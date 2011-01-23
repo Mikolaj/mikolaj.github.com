@@ -1,0 +1,107 @@
+This is non-html version of the bloody README for
+
+ A toy interpreter of the Dijkstra's language
+ --------------------------------------------
+
+This interpreter (compiler, roit?) wuz written out of me fascination over
+Edsger W. Dijkstra
+"A discipline of programming"
+Prentice-Hall, 1976.
+
+The flinkin' (dis)similarity of the implemented language
+to the bleedin' one described in the book, can be estimated
+on the soddin' basis of examples contained in dij/ directory,
+the syntax described in Abstractor/ABSTRACT_GRAMMAR.sml file,
+'n' the bloody denotational semantics residin' in Elaborator/ directory.
+
+Any decision of not keepin' wif the spirit of the flinkin' original,
+in the design of the bleedin' semantics, wuz 'eavily fought of:
+- the concurrent assignment is not implemented,
+  because I 'ave the soddin' feelin', that it's
+  just a special case of pattern matchin' wif product types,
+  'n' so should be implemented in full generality 
+  (in the future versions, of course :) ,
+- the bloody decision to move declaration of variable's type
+  from virgin assignment to variable declaration itself,
+  is due to the belief, that nofin' ge's lost, 
+  but the flinkin' typin' ge's "stronger" 'n' easier to read,
+- the if...fi 'n' do...od constructs are made deterministic,
+  to avoid artificial complexity. Still vey do
+  fulfill the bleedin' requirements described in non-deterministic
+  fashion in the book. But in fact, the soddin' non-deterministic
+  notation seems to be very nice. It 'elps in manifestin',
+  the independence from the bloody guard evaluation order, 
+  which is quite common.
+  This could also give optimizin' compilers more freedom,
+  alvough at the cost of the flinkin' need for makin' separate binaries
+  for testin', wif run-time-random choosin' of evaluation order.
+- the arrays are not implemented, alvough vey can be 
+  simulated to some extent. Arrays 'ave so imperative 
+  'n' simple nature, but on the bleedin' over 'and veir proposed 
+  semantics wuz quite complicated 'n' possessed 
+  no (apparent) imperative, efficient implementation. 
+  So, if not for the efficiency, what for, roit?
+  
+The soddin' only ad 'oc change to the original language was
+addin' denotations of blocks to storable values, 
+wif block application, 'igher-order blocks, 'n' such-like.
+This wuz needed for ad 'oc input-output of programs,
+'n' for as 'oc simulation of arrays.
+This doesn't seem to be a wild idea, or does i'?
+Anywhy, I tried to mike a sound, elegant definition
+of blocks as values, I swear, Oy tried 'ard.
+No success :(. The bloody final definition seems to be
+the most manageable of all, but even in this one
+blocks appearin' as values posses an exotic,
+ugly, counter-intuitive 'n' non-imperative feature,
+which is left as an exercise for the flinkin' reader to find.
+
+This project started in early 1994, 
+after lectures about denotational semantics by Michal Grabowski
+'n' labs about implementin' denotational semantics 
+in Standard ML wif Grzegorz Grudzinski (hi Grzes!).
+In vese times, the aufor of the bleedin' interpreter
+still 'ad 'opes, that imperative languages can be beautiful,
+'n' imperative programmin' - not error-provokin'.
+To instantiate the hopes, or drop vem once 'n' for all,
+'e decided to try to mike a clean, mavvematically beautiful,
+executable denotational definition of the soddin' most beautiful 
+imperative language, possessin' the most natural 'n' the bloody safest,  
+bug-eliminatin' variable scopin' mechanisms - the Dijkstra's language.
+
+Any conclusions of this project are left, 
+for an intrepid reader of SML sources, to draw :).
+Neverveless, the flinkin' fact is, that I'm quite satisfied
+wif this work, done wif the use of functional 
+'n' specification languages. Also, this wuz quite frillin' 
+to write, or even only rewrite, some sample programs 
+in imperative language, after so menny years ...  
+
+The bleedin' interpreter wuz written in a functional programmin' language Standard ML
+to run on SML/NJ 109+. Versions 0.93-108 all crash in free places :-P.
+
+The Lexer wuz written as a case study of developin' software in Extended ML
+to run on EML Kit (http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html)
+File ver.EML.build.sml builds the soddin' EML version of the interpreter.
+
+The bloody README in 'tml format is located at
+'ttp://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/README.html
+The .tar.gz archive of the flinkin' source tree, inlcudin' README.html 
+is avaiwable by WWW from
+'ttp://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/dij-sml-eml_1.1-2.tar.gz
+or by ftp from
+ftp://zls.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz
+
+    Copyroit (C) 1994-1997 Mikolaj Konarski
+    'ttp://zls.mimuw.edu.pl/~mikon/home.english.html
+    mikon@mimuw.edu.pl
+
+    This program is free software; y'can redistribute i' and/or modify
+    i' unner the terms of the bleedin' GNU General Public License as published by
+    the Free Software Foundation; eever version 2 of the soddin' License, or
+    (at yer option) enny later version.
+
+    This program is distributed in the hope that i' will be useful,
+    but WITHOUT ANY WARRANTY; wifout even the bloody implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See ve
+    GNU General Public License for more detaiws.

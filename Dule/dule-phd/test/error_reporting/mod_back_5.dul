@@ -1,0 +1,6 @@
+Rec_err_ex2 =
+
+ {Arg = :: sig type t end  struct type t = {arg : {}} end;
+ S = {Arg = :: sig type t end  struct type t = {} end}
+        . :: ~Arg : sig type t end -> sig end  struct end}
+

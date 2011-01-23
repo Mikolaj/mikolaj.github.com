@@ -1,0 +1,68 @@
+\documentclass[12pt,a4paper,twoside]{article}
+
+\usepackage{amsthm}
+
+%\usepackage{longtable}
+
+\usepackage{ifthen}
+\newboolean{ifglish}
+\setboolean{ifglish}{true}
+
+\ifthenelse{\boolean{ifglish}}
+{
+\usepackage[english]{babel}
+}
+{
+\usepackage[polish]{babel}
+}
+
+\input{mac}      % stolen macros
+\input{emlmacros} % more stolen macros
+
+\def\|{\verb|}  
+\newcommand{\mikoncomment}[1]{{\sf [[[MIKON\@: #1]]]}}             
+
+\begin{document}
+
+\input{eng-mac}
+
+\newtheorem{thm}{\Theorem}[section]
+\newtheorem{cor}[thm]{\Corollary}
+\newtheorem{lem}[thm]{\Lemma}
+\newtheorem{obs}[thm]{\Observation}
+
+\MyTitle
+\MyAuthor
+\date{\MyDate}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\part{\partintro}
+\label{part:intro}
+\input{intro}
+
+\newpage
+\part{\parttheory}
+\label{part:theory}
+\input{axioms}
+\newpage
+\input{traces}
+
+\newpage
+\part{\partimpl}
+\label{part:impl}
+\input{actual}
+
+\newpage
+\input{bib}  
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

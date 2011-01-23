@@ -1,0 +1,313 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    pricon N : int ;
+    pricon p : int ;
+
+    pricon lob : int ;
+    pricon ctrl : int ;
+    pricon empty : int -> int ;
+    pricon dom : ( int -> int ) -> int ;
+    pricon hib : ( int -> int ) -> int ;
+    pricon val : ( int -> int ) -> int -> int ;
+    pricon high : ( int -> int ) -> int ;
+    pricon hiext : ( int -> int ) -> int -> int -> int ;
+    pricon alt : ( int -> int ) -> int -> int -> ( int -> int ) ;
+    pricon hirem : ( int -> int ) -> int -> int 
+
+    lob :vir= 0 ;
+
+    ctrl :vir= lob - 1 ;
+
+    empty :vir= begin 
+
+		    glocon ctrl ;
+
+		    glocon input : int ;
+		    vircon output : int
+
+		    if input = ctrl -> output :vir= 0
+		    fi
+
+		end ;
+
+    dom :vir= begin
+
+		  glocon ctrl ;
+
+		  glocon input : int -> int ;
+		  vircon output : int
+
+		  output :vir= input . ctrl
+
+	      end ;
+
+    hib :vir= begin
+
+		  glocon lob ;
+		  glocon dom ;
+
+		  glocon input : int -> int ;
+		  vircon output : int
+
+		  output :vir= dom . input + lob - 1
+
+	      end ;
+
+    val :vir= begin
+
+		  glocon lob ;
+		  glocon hib ;
+
+		  glocon input : int -> int ;
+		  vircon output : int -> int ;
+		  pricon aux_arr : int -> int
+
+		  aux_arr :vir= input ;
+		  output :vir= begin 
+
+				   glocon lob ;
+				   glocon hib ;
+
+				   glocon input : int ;
+		    		   vircon output : int ;
+				   glocon aux_arr
+
+				   if input >= lob and input <= hib . aux_arr -> 
+				       output :vir= aux_arr . input
+				   fi
+
+			       end 
+
+	      end ;
+
+    high :vir= begin
+
+		   glocon hib ;
+		   glocon val ;
+
+		   glocon input : int -> int ;
+		   vircon output : int
+
+		   output :vir= val . input . ( hib . input )
+
+	       end ;
+
+    alt :vir= 
+        begin
+
+            glocon lob ;
+	    glocon hib ;
+	    
+    	    glocon input : int -> int ;
+	    vircon output : int -> int -> int -> int ;
+	    pricon aux_arr : int -> int
+	    
+	    aux_arr :vir= input ;
+	    output :vir= 
+		begin 
+	    
+	    	    glocon lob ;
+	    	    glocon hib ;
+	    	    
+	    	    glocon input : int ;
+	    	    vircon output : int -> int -> int ;
+	    	    glocon aux_arr ;
+	            pricon aux_ind : int
+    	    
+		if input >= lob and input <= hib . aux_arr ->
+
+    	    	    aux_ind :vir= input ;
+                    output :vir= 
+			begin 
+	    	    
+	    	            glocon input : int ;
+	    	            vircon output : int -> int ;
+	    	            glocon aux_arr ;
+	    	    	    glocon aux_ind ;
+	    	    	    pricon aux_val : int
+
+			    aux_val :vir= input ;
+                            output :vir= 
+			        begin 
+	    	    
+	    	                    glocon input : int ;
+	    	                    vircon output : int ;
+	    	                    glocon aux_arr ;
+	    	    	            glocon aux_ind ;
+	    	    	            glocon aux_val 
+
+		    	    	    if input = aux_ind -> 
+		    	    	    	output :vir= aux_val
+	    		    	    [] input <> aux_ind -> 
+	    		    	        output :vir= aux_arr . input
+	    	    		    fi
+	    	    
+	    	                end
+                         
+			end 
+
+		fi
+
+		end
+
+	end ;
+
+    hiext :vir= begin
+
+		    glocon ctrl ;
+		    glocon dom ;
+		    glocon hib ;
+		    glocon alt ;
+		    
+    		    glocon input : int -> int ;
+		    vircon output : int -> int -> int ;
+		    pricon aux_arr : int -> int
+
+		    aux_arr :vir= input ;
+		    output :vir= begin 
+
+				     glocon ctrl ;
+				     glocon dom ;
+				     glocon hib ;
+				     glocon alt ;
+				     
+			  	     glocon input : int ;
+		    		     vircon output : int -> int ;
+				     glocon aux_arr
+
+    		  		     output :vir= alt . begin 
+
+							    glocon ctrl ;
+							    glocon dom ;
+						      	    
+				                      	    glocon input : int ;
+		    		                      	    vircon output : int ;
+				                      	    glocon aux_arr 
+						      
+						      	    if input = ctrl -> 
+							  	output :vir= dom . aux_arr + 1
+						      	    [] input <> ctrl -> 
+						          	output :vir= aux_arr . input
+						      	    fi
+
+			                          	end . ( hib . aux_arr + 1 ) . input
+
+			         end 
+
+		end ;
+
+    hirem :vir= begin
+
+		    glocon ctrl ;
+		    glocon dom ;
+		    
+    		    glocon input : int -> int ;
+		    vircon output : int -> int ;
+		    pricon aux_arr : int -> int
+
+		if dom . input <> 0 ->
+
+		    aux_arr :vir= input ;
+		    output :vir= begin 
+
+				     glocon ctrl ;
+				     glocon dom ;
+				     
+				     glocon input : int ;
+		    		     vircon output : int ;
+				     glocon aux_arr 
+				     
+				     if input = ctrl -> output :vir= dom . aux_arr - 1
+				     [] input <> ctrl -> output :vir= aux_arr . input
+				     fi
+
+				 end
+
+		fi
+
+		end ;
+
+if input > 1 ->
+
+    N :vir= input ;
+
+    begin
+
+	glocon empty ; glocon hiext ; glocon hib ; glocon val ; glocon alt ; glocon high ; glocon hirem ;
+
+	glocon N : int ; vircon p : int ;
+	privar f : int ; privar ar : int -> int 
+
+	begin
+
+	    glocon empty ; glocon hiext ;
+
+	    glocon N ; virvar ar ; 
+	    privar x : int ; privar y : int
+
+	    ar :vir= empty ;
+	    x :vir= N ; y :vir= 2 ;
+	    do x <> 0 -> ar := hiext . ar . ( x mod y ) ;
+			 x := x div y ; y := y + 1
+	    od 
+	end ;
+	f :vir= 2 ;
+
+	do begin privar this_is_an_ugly_hack_to_simulate_lazy_array_index_checking : bool ;
+
+		 glocon hib ; glocon val ;
+
+		 glocon input : int -> int ;
+		 vircon output : bool
+
+		 if hib . input > 1 -> if val . input . 0 <> 0 -> output :vir= true
+				    [] val . input . 0 = 0 -> output :vir= false
+				    fi
+		 [] hib . input <= 1 -> output :vir= false
+		 fi
+
+           end . ar -> 
+	    begin 
+
+		glocon hib ; glocon alt ; glocon val ;
+
+		glovar f ; glovar ar ;
+		privar i : int
+
+		f := f + 1 ;
+		i :vir= 0 ;
+		do i <> hib . ar ->
+		    begin
+
+			glocon alt ; glocon val ;
+
+			glocon f ;
+			glovar ar ; glovar i ;
+			pricon j : int
+
+			j :vir= i + 1 ;
+			ar := alt . ar . i . ( val . ar . i - j * val . ar . j ) ;
+			do val . ar . i < 0 -> ar := alt . ar . i . ( val . ar . i + f + i ) ;
+					       ar := alt . ar . j . ( val . ar . j - 1 )
+			od ;
+			i := j
+		    end
+		od
+	    end ;
+	    do high . ar = 0 -> ar := hirem . ar
+	    od
+	od ;
+	if val . ar . 0 = 0 -> p :vir= f
+	[] val . ar . 0 <> 0 -> p :vir= N
+	fi
+
+    end ;
+
+    output :vir= p
+
+fi
+
+end
+

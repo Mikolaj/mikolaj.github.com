@@ -1,0 +1,60 @@
+The README for The Graphical Pretty Printer for Proof Obligations 1.0
+Binaries Release
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+
+1. The Graphical Pretty Printer for Proof Obligations 1.0 (GPP) 
+is available through anonymous ftp from zls.mimuw.edu.pl.
+The archive containing the release is called gpp10-i386.tar.gz and resides
+in the /People/mikon/EMLKit directory.
+
+There is also a link to this file from EML Kit home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+
+To install the GPP first ungzip and untar the archive.
+It should contain:
+README - info about the Graphical Pretty Printer for Proof Obligations 1.0
+COPYING - text of the GNU General Public License
+README.gpp10-i386 - this file
+bin/ - GPP binaries
+example/ - program in Exented ML language
+
+
+Change PATH environment variable to reflect new directory for searching executables
+or move gpp to one of directory included in value of PATH variable (e.g. /usr/bin/)
+
+You can place the file from bin/ wherever you want but you have to change 
+directory in gpp to reflect new location.
+
+GPP works better with proof obligations generator - 
+The EML Kit Proof Obligations Generator - see EML Kit home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+
+After building emlkit (default name of EML Kit Proof Obligations Generator's
+executable file) set new environment variable:
+	OBLIGS_GEN=/eml11ogen/src/emlkit
+
+'/eml11ogen/src/emlkit' is ONLY an example and it should be 
+a real location of emlkit.
+
+Installation complete.
+
+Well, now you can type gpp, and  ...read README first ;)
+
+2. The EML Kit is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the gpp10-i386.tar.gz archive.
+This also means that you have the right to get the source code.
+The source code is available as gpp10-src.tar.gz, through ftp or WWW.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Warsaw, 1999.10

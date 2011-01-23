@@ -1,0 +1,8 @@
+Inst_ass =
+{T = :: -> sig type t value v : t end  
+     struct type t = {} value v = {} end} 
+|
+({V = :: ~T : sig type t value v : t end -> sig value v : T.t end  
+struct value v = T.v end}
+|
+: {{V : sig value v : {} end}})

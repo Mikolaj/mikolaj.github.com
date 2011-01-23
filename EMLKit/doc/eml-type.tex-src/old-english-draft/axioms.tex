@@ -1,0 +1,389 @@
+\section{\secaxiom}
+\label{sec:axiom}
+
+In SML there are no axioms. In EML axioms can appear as components of structures and signatures.
+Elaborating EML structures containing axioms is not very difficult, apart from the problem with
+trace collection described in detail in Section~\ref{sec:trace}.
+Elaborating EML signatures with axioms is much more complicated.
+
+\subsection{\secinsig}
+\label{sec:in_sig}
+
+Rule 65 (we consider here a slightly simplified version), 
+describes the static meaning of syntactic signature
+as an element of a semantic domain $\Sig$.
+The rule is a bit more complex in the Definition of EML than in the Definition of SML.
+The additional second and third premises serve to assure, that
+axioms do not impose any type sharing or setting of equality attributes. 
+This restriction is expressed using the notion of strip ---
+an operation that strips signature of its axioms. The EML rule 65 follows:
+$$
+\frac{\begin{array}{c}
+\mbox{$(\N)\S$ with $\trace$ principal for $\sigexp$ in $\B$}\\
+\strip(\sigexp,\trace)=(\sigexp',\trace')\\
+\mbox{$(\N)\S$ with $\trace'$ principal for $\sigexp'$ in $\B$}
+      \end{array}}
+     {\B\ts\sigexp\ra (\N)\S,(\N)\trace}
+$$ %$$
+
+The main reason for this restriction is that EML programs
+at the end of their development process (when there are no specification constructs 
+in place of executable code), should become correct SML
+programs as soon as all the axioms in their bodies are commented out.
+Consider the following example:
+\begin{verbatim}
+functor F (Arg : sig
+                     type t
+                     val f : t -> int
+                     type u
+                     val a : u                                         
+                     axiom f a = 0
+                 end) : 
+sig
+    val b : int
+end =
+struct
+    val b = Arg.f Arg.a
+end
+\end{verbatim}
+This is not correct, because the axiom imposes that type \|t| is equal to \|u|.
+If not for the restriction in rule 65 the program would be correct, but then
+its stripped version would be an incorrect SML program, 
+because of the application of \|Arg.f| to \|Arg.a|.
+
+\subsection{\secquasi}
+\label{sec:quasi}
+
+Let QUASI-EML be a dialect of EML, with second and third premises removed from rule~65.
+In QUASI-EML rule 65 looks as follows:
+$$
+\frac{\begin{array}{c}
+\mbox{$(\N)\S$ with $\trace$ principal for $\sigexp$ in $\B$}\\
+     \end{array}}
+     {\B\ts\sigexp\ra (\N)\S,(\N)\trace}
+$$
+
+\begin{lem}
+In QUASI-EML \emph{type abbreviations} can be defined as derived forms.
+\end{lem}
+
+Instead of a rigorous proof let's consider the example of type abbreviation taken from \cite{MT91}, p.66:
+\begin{verbatim}
+sig
+    type 'a t
+    type u = int t (* a type abbreviation *)
+    sharing type u = int
+end
+\end{verbatim}
+and it's translation into QUASI-EML:
+\begin{verbatim}
+sig
+    type 'a t
+    type u
+    axiom true orelse (forall (c : u, d : int t) => c == d)
+    sharing type u = int
+end
+\end{verbatim}
+
+\begin{cor}
+In QUASI-EML reconstruction of principal signatures is undecidable.
+\end{cor}
+
+The clue is, that type abbreviations in conjunction with sharing specifications
+make reconstruction of principal signatures as hard as second order unification. 
+(In case of the above example, second order unification would be required
+to decide whether $\Lambda$\|'a.|$\INT$ or $\Lambda$\|'a.'a| is the most general type function
+which can be assigned to \|t|.) As second order unification is undecidable, we get the
+undecidability of principal signature reconstruction in QUASI-EML.
+
+\subsection{\secnaive}
+\label{sec:naive}
+
+Now, let's come back to the problem of elaboration of the Extended ML signatures.
+Looking at rule 65 we can conceive an idea, that the most natural solution is the following
+(for simplicity we disregard traces here):
+
+\begin{enumerate}
+\item elaborate the original $\sigexp$ and obtain its principal signature~$(\N)\S$,
+\item strip $\sigexp$ of its axioms getting $\sigexp'$,
+\item elaborate $\sigexp'$ and obtain principal signature $(\N')\S'$,
+\item if $(\N)\S$ and $(\N')\S'$ are identical
+      then $(\N)\S$ is the result, otherwise the signature is incorrect.
+\end{enumerate}
+Unfortunately, the implementation of the first step is impossible,
+because it would also be a solution to the (undecidable) problem of
+principal signature reconstruction in QUASI-EML.
+
+\subsection{\seccomforting}
+\label{sec:comforting}
+
+Fortunately the following lemma holds.
+
+\begin{lem}[\thmcomforting]
+\label{thm:comforting}
+Axioms do not contribute to the signature internal environment.
+Moreover the presence and identity of the trace produced as a result of an axiom elaboration    
+doesn't influence the elaboration of any of the remaining signature components.
+\end{lem}
+
+\begin{proof}
+Rule 74.1:
+$$
+\frac{\B\ts\axiomdesc\ra\trace}
+     {\B\ts\axiomspec\ra\emptymap\ \In\ \Env,\ \trace}
+$$
+and induction over rules 63--90.
+\end{proof}
+
+\begin{cor}
+Axioms can affect the signature elaboration only by
+imposing things and not by non-trivially contributing things.
+\end{cor}
+
+\subsection{\secmature}
+\label{sec:mature}
+
+Basing on these facts we can now formulate a sketch
+of the algorithm for the implementation of rule 65:
+\begin{enumerate}
+\item strip $\sigexp$ of its axioms getting $\sigexp'$,
+\item elaborate $\sigexp'$ and obtain principal $(\N')\S'$ and $\trace'$,
+\item check that the axioms do not impose anything,
+\item elaborate axioms according to rule 74.1, getting traces $\trace_1,\cdots,\trace_n$,
+\label{step:elaborate}
+\item if everything was all right, return $(\N')\S'$ and additionally $\trace'$ 
+      with $\trace_1,\cdots,\trace_n$ inserted into proper places.
+\end{enumerate}
+(A hint towards a similar solution was formulated by Stefan Kahrs in~[6].)
+
+\begin{thm}
+The above procedure is correct.
+\end{thm}
+
+\begin{proof}
+When the check performed in step~\ref{step:elaborate} assures us that the axioms do not impose anything,
+we know by the Comforting Lemma, that the semantic signature
+resulting from the elaboration of $\sigexp$ is the same as 
+from the elaboration of it's stripped version.
+On the other hand, as the traces resulting from the elaboration of the signature components
+are put together in a ``free'' way (see rule 81 cited in Section~\ref{sec:elaborating}),
+simple inserting of $\trace_1,\cdots,\trace_n$ into $\trace'$ is enough 
+to correctly reconstruct the trace for $\sigexp$.
+\end{proof}
+
+Let us analyze the steps sketched above. 
+The first step, stripping axioms, is a simple syntactic operation.
+As $\sigexp'$ is bereft of axioms the second step, its elaboration, is as easy as elaboration
+of any SML signature (apart from trace collection involved, see Section~\ref{sec:trace}).
+Inserting the traces $\trace_1,\cdots,\trace_n$ into $\trace'$ in the fifth step is a technicality.
+The problem that remains, is how to implement the third and the fourth steps.
+
+\subsection{\secvalidating}
+\label{sec:validating}
+
+Suppose, we are given a $\sigexp$ with an axiom inside. 
+Let $\sigexp'$ be $\sigexp$ with an empty specification in place of the axiom.
+If there is a derivation $Der'$ of a principal signature for $\sigexp'$,
+let $Der_e$ be its sub-derivation, corresponding to the empty specification.
+Then let $\B_e$ be the basis found in $Der_e$.
+
+\begin{thm}
+The axiom do not impose any type sharing or setting of equality attributes in $\sigexp$ 
+iff there is a derivation $Der_{ax}$ of the principal trace for the axiom in basis $\B_e$. 
+\end{thm}
+
+\begin{proof}[\proofname\ ($\Leftarrow$)]
+Suppose, there exists $Der_{ax}$. Then $Der'$ with $Der_{ax}$ in place o $Der_e$
+is a perfect skeleton of a principal derivation $Der$ for $\sigexp$. To make a formally correct
+derivation tree out of this skeleton it's enough to additionally perform two operations 
+on every ancestor node of $Der_e$. First operation is a proper insertion of
+the trace resulting from $Der_{ax}$ into the traces of the node. 
+Second is substituting the empty specification sub-phrase of the node by the axiom. 
+
+After this, $Der$ is a correct derivation for $\sigexp$ and moreover it is the principal one, 
+because $Der'$ and $Der_{ax}$ are principal. Now notice, that $Der$ has 
+the same resulting semantic signature as $Der'$ and its trace is 
+a simple extension of the $Der'$ trace. This means that the axiom 
+do not impose any type sharing or setting of equality attributes in $\sigexp$. 
+\end{proof}
+
+\begin{proof}[\proofname\ ($\Rightarrow$)]
+If $\sigexp'$ has a principal derivation and the axiom do not impose anything,
+then surely there is a principal derivation for $\sigexp$. Obviously its sub-derivation corresponding
+to the axiom is also principal. What remains to be proved is, that the derivation for the axiom
+starts in the basis $\B_e$. By the Comforting Lemma the axiom (which as we know, do not impose things)
+cannot influence any bases occurring in the principal derivation for $\sigexp$.
+So the principal derivation for the axiom is performed in the same basis as the derivation $Der_e$ --- 
+in the basis $\B_e$. 
+\end{proof}
+
+The checks that there are principal derivations for axioms in given bases is not much more
+complicated than the elaboration of axioms in structures. Additionally, as can be seen from
+the proof, the traces produced in the result are the ones required in the step four 
+from Section~\ref{sec:mature}. Now the only remaining difficulty in implementing step three, 
+and so the whole algorithm, is the computation of bases $\B_e$ for given axioms.
+
+\section{\secinter}
+\label{sec:inter}
+
+In fact we already know where to get $\B_e$ from. It's one of the components 
+of the trace $\trace'$ resulting from the elaboration of $\sigexp'$ 
+(in the second step, Section~\ref{sec:mature}). There are two problems however.
+First, for simplicity we assumed in Section~\ref{sec:judgments}, that traces
+are full-blown derivation trees. The truth is, that although one can reconstruct
+a derivation tree for a phrase using its resulting trace, the task is not much
+simpler than building the derivation tree from scratch. 
+Second, traces are necessary only for the EML Verification Semantics.
+If we can find a suitable way for computing $\B_e$ without traces,
+there is no need to introduce them for the sake of the Static Semantics, 
+as their implementation is somewhat complicated and troublesome (Section~\ref{sec:trace}).
+
+To see how to compute bases $\B_e$ without the use of traces we should first go into 
+the details of the signature elaboration in SML (or axiom-less signature elaboration in EML).
+
+\subsection{\secstatic}
+\label{sec:static}
+
+Both the EML and the SML Static Semantics for Modules relies on nondeterminism. 
+While elaborating signatures the identity of their type or structure components 
+is nondeterministically guessed. For example in rule 83 (slightly simplified):
+$$
+\frac{ \tyvarseq = \alphak \qquad\arity\theta=k }
+     { \C\ts{\mbox{\tyvarseq\ \tycon}}\ra\{\tycon\mapsto(\theta,\emptymap)\}}
+\eqno(83)
+$$
+where $\theta$ may be chosen to achieve the desired sharing or equation attribute properties.
+Or in rule 63:
+$$
+\frac{\B\ts\spec\ra\E,\trace }
+     {\B\ts\encsigexp\ra (\m,\E),\append{\m}{\trace}}
+\eqno(63)
+$$
+where $m$ may be chosen to satisfy the sharing or enrichment requirements.
+
+\subsection{\secelaborating}
+\label{sec:elaborating}
+
+To get rid of the nondeterminism inherent in the Static Semantics, 
+an~algorithm for computing principal signatures is used,
+resembling the~algorithm for inferring principal types by Damas and Milner.
+
+Instead of being correctly guessed at once, the type and structure components of a signature
+are considered to be fresh, most general. Then in the process of elaborating the signature,
+a \emph{realisation} is collected and applied to these components. 
+This ``improves'' the first cautious approximations, makes them more specific, more precise.
+
+To get a bit of intuition about the algorithm let's look at rule 81, 
+describing the elaboration of sequential specifications:
+$$
+\frac{ \B\ts\spec_1\ra\E_1,\trace_1 \qquad
+\plusmap{\B}{\E_1}\ts\spec_2\ra\E_2,\trace_2 }
+     { \B\ts\seqspec\ra\plusmap{\E_1}{\E_2},\append{\trace_1}{\trace_2} }
+\eqno(81)
+$$
+and now look at the corresponding code (simplified) in the EML Kit.
+The things to note are the realisations (\|rea1|, \|rea2|), their composition (\|oo|) 
+and application to the semantic objects (\|onB|, \|onE|):
+{\small
+\begin{verbatim}
+fun elab_spec (B: Env.Basis, spec: IG.spec) : 
+    (Stat.Realisation * Env.Env * OG.spec) =
+    case spec of
+    ...
+    (* Sequential specification *)
+    | IG.SEQspec(i, spec1, spec2) =>
+        let
+            val (rea1, E1, out_spec1) = elab_spec(B, spec1)
+            val B' = (rea1 onB B) B_plus_E E1
+            val (rea2, E2, out_spec2) = elab_spec(B', spec2)
+        in
+            (rea2 oo rea1, (rea2 onE E1) E_plus_E E2, 
+             OG.SEQspec(okConv i, out_spec1, out_spec2))
+        end
+\end{verbatim}
+}
+
+\section{\secsearch}
+\label{sec:search}
+
+Knowing the basics of the algorithm for elaborating axiom-less signatures, 
+let's try to guess how to get the basis $\B_e$ for a given $\sigexp$ with an axiom.
+
+\subsection{\secmodest}
+\label{sec:modest}
+
+Should it be the basis used by the algorithm, 
+when it starts to elaborate the whole $\sigexp$?
+No, and the following example shows why:
+\begin{verbatim}
+signature S1 =
+sig
+    type t
+    axiom forall (a : t) => true
+end
+\end{verbatim}
+In this basis there is no type t, and so the axiom would be wrongly considered ill-formed.
+
+\subsection{\secignorant}
+\label{sec:ignorant}
+
+Maybe then we should use the basis, which is collected in the place just before the axiom?
+Let's look at the following example:
+\begin{verbatim}
+signature S2 =
+sig
+    type t
+    type u 
+    axiom forall ( a : t, f : u -> bool) => f a
+    sharing type t = u
+end
+\end{verbatim}
+The axiom here doesn't impose any sharing, because in the principal signature
+for the $\sigexp$ with the axiom removed types \|t| and \|u| are identified.
+Nevertheless the axiom here won't elaborate in the basis obtained
+when the algorithm finishes elaborating first two specifications,
+because fresh types are assigned to \|t| and \|u|, and no knowledge about
+the upcoming sharing specification is taken into account.
+
+\subsection{\secomniscient}
+\label{sec:omniscient}
+
+It seems so, that the basis collected at the and of the elaboration of
+the stripped $\sigexp$ would be a good candidate for $\B_e$.
+Indeed the axiom from the last example would elaborate correctly in this basis,
+because types assigned to \|t| and \|u| are finally identified.
+Unfortunately, in the following example the axiom which is clearly ill-formed,
+does elaborate in the basis obtained in the final step of signature elaboration:
+\begin{verbatim}
+signature S3 =
+sig
+    axiom forall (a : t) => true
+    type t
+end
+\end{verbatim}
+
+\subsection{\secobservation}
+\label{sec:observation}
+
+A we see, in the basis $\B_e$ there should be exactly those components collected
+in the basis from just before the axiom, but their identity should be influenced
+by the information gathered throughout the whole signature.
+
+\begin{obs}
+It turns out that to get basis $\B_e$ it's enough to obtain the final realisation $\|rea|$,
+by using the standard signature type-checking algorithm on $\sigexp'$,
+and then apply $\|rea|$ to the basis, taken when the algorithm 
+finished processing the specification just before the axiom.
+\end{obs}
+
+\begin{cor}
+It is possible to obtain the basis $\B_e$ without the use of traces.
+\end{cor}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 
+
+

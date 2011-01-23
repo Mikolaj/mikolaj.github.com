@@ -1,0 +1,102 @@
+#load "/usr/lib/ocaml/3.07/camlp4/camlp4o.cma";;
+#load "ll_parser.cmo";;
+module M = Mod_front.EDule;;
+module C = Core_front.BCore;;
+open Tools.AtIndex;;
+open IdIndex;;
+module IList = Tools.IList;;
+
+let rec check_repeat = (* simplify!!!!!!!!!!!!!!!!! *)
+  function
+    | [] -> IList.nil
+    | (i, v) :: r ->
+        let l = check_repeat r in
+        if IList.is_in i l then (* this should work even with -noassert *)
+          failwith ("check_repeat: duplicated label " ^ t2string i)
+        else
+          IList.cons (i, v) l
+;;
+
+Random.self_init();;
+
+let rndloc() = M.Location.int2t (Random.bits()) (Random.bits());;
+let mktyp t = (rndloc(), t)
+let mkvalu v = (rndloc(), v)
+let mksp p = (rndloc(), p)
+let mkdule m = (rndloc(), m)
+let mkstart li = (rndloc(), li)
+let mkwild () = loc2wild (string_of_int (Random.bits()))
+let mkpatid () = loc2patt (string_of_int (Random.bits()))
+let mkpat lt = let f = mktyp(C.F_x) in
+	       let lf = IList.vmap (fun _ -> f) lt in
+	       mktyp (C.F_pp lf)
+let mkint n =
+  if n < 0 then failwith "Negative integers not implemented!"
+  else
+    let i2pr i = 
+      mkvalu(C.T_comp (mkvalu(C.T_pr mNat), 
+		     mkvalu(C.T_pr i)))
+    in
+    let rec n2con n = 
+      match n with
+      | 0 -> i2pr zero
+(*    | 1 -> i2pr one
+      | 2 -> i2pr two
+      | 3 -> i2pr three
+      | 4 -> i2pr four
+      | 5 -> i2pr five
+      | 6 -> i2pr six
+      | 7 -> i2pr seven
+      | 8 -> i2pr eight
+      | 9 -> i2pr nine *)
+      | _ ->
+	  let acc = n2con (n - 1) in
+	  mkvalu(C.T_appl (IList.cons (arg_of_succ, acc) IList.nil, 
+			 i2pr succ))
+    in
+    n2con n
+;;
+
+let elcp p = 
+  let prelude_m = Main_common.update_prelude (Main.process Parser.start) in
+  Main_common.elc prelude_m p
+
+let main elf p = 
+  try
+    let _ = Sys.catch_break true in
+    let _ = elf p in
+    (flush stderr; print_string "Success! The results are:"; 
+     if !Main_common.results = [] then 
+       print_string "\nnone, probably no arguments given\n"
+     else (ignore (List.map (fun re -> 
+       print_string re) (List.rev !Main_common.results)); 
+		  print_string "\n"))
+  with
+  | Sys.Break -> 
+      prerr_endline "\nInterrupted!";
+      exit 0
+  | x ->
+      Main_common.report_error Format.err_formatter x;
+      exit 2
+;;
+
+Mod_front.ElabEDule.allow_composition := true;;
+
+print_string "Compiling...\n";; flush stdout;;
+#use "prelude.dul";;
+(*print_string "Compiling...\n";; flush stdout;;
+#use "../test/strange_commented.dul";;*)
+print_string "Compiling...\n";; flush stdout;;
+#use "../test/regression_short.dul";;
+print_string "Compiling...\n";; flush stdout;;
+#use "../test/tutorial_modules.dul";;
+print_string "Compiling...\n";; flush stdout;;
+#use "../test/regression_long.dul";;
+(*print_string "Compiling core...\n";; flush stdout;;
+#use "../test/core.dul";;*)
+
+print_string "Compiling compiler.dul, this will take long...";; flush stdout;;
+#use "../test/compiler.dul";;
+
+ 
+exit 0

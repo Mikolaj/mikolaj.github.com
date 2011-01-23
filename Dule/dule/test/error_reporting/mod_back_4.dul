@@ -1,0 +1,2 @@
+Er2 = {M = {}} . link T = M M2 = {} end (* this is OK *)
+Er3 = {M = {}} . link T = M M = {} end

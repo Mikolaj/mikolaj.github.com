@@ -1,0 +1,63 @@
+\documentclass[11pt,twoside]{rinf}
+\usepackage{longtable}
+
+%%%%%%%%%%%% copied from the example for institute report
+\def\tr{{\small \sl TR 96-04 (225)}} 
+
+\pagestyle{myheadings}
+
+%%%%%%%%%%%% copied from the example for institute report
+
+\title{\bf The EML Kit\\Version 1}
+
+\author{
+ Marcin Jurdzi\'nski\thanks{
+   Institute of Informatics, Warsaw University, Warsaw, Poland.}
+   \\{\tt mju@mimuw.edu.pl}	
+\and
+ Miko{\l}aj Konarski$^1$\\{\tt mikon@mimuw.edu.pl}
+\and
+ Aleksy Schubert$^1$\\{\tt alx@mimuw.edu.pl}}
+
+\date{May 27, 1996}
+
+\bibliographystyle{plain}
+\def\|{\verb|}  
+\input{mac}      % stolen macros
+\input{emlmacros} % more stolen macros
+
+\begin{document}
+
+
+\input{in1tyt225}
+%\maketitle
+
+\pagenumbering{roman}
+\setcounter{page}{0}
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+
+\include{preface}
+\include{intro}
+\include{parsing}
+\include{elab} 
+\include{misc}
+
+\appendix
+\include{release}
+%\include{state}
+\include{bib}	
+
+\end{document}
+
+
+
+
+
+
+
+
+
+

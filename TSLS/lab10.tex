@@ -1,0 +1,85 @@
+\chapter{
+Modu"ly: funktory
+}
+
+Przy pomocy funktora mo"rna wyra"znie opisa"c, jakie modu"ly
+s"a potrzebne by zaimplementowa"c dany modu"l. Gdy program jest napisany 
+w ca"lo"sci przy pomocy funktor"ow, w naturalny spos"ob przybiera on hierarchiczn"a posta"c.
+Jest jeden modu"l, kt"ory rz"adzi i kt"orego sygnatura jest opisem naszych
+oczekiwa"n co do programu, s"a modu"ly spe"lniaj"ace specyfikacje argument"ow
+tego rz"adz"acego funktora, s"a modu"ly spe"lniaj"ace specyfikacje argument"ow tych modu"l"ow, itd.
+Dodatkowo, je"sli funktor ma dobr"a sygnatur"e i nie wymienia si"e w nim nazw "radnych zewn"etrznych
+modu"l"ow (element dobrego stylu), to mo"rna o nim rozumowa"c lub zmienia"c
+jego implementacj"e, abstrahuj"ac od w"lasno"sci czy istnienia jakichkolwiek innych modu"l"ow
+i nie psuje to poprawno"sci programu.  
+
+Przyk"lad funktora:
+\begin{verbatim}
+... (* <- TREE and Tree are defined here *)   
+
+functor PQasHeap 
+    ( structure TotalPreorder : TOTAL_PREORDER
+      structure Tree : TREE ) :
+sig 
+
+    include PRIORITY_QUEUE
+    sharing Item = TotalPreorder
+
+    (* queues should be constructed as trees  *)
+    (* with value of every node less or equal *)
+    (* to values of all the descendant nodes  *)
+
+end =
+struct
+
+    structure Item = TotalPreorder (* sharing satisfied *)
+
+    type queue = Item.elem Tree.tree 
+    ... (* still some work ;-) *)
+
+end;
+
+structure IntPQasHeap = PQasHeap (structure TotalPreorder = IntegerLeq 
+                                  structure Tree = Tree);
+\end{verbatim}
+
+\section*{Zadania}
+\begin{zadania} 
+
+\item
+Napisz program $PQasHeap$ wed"lug szkicu podanego powy"rej. 
+Sprawd"z, czy sygnatury s"a dobre.
+Przetestuj w przypadku liczb ca"l\-ko\-wi\-tych i zespolonych.
+
+\item
+Zmie"n \|TREE| i \|Tree| tak, by \|Tree| by"l funktorem, o argumencie \|Item|,
+a \|tree| nie by"lo polimorficznym typem danych, tylko typem zale"rnym od argumentu funktora:
+\begin{verbatim}
+datatype tree = EMPTY | NODE of tree * Item.item * tree.  
+\end{verbatim}
+
+U"ryj tego \|TREE| i \|Tree| do zrobienia innej wersji programu $PQasHeap$.
+To jest niezbyt "ladne bez funktor"ow wy"rszego rz"edu, ale wykonalne.
+
+\item
+Zmodyfikuj $PQasHeap$ tak, by drzewa, jakimi s"a kolejki, 
+by"ly zawsze utrzymywane w postaci wywa"ronej.
+Postaraj si"e w jak najwi"ekszym fragmencie programu
+abstrahowa"c od sposobu w jaki zapewniane jest wywa"renie.
+Zamanifestuj t"e abstrakcj"e odpowiednio deklaruj"ac modu"ly.
+
+\item
+Napisz funktor implementuj"acy sortowanie przy pomocy kolejek priorytetowych.
+Pomy"sl o z"lo"rono"sci czasowej sortowania przy u"ryciu $PQasHeap$.
+
+\end{zadania}
+
+\bigskip
+
+{\bf To ju"r koniec :-[}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

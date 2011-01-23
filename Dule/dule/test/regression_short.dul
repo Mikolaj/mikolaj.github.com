@@ -1,0 +1,8442 @@
+(* Copyright (C) 2003 Mikolaj Konarski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: regression_short.dul,v 1.86 2006-05-19 01:23:34 mikon Exp $
+ *) 
+
+(* Regression tests. Please ignore. *)
+
+spec Sh_E = sig end
+spec Sh_S1 = ~S1:(~S1:Sh_E -> Sh_E) -> Sh_E
+spec Sh_S2 = ~S1:(~S1:sig end -> Sh_E) -> sig end
+spec Sh_E2 = sig type t end
+spec Sh_S6 = ~S1:(~S1:sig type t end -> Sh_E2) -> sig end
+(* check this after parser is repaired
+spec Sh_D1 = 
+{M = :: sig type t value v : t end 
+struct type t = [`G] value v = `G end}
+| sig value v : M.t end
+spec Sh_D2 = 
+~N: sig type t end -> 
+({M = :: sig type t value v : N.t end 
+struct type t = [`G] value v = `G end}
+| sig value v : N.t end)
+*)
+
+Sh_M1 = :: {} struct end
+Sh_M2 = :: sig end {}
+
+Sh_sbb = : {{P :
+sig 
+  type bool
+  type int
+  value v : bool
+end}}
+Sh_sbb1 = : {{P1 :
+sig 
+  type bool type int value v : int
+end}}
+
+Sh_e_s1 = : {{P2 : (~R :(~T: ~W : sig end -> {} -> {}) -> ~E : sig end -> {})}}
+Sh_e_d2 =  
+link spec E = sig end 
+spec R = (~R :(~E -> {}) -> ~E -> {}) 
+end
+Sh_e_s1' = : {{P3 : ~R :(~T: ~E : sig end -> {} -> {}) -> ~E : sig end -> {}}}
+Sh_e_d2' =  
+link spec E = sig end 
+spec R = (~R :(~E -> {}) -> ~E : sig end -> {})
+end
+Sh_e_d3 =  
+link spec E = sig end 
+spec R = (~R :(~E : sig end -> {}) -> ~E -> {})
+end
+Sh_e_d4 =  link
+  spec TV= sig end
+  spec Up= {TV: sig end; Down: {}}
+end
+Sh_e_d5 =  link
+  spec TV= sig type t value v : t end
+  spec Both = ~TV ->
+    {T1: TV; T3 : ~T2: TV -> TV}
+  spec Up= {Both; Down: {Both}}
+end
+Sh_e_d51 = 
+: {{M2: sig end}} .
+{M1 = :: ~M2: sig end -> sig end struct end;
+ M2 = {}}
+Sh_e_d52 = 
+: {{M1': sig end}} .
+{M1 = :: ~M1': sig end -> sig end struct end;
+ M2 = {}}
+
+Sh_e_d56 =  
+link spec rec E = sig type t end 
+end
+Sh_e_d57 =  
+link spec rec E = sig type t value d : E.t end 
+end
+Sh_e_d6 =  
+link spec rec E = ~E1:sig type r end -> sig type t value d : E.t end 
+end
+Sh_e_d7 =  
+link spec rec E = ~E1:sig type r end -> sig type t value d : E.t end 
+spec R = ~E -> sig end end
+Sh_e_d8 =  
+link spec rec E = ~E1:sig type r end -> sig type t value d : E.t end 
+and R = ~E2:sig end -> sig value d : E.t end 
+spec W = E end
+Sh_e_d9 =  
+link spec rec E = ~E1:sig type t1 end -> sig type t value d : R2.t2 end 
+and R2 = ~E2:sig end -> sig type t2 value d2 : E.t end 
+spec W = E end
+
+Sh_s1 = :{{P5 : sig type t1 type t2 type t3 
+                value v1 : {a: t1; b: t3} value v2 : t2 end}}
+Sh_s7 = : {{P6 : {Zub : ~S1: sig type t1 end -> sig value v7 : S1.t1 end}}}
+Sh_s71 = : {{P7 : {Zub1 : ~S11: sig type t1 type t2 type t3 
+                value v1 : {a: t1; b: t3} value v2 : t2 end -> 
+	     sig type t7 value v7 : {d: S11.t1} value e : t7 end}}}
+Sh_s8 = : {{P8 : {S1: sig type t1 type t2 type t3
+                value v1 : {a: t1; b: t3} value v2 : t2 end; S2: {}}}}
+Sh_m9 =  {ExtendedBool = 
+               :: sig end
+	       struct
+               end}
+Sh_m2 =  {ExtendedBool = 
+               :: sig value mytrue : {} end
+struct
+                 value mytrue = {}
+               end}
+Sh_s3 = : {{P9 : {Bool: sig type bool end}}}
+Sh_s35 = : {{ P10 : sig type bool end}}
+Sh_s4 =  : {{P11 : {ExtendedBool : ~Bool: sig type bool end -> sig value mytrue : Bool.bool end}}}
+Sh_s5 = : {{ P12 : sig type newbool value newmytrue : newbool end}}
+Sh_m91 =  :: ~ExtendedBool : ~Bool: sig type bool end -> 
+                         sig value mytrue : {} end -> sig type newbool value newmytrue : newbool end
+struct
+              type newbool = {}
+              value newmytrue = ExtendedBool.mytrue
+            end
+Sh_m4 =  : {{ExtendedBool1 : sig end}} .
+{ NewBool = :: ~ExtendedBool1 : sig end -> 
+                          sig type newbool end
+struct
+              type newbool = {}
+            end}
+Sh_m41 =  : {{ExtendedBool1 : sig end}} .
+ : {{ExtendedBool1 : sig end}}
+            . { NewBool = :: ~ExtendedBool1 : sig end -> 
+                          sig type newbool end
+struct
+              type newbool = {}
+            end}
+Sh_m42 =  
+ : {{ExtendedBool2 : ~Bool: sig type bool end -> sig value mytrue : {} end}}
+            . { NewBool = :: ~ExtendedBool2 : ~Bool: sig type bool end -> 
+                         sig value mytrue : {} end -> sig type newbool value newmytrue : newbool end
+struct
+              type newbool = {}
+              value newmytrue = ExtendedBool2.mytrue
+            end}
+Sh_m3 =  :: sig type bool end
+struct
+              type bool = {}
+            end
+Sh_m21 =  :: ~Bool: sig type bool end -> sig value mytrue : {} end
+struct
+              value mytrue = {}
+            end
+Sh_s41 =  : {{P13 : {ExtendedBool : ~Bool: sig type bool end -> 
+             sig value mytrue : Bool.bool end}}}
+Sh_s42 = : {{ P14 : {ExtendedBool: ~Bool: sig type bool end -> sig value mytrue : Bool.bool end}}}
+
+Sh_ed11 =  link spec 
+  TV= sig type t value v : t end
+spec  ToCurry= {T3 : ~T1: TV ~T2: TV -> TV}
+spec  Curry= {BIbi : ~TC: ToCurry ->
+           {E : ~T1: TV -> TV}}
+spec  ToEval= {E: TV; T2: TV}
+spec  Eval= {T3 : ~TE: ToEval -> TV}
+spec  Exp= {Curry: Curry; Eval: Eval}
+end
+
+Sh_es11 = : {{ P15 :
+{  Syntax2Bool1 :
+    ~D: {} ->
+             sig
+               type exp2bool
+             end;
+  Checker1 : ~Syntax2Bool1:
+    ~D: {} ->
+             sig
+               type exp2bool
+             end ->
+    ~D: {} ->
+             sig
+               type exp2bool
+             end}}}
+
+Sh_revbl =  :: ~W1: sig type bool 
+                                 value ttrue : bool value not_true : bool
+                                 value almost_true : bool
+                             end -> sig type bool end
+struct
+                   type bool = W1.bool 
+                 end
+Sh_revbl2 =  :: ~W2: sig type bool 
+                                 value ttrue : {}
+                             end  -> sig type bool 
+                                 value ttrue : bool
+                             end
+struct
+                   type bool = {}
+                   value ttrue = W2.ttrue
+                 end
+Sh_revbl3 =  :: ~W3: sig
+                                 value ttrue : {} value not_true : {}
+                             end  -> sig 
+                                 value ttrue : {}
+                             end
+struct
+                   value ttrue = W3.ttrue
+                 end
+Sh_revbl4 =  :: ~W4: sig type bool 
+                                 value ttrue : bool value not_true : bool
+                                 value almost_true : bool
+                             end  -> sig type bool 
+                                 value ttrue : bool value not_true : bool
+                                 value almost_true : bool
+                             end
+struct
+                   type bool = W4.bool 
+                   value ttrue = W4.not_true value not_true = W4.ttrue
+                   value almost_true = W4.almost_true
+                 end
+Sh_revbl5 =  :: ~WeirdBool: sig type bool 
+                                 value ttrue : bool value not_true : bool
+                                 value almost_true : bool
+                             end -> 
+	                 sig
+			   value ttrue : WeirdBool.bool 
+			     value not_true : WeirdBool.bool
+			     value almost_true : WeirdBool.bool
+			 end
+struct
+                   value ttrue = WeirdBool.not_true
+		   value not_true = WeirdBool.ttrue
+                   value almost_true = WeirdBool.almost_true
+                 end
+Sh_wb2b =  :: ~WeirdBool: 
+             sig 
+               type bool 
+               value not_true : bool value ttrue : bool
+               value almost_true : bool
+             end -> sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+struct
+      value ffalse = WeirdBool.not_true
+      value ttrue = WeirdBool.ttrue
+      type bool = WeirdBool.bool 
+    end
+
+Sh_interp =  
+:: ~Syntax2Bool4 : ~Syntax4 : sig              
+              end
+    ~Bool4 : sig end ->
+                  sig
+                  end -> {TypeChecker : sig end}
+link
+spec
+  Bool4= sig
+         end
+      spec Syntax4= sig              
+              end
+spec  Syntax2Bool4 =
+    ~Syntax4
+    ~Bool4 ->
+                  sig
+                  end        
+spec Visiax = ~Syntax4 -> sig end
+ Visiax = :: ~Syntax4 -> sig end
+struct
+           end
+spec  TypeChecker =
+    ~Syntax2Bool4 ->
+              sig
+              end
+  TypeChecker = 
+    :: ~Syntax2Bool4 -> sig
+              end
+struct
+    end
+end  :> ~Syntax2Bool4 : ~Syntax4 : sig              
+              end
+    ~Bool4 : sig end ->
+                  sig
+                  end -> {TypeChecker : sig end}
+
+Sh_interp_weaker =  
+link
+spec
+  Bool7= sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+      spec Syntax= sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+spec  Syntax2Bool =
+    ~Syntax
+    ~Bool7 ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end
+  spec Interpreter = ~Syntax2Bool ->
+sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+  Interpreter = 
+(link
+spec  TypeChecker =
+    ~Syntax2Bool ->
+              sig
+                value is_correct : Syntax2Bool.exp2bool
+                value is_correct_empty : Bool7.bool
+                value make_correct_second_constant : Syntax.expression
+                value a_non_empty_expression : Syntax.expression
+                type error
+                value why_empty_not_correct : error
+              end
+  TypeChecker = 
+struct
+      value is_correct = Syntax2Bool.always_ttrue
+      value is_correct_empty = Syntax2Bool.eval_always_ttrue_at_empty
+      value make_correct_second_constant = Syntax.empty_expression
+      value a_non_empty_expression = Syntax.constants.first
+      type error = Bool7.bool
+      value why_empty_not_correct = Bool7.ffalse
+    end
+  Interpreter' =
+    (:: ~TypeChecker ->
+          sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+    struct
+      value interpret_empty = {error= Bool7.ffalse;
+			       vvalue= {values= {}}}
+    end) :> Interpreter
+end | Interpreter') end
+
+Sh_interp_weak =  
+link
+spec
+  Bool7= sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+      spec Syntax= sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+spec  Syntax2Bool =
+    ~Syntax
+    ~Bool7 ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end
+spec  Syntax2Bool' =
+    ~Syntax':Syntax
+    ~Bool7':Bool7 ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7'.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax'.expression
+                  end
+  spec Interpreter' = ~Syntax2Bool' ->
+sig 
+	    value interpret_empty : {error: Bool7'.bool;
+				     vvalue: {values: {}}}
+          end
+  Interpreter' = 
+(link
+spec  TypeChecker =
+    ~Syntax2Bool' ->
+              sig
+                value is_correct : Syntax2Bool'.exp2bool
+                value is_correct_empty : Bool7'.bool
+                value make_correct_second_constant : Syntax'.expression
+                value a_non_empty_expression : Syntax'.expression
+                type error
+                value why_empty_not_correct : error
+              end
+  TypeChecker = 
+struct
+      value is_correct = Syntax2Bool'.always_ttrue
+      value is_correct_empty = Syntax2Bool'.eval_always_ttrue_at_empty
+      value make_correct_second_constant = Syntax'.empty_expression
+      value a_non_empty_expression = Syntax'.constants.first
+      type error = Bool7'.bool
+      value why_empty_not_correct = Bool7'.ffalse
+    end
+  Interpreter2 =
+    (:: ~TypeChecker ->
+          sig 
+	    value interpret_empty : {error: Bool7'.bool;
+				     vvalue: {values: {}}}
+          end
+    struct
+      value interpret_empty = {error= Bool7'.ffalse;
+			       vvalue= {values= {}}}
+    end) :> Interpreter'
+end | Interpreter2) end
+
+Sh_interp' =  
+:: ~Syntax2Bool : ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end -> {}
+link
+spec
+  Bool7= sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+      spec Syntax= sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+spec  Syntax2Bool =
+    ~Syntax
+    ~Bool7 ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end
+  spec Interpreter = ~Syntax2Bool ->
+sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+  Interpreter = 
+(link
+spec  TypeChecker =
+    ~Syntax2Bool ->
+              sig
+                value is_correct : Syntax2Bool.exp2bool
+                value is_correct_empty : Bool7.bool
+                value make_correct_second_constant : Syntax.expression
+                value a_non_empty_expression : Syntax.expression
+                type error
+                value why_empty_not_correct : error
+              end
+spec  Values= sig type values value nil : values end
+spec  Evaluator =
+     ~Syntax
+     ~Values ->
+                sig
+                  value eval_empty : Values.values
+                  value eval_constants : {first: Values.values;
+		    			  second: Values.values;
+					  third: Values.values}
+                end
+spec Visiax = ~Syntax -> Syntax
+  Visiax = :: ~Syntax -> Syntax
+struct
+             type expression = {visible: Syntax.expression;
+	 		        hidden: Syntax.expression}
+             value empty_expression = {visible= Syntax.empty_expression;
+	 			       hidden= Syntax.constants.third}
+             value constants =
+	       {first= {visible= Syntax.constants.first;
+		 	 hidden= Syntax.constants.third};
+	        second= {visible= Syntax.constants.second;
+			  hidden= Syntax.constants.third};
+	        third= {visible= Syntax.constants.third;
+			 hidden= Syntax.constants.first}}
+           end
+  TypeChecker = 
+    :: ~Syntax2Bool -> sig
+                value is_correct : Syntax2Bool.exp2bool
+                value is_correct_empty : Bool7.bool
+                value make_correct_second_constant : Syntax.expression
+                value a_non_empty_expression : Syntax.expression
+                type error
+                value why_empty_not_correct : error
+              end
+struct
+      value is_correct = Syntax2Bool.always_ttrue
+      value is_correct_empty = Syntax2Bool.eval_always_ttrue_at_empty
+      value make_correct_second_constant = Syntax.empty_expression
+      value a_non_empty_expression = Syntax.constants.first
+      type error = Bool7.bool
+      value why_empty_not_correct = Bool7.ffalse
+    end
+  Values = :: Values
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+  Evaluator = 
+    :: Evaluator
+struct
+      value eval_empty = Values.nil
+      value eval_constants = {first= Values.nil;
+		    	      second= Values.nil;
+			      third= Values.nil}
+    end
+  Interpreter2 =
+    (:: ~TypeChecker ~Evaluator ->
+          sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+    struct
+      value interpret_empty = {error= Bool7.ffalse;
+			       vvalue= {values= {}}}
+    end)  :> Interpreter
+end | Interpreter2) end  :> ~Syntax2Bool : ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end -> {}
+
+Sh_stub =  
+link
+spec
+  Bool7= sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+      spec Syntax= sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+spec  Syntax2Bool =
+    ~Syntax
+    ~Bool7 ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end
+module I = 
+{ Bool7 =
+    :: sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end
+struct
+      type bool = {bool: {}}
+      value ttrue = {bool= {}}
+      value ffalse = {bool= {}}
+    end;
+  Syntax =
+    :: sig
+               type expression
+               value empty_expression : expression
+               value constants : {first: expression;
+	    			  second: expression;
+				  third: expression}
+             end
+struct
+      type expression = {expression: {}}
+      value empty_expression = {expression= {}}
+      value constants = {first= {expression= {}};
+	    		 second= {expression= {}};
+			 third= {expression= {}}}
+    end} .
+(:: ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end -> {{Syntax2Bool : ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end -> sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end}}
+{ 
+Bool7 = Bool7;
+  Syntax = Syntax;
+  Syntax2Bool =
+    :: ~Bool7: sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end ~Syntax: sig
+               type expression
+               value empty_expression : expression
+               value constants : {first: expression;
+	    			  second: expression;
+				  third: expression}
+             end -> sig
+                       type exp2bool
+		       value always_ttrue : exp2bool
+                       value eval_always_ttrue_at_empty : Bool7.bool
+                       value is_empty : exp2bool
+                       value a_non_empty_expression : Syntax.expression
+                     end
+struct
+      type exp2bool = {exp2bool: {}}
+      value always_ttrue = {exp2bool= {}}
+      value eval_always_ttrue_at_empty = Bool7.ttrue
+      value is_empty = {exp2bool= {}}
+      value a_non_empty_expression = Syntax.empty_expression
+    end }) .
+:: ~Syntax2Bool : ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end -> {}
+link
+  spec Interpreter = ~Syntax2Bool ->
+sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+  Interpreter = 
+(link
+spec  TypeChecker =
+    ~Syntax2Bool ->
+              sig
+                value is_correct : Syntax2Bool.exp2bool
+                value is_correct_empty : Bool7.bool
+                value make_correct_second_constant : Syntax.expression
+                value a_non_empty_expression : Syntax.expression
+                type error
+                value why_empty_not_correct : error
+              end
+spec  Values= sig type values value nil : values end
+spec  Evaluator =
+     ~Syntax
+     ~Values ->
+                sig
+                  value eval_empty : Values.values
+                  value eval_constants : {first: Values.values;
+		    			  second: Values.values;
+					  third: Values.values}
+                end
+spec Visiax = ~Syntax -> Syntax
+  Visiax = :: ~Syntax -> Syntax
+struct
+             type expression = {visible: Syntax.expression;
+	 		        hidden: Syntax.expression}
+             value empty_expression = {visible= Syntax.empty_expression;
+	 			       hidden= Syntax.constants.third}
+             value constants =
+	       {first= {visible= Syntax.constants.first;
+		 	 hidden= Syntax.constants.third};
+	        second= {visible= Syntax.constants.second;
+			  hidden= Syntax.constants.third};
+	        third= {visible= Syntax.constants.third;
+			 hidden= Syntax.constants.first}}
+           end
+  TypeChecker = 
+    :: ~Syntax2Bool -> sig
+                value is_correct : Syntax2Bool.exp2bool
+                value is_correct_empty : Bool7.bool
+                value make_correct_second_constant : Syntax.expression
+                value a_non_empty_expression : Syntax.expression
+                type error
+                value why_empty_not_correct : error
+              end
+struct
+      value is_correct = Syntax2Bool.always_ttrue
+      value is_correct_empty = Syntax2Bool.eval_always_ttrue_at_empty
+      value make_correct_second_constant = Syntax.empty_expression
+      value a_non_empty_expression = Syntax.constants.first
+      type error = Bool7.bool
+      value why_empty_not_correct = Bool7.ffalse
+    end
+  Values = :: Values
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+  Evaluator = 
+    :: Evaluator
+struct
+      value eval_empty = Values.nil
+      value eval_constants = {first= Values.nil;
+		    	      second= Values.nil;
+			      third= Values.nil}
+    end
+  Interpreter2 =
+    (:: ~TypeChecker ~Evaluator ->
+          sig 
+	    value interpret_empty : {error: Bool7.bool;
+				     vvalue: {values: {}}}
+          end
+    struct
+      value interpret_empty = {error= Bool7.ffalse;
+			       vvalue= {values= {}}}
+    end)  :> Interpreter
+end | Interpreter2) end  :> ~Syntax2Bool : ~Syntax : sig
+                type expression
+                value empty_expression : expression
+                value constants : {first: expression;
+	    			   second: expression;
+				   third: expression}
+              end
+    ~Bool7 : sig
+           type bool 
+           value ttrue : bool
+           value ffalse : bool
+         end ->
+                  sig
+                    type exp2bool
+                    value always_ttrue : exp2bool
+                    value eval_always_ttrue_at_empty : Bool7.bool
+                    value is_empty : exp2bool
+                    value a_non_empty_expression : Syntax.expression
+                  end -> {}
+end
+
+Sh_interp1 =  
+link
+spec
+    Syntax= sig
+             end
+spec Values= sig type values value nil : values end
+spec   Evaluator = 
+      ~Syntax: Syntax
+      ~Values: sig type values value nil : values end -> sig end
+spec R = {}
+R =
+:: {}
+{ Syntax =
+    :: Syntax
+struct
+    end } .
+:: ~Syntax -> {}
+link
+  Values = :: Values
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+  Evaluator = 
+    :: Evaluator
+struct
+    end
+spec Interpreter = ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+  Interpreter =
+    :: ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+    struct
+      value interpret_empty = {}
+    end
+end  :> ~Syntax -> {}
+end
+
+Sh_interp2 =  
+link
+spec 
+    Syntax= sig
+            end
+spec Values= sig type values value nil : values end
+  spec Evaluator =
+      ~Syntax: Syntax
+      ~Values -> sig end
+spec R = {}
+R =
+link 
+  Syntax =
+    :: Syntax
+struct
+    end  
+  Values = :: Values
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+  Evaluator = 
+    :: Evaluator
+struct
+    end
+spec Interpreter = ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+  Interpreter =
+    :: ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+    struct
+      value interpret_empty = {}
+    end
+end  :> {}
+end
+
+Sh_interp3 =  
+link
+spec 
+    Syntax= sig
+             end
+spec Values= sig type values value nil : values end
+  spec Evaluator =
+      ~Syntax: Syntax
+      ~Values -> sig end
+spec R = {}
+R =
+link 
+  Syntax = : {{}} .
+    { Syntax =
+        :: Syntax
+struct
+        end } . Syntax
+  Values = :: Values
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+  Evaluator = 
+    :: ~Syntax: Syntax
+      ~Values -> sig end
+struct
+    end
+spec Interpreter = ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+  Interpreter =
+    :: ~Evaluator ->
+          sig 
+	    value interpret_empty : {}
+          end
+    struct
+      value interpret_empty = {}
+    end
+end  :> {}
+end
+
+Sh_interp'' =  
+:: ~Bool8 : sig
+           type bool 
+           value ffalse : bool
+         end -> {}
+link
+spec Bool8= sig
+           type bool 
+           value ffalse : bool
+         end
+spec   Checker = 
+     ~Bool8: Bool8 -> sig
+                type error
+                value why_empty_not_correct : error
+              end
+  Checker = 
+    :: ~Bool8: Bool8 -> sig
+                type error
+                value why_empty_not_correct : error
+              end
+struct
+      type error = Bool8.bool
+      value why_empty_not_correct = Bool8.ffalse
+    end
+spec   Interpreter =
+     ~Checker : ~Bool8: Bool8 -> sig
+                type error
+                value why_empty_not_correct : error
+              end ->
+          sig 
+	    value interpret_empty : {error: Checker.error}
+          end
+  Interpreter =
+    :: ~Checker : ~Bool8: Bool8 -> sig
+                type error
+                value why_empty_not_correct : error
+              end ->
+          sig 
+	    value interpret_empty : {error: Checker.error}
+          end
+    struct
+      value interpret_empty = {error= Checker.why_empty_not_correct}
+    end
+end  :>  ~Bool8 : sig
+           type bool 
+           value ffalse : bool
+         end -> {}
+
+spec Sh_ppmangled1 =
+{
+  Bool: sig
+             type bool 
+           end;
+  Syntax2Bool :
+    ~Bool: sig
+             type bool 
+           end
+    ~Large : 
+     {Bool: sig
+           type bool 
+        end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Bool.bool
+                  end
+}
+Sh_ppmangled2 = : {{ P100 :
+{
+  Bool: sig
+           type bool 
+        end;
+  Syntax2Bool :
+~Bool: sig
+           type bool 
+        end
+    ~Large :
+     {Syntax: sig
+                type expression
+              end;
+     Bool: sig
+           type bool 
+        end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Bool.bool
+                    value a_non_empty_expression : Large.Syntax.expression
+                  end
+}}}
+Sh_ppmangled3 = : {{PP3 :
+{
+  Syntax2Bool3 :
+     ~Bool3: sig
+           type bool 
+        end
+    ~Large3 :
+     {Bool3: sig
+           type bool 
+         end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Large3.Bool3.bool
+                  end
+}}}
+Sh_ppmangled14 = :{{ PP14 :
+{
+  Bool14: sig
+           type bool 
+        end;
+  Syntax2Bool14 :
+    ~Large4 : 
+     {Bool14: sig
+           type bool 
+        end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Large4.Bool14.bool
+                  end
+}}}
+Sh_ppmangled41 = : {{P102 :
+{
+  Bool41: sig
+           type bool 
+        end;
+  Syntax2Bool41 :
+    ~Large41 : 
+     {E:{Bool41: sig
+           type bool 
+         end}} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Large41.E.Bool41.bool
+                  end
+}}}
+Sh_ppmangled33 = : {{PP33 :
+{
+  Syntax2Bool33 :
+     ~Bool33: sig
+           type bool 
+        end
+    ~Large33 :
+     {E33:{Bool33: sig
+           type bool 
+         end}} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Large33.E33.Bool33.bool
+                  end
+}}}
+Sh_ppmangled55 = : {{PP55 :
+{
+  Syntax2Bool55 :
+    ~Bool55: sig
+             type bool 
+           end
+    ~Large55 : 
+     {Bool55: sig
+           type bool 
+        end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Bool55.bool
+                  end
+}}}
+Sh_ppmangled6 = : {{PP6 :
+{
+  Syntax2Bool6 :
+    ~Large6 : 
+     {Bool6: sig
+           type bool 
+        end} ->
+                  sig
+                    value eval_always_ttrue_at_empty : Large6.Bool6.bool
+                  end
+}}}
+Sh_interp31 =  
+:: sig type values value nil : values end
+struct
+             type values = {values: {}} value nil = {values= {}} 
+           end
+
+library Sh_m92 = 
+:: ~ExtendedBool : sig value mytrue : {} end ->
+  sig type newbool value newmytrue : {} end
+struct
+              type newbool = {}
+              value newmytrue = ExtendedBool.mytrue
+            end
+
+Sh_revbl6 =  :: ~W16: sig type bool 
+                                 value almost_true : bool
+                             end -> sig type bool 
+                                 value almost_true : bool
+                             end
+struct
+                   type bool = W16.bool
+                   value almost_true = W16.almost_true
+                 end
+
+library Sh_list = : {{ P :
+{  List :
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t
+      end}}}
+
+Sh_list01 =  
+link
+  spec LDule =
+    sig
+      type cat
+      value c_bb : ~c:cat -> [`BB]
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      value c_bb = fun ~c -> {} .`BB
+    end
+end
+
+Sh_list02 =  
+link
+  spec LDule =
+    sig
+      value c_bb : [`BB]
+    end
+  LDule = 
+struct
+      value c_bb = {} . `BB
+    end
+end
+
+Sh_list03 =  
+link
+  spec LDule =
+    sig
+      value c_bb : ~c:ind cat: [`BB] -> [`BB]
+    end
+  LDule = 
+struct
+      value c_bb = fun ~c -> c . de
+    end
+end
+
+Sh_list04 =  
+link
+  spec LDule =
+    sig
+      type cat
+      value c_bb : ~c:cat -> [`BB]
+    end
+  LDule = 
+struct
+      type cat = 
+        ind cat: [`BB]
+      value c_bb = fun ~c -> c . de
+    end
+end
+
+Sh_list05 =  
+link
+  spec LDule =
+  ~T05 : sig type t value v : t end ->
+    sig
+      value c_bb : ind cat: (T05.t)
+    end
+  LDule = 
+    struct
+      value c_bb = T05.v . con
+    end
+end
+
+Sh_list07 =  
+link
+  spec LDule =
+    sig
+      value c_bb : ind cat: [`BB]
+    end
+  LDule = 
+struct
+      value c_bb = {} .`BB . con
+    end
+end
+
+Sh_list0 =  
+link
+  spec LDule =
+    sig
+      type cat
+      value c_bb : cat
+    end
+  LDule = 
+struct
+      type cat = 
+        ind cat: [`BB]
+      value c_bb = {} .`BB . con
+    end
+end
+
+Sh_list1 =  
+:: {List : ~Elem : sig type t end -> 
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end}
+link
+ spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end
+ List =
+struct
+  type t = ind t: [`Nil {}| `Cons {head:Elem.t; tail:t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head=head; tail=tail} . `Cons . con
+  value mapt = fun ~f ~l -> l
+end end
+
+Sh_list2 =  
+:: ~Elem : sig type t end ->  {List : ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end}
+link spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}| `Cons {head:Elem.t; tail:t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+    fun ~f ~l -> 
+      (fold [`Nil u -> `Nil . con
+            |`Cons ht -> 
+               {head=(f ~e:ht.head); tail=ht.tail} . `Cons . con]) 
+      ~it:l
+end end
+
+Sh_list22 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~it:t -> t 
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~it:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Cons {head:Elem.t; tail:t}]
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = fold [`Cons ht -> ht . `Cons . con] 
+end
+end
+
+Sh_list222 =  
+::
+      sig
+	type t
+	value cons : ~it:t -> t
+	value mapt : ~it:t -> t 
+      end
+struct
+  type t = ind t: [`Cons t]
+  value cons = fun ~it -> it . `Cons . con
+  value mapt = fold [`Cons ht -> ht . `Cons . con] 
+end
+
+Sh_list2222 =  
+::
+      sig
+	type t
+	value cons : {}
+	value mapt : ~it:t -> t 
+      end
+struct
+  type t = ind t: [`Cons t]
+  value cons = {}
+  value mapt = fold i -> i . con
+end
+
+Sh_list3 =  
+::  {List : ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end}
+link  spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail-> {} . `Nil . con
+  value mapt = 
+    fun ~f ~l ->
+      (fold [`Nil fun ~it:u -> {} . `Nil . con])
+      ~it:l
+end
+end
+
+Sh_list33 =  
+::
+      sig
+	value mapt : ~it:ind t: [`Nil] -> {}
+      end
+struct
+  value mapt = fold [`Nil -> {}] 
+end
+
+Sh_list4 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	value mapt : ~it:[`Nil {}] -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:[`Nil {}] -> {}
+      end
+List = 
+struct
+  value mapt = [`Nil fun ~(it:{}) -> {}] 
+end
+end
+
+Sh_list5 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	value mapt : ~it:[] -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:[] -> {}
+      end
+List = 
+struct
+  value mapt = [] 
+end
+end
+
+Sh_list6 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~it:[`Nil {}] -> t
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~it: [`Nil {}] -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = [`Nil fun ~it:u:{} -> {} . `Nil . con] 
+end
+end
+
+Sh_list7 =  
+:: {List :~Elem : sig type t end -> 
+      sig
+	type t
+	value mapt : ~it:[`Nil {}] -> t
+      end}
+link spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~it: [`Nil {}] -> t 
+      end
+List = 
+struct
+  type t = [`Nil {}]
+  value mapt = [`Nil fun ~it:u -> {} . `Nil] 
+end
+end
+Sh_list8 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t'
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t' -> t' 
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t'
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t' -> t' 
+      end
+List = 
+struct
+  type t' = ind t: [`Nil {}]
+  value mapt = 
+    fun ~(f: ~e:Elem.t -> Elem.t) ~(l:ind t: [`Nil {}]) -> l
+end
+end
+
+Sh_list9 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t
+      end}
+link spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = 
+    fun ~f ~(l:ind t: [`Nil {}]) ->
+      (fold [`Nil it -> (fun ~u -> {} . `Nil . con) ~u:it])
+      ~it:l
+end
+end
+
+Sh_list10 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~it: [`Nil {}] -> t 
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~it: [`Nil {}] -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = fun ~it -> it . con
+end
+end
+
+Sh_list11 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l:t -> t 
+      end}
+link  spec 
+  List=
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = 
+    fun ~(l:ind t: [`Nil {}]) ->
+      (fold it -> it . con)
+      ~it:l
+end
+end
+
+Sh_list12 = 
+::  {List :~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] -> {}
+      end
+List = 
+struct
+  value mapt = fold -> {}
+end
+end
+
+Sh_list13 =  
+:: ~Elem : sig type t end -> {}
+link  spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l:t -> t 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = 
+    fun ~l ->
+      (fold [`Nil fun ~it:u:{} -> {} . `Nil . con])
+      ~it:l
+end
+end  :> ~Elem : sig type t end -> {}
+
+Sh_list14 =  
+::  {List : ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l: t -> ind t: [`Nil {}] 
+      end}
+link spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l: t -> ind t: [`Nil {}] 
+      end
+List = 
+struct
+  type t = ind t: [`Nil {}]
+  value mapt = 
+    fun ~l -> l
+end
+end
+Sh_list14' =  
+::  {List : ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l: t -> ind z: [`Nil {}] 
+      end}
+link  spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value mapt : ~l: t -> ind z: [`Nil {}] 
+      end
+List = 
+struct
+  type t = ind y: [`Nil {}]
+  value mapt = 
+    fun ~l -> l
+end
+end
+
+Sh_list15 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] -> {}
+      end
+List = 
+struct
+  value mapt = fold [] 
+end
+end
+
+Sh_list152 =  
+:: ~Elem : sig type t end -> {List :
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] ~e:Elem.t -> {}
+      end}
+link 
+List = ::
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] ~e:Elem.t -> {}
+      end 
+struct
+  value mapt = fold (fun ~it ~e -> match it with []) 
+end
+end
+
+Sh_list151 =  
+:: ~Elem : sig type t end -> {List :
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] ~e:Elem.t -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [] ~e:Elem.t -> {}
+      end spec Elem = sig type t end
+List = 
+struct
+  value mapt = fold (fun ~it ~e -> match it with []) 
+end
+end
+
+Sh_list16 = 
+::  {List :~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [`Nil {}] -> {}
+      end}
+link  spec 
+  List =
+    ~Elem : sig type t end ->
+      sig
+	value mapt : ~it:ind t: [`Nil {}] -> {}
+      end
+List = 
+struct
+  value mapt = fold fun ~(it:[`Nil {}]) -> {}
+end
+end
+
+Sh_list17 =  
+:: ~Elem3 : sig type t value z : t value x : t end -> {}
+link spec 
+  Elem3 = sig type t value z : t value x : t end
+spec  List3 = 
+    ~Elem3 : sig type t value z : t value x : t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem3.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem3.t -> Elem3.t ~l:t -> t 
+	value z2 : t
+      end
+spec DoMap3 =
+  ~List : List3 -> sig value x2 : List.t end
+List = :: List3
+struct
+  type t = ind t: [`Nil {}| `Cons {head: Elem3.t; tail: t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+    fun ~f ~l -> 
+      (fold [`Nil u -> u . `Nil . con 
+            |`Cons ht -> 
+              {head= f ~e:ht.head; tail= ht.tail} . `Cons . con]) 
+      ~it:l
+  value z2 = [Elem3.z; Elem3.z]
+end
+DoMap = :: DoMap3
+struct
+    value x2 = List.mapt ~f:(fun ~e -> Elem3.x) ~l:List.z2
+  end
+end  :> ~Elem3 : sig type t value z : t value x : t end -> {}
+
+Sh_list117 =  
+link
+spec List = sig
+	value mapt : ~it:[] -> {}
+      end
+List =
+::
+      sig
+	value mapt : ~it:[] -> {}
+      end
+struct
+  value mapt = []
+end
+end
+
+Sh_list118 =  
+link
+spec List = sig
+	value mapt : ~it:[`Nil] -> {}
+      end
+List =
+::
+      sig
+	value mapt : ~it:[`Nil] -> {}
+      end
+struct
+  value mapt = [`Nil -> {}]
+end
+end
+
+Sh_list1825 =  
+:: ~Elem18 : sig end -> {}
+link spec 
+  List = 
+    ~Elem18 : sig end ->
+      sig
+	value nil : ind too: [`Nil {}| `Cons too]
+      end
+spec R = List
+R =
+link
+List2 = :: List
+struct
+  value nil = {} . `Nil . con
+end
+end . List2
+end  :> ~Elem18 : sig end -> {}
+
+Sh_list18 =  
+:: ~Elem18 : sig end -> {}
+link spec 
+  List = 
+    ~Elem18 : sig end ->
+      sig
+	value nil : ind too: [`Nil {}| `Cons too]
+      end
+R =
+link
+List2 = :: List
+struct
+  value nil = {} . `Nil . con
+end
+end . List2
+end  :> ~Elem18 : sig end -> {}
+
+Sh_list181 =  
+link spec 
+  List = 
+    ~Elem18 : sig end ->
+      sig
+      end
+R = :: List
+(link
+  List2 = :: List struct end
+end . List2)
+end
+
+Sh_list19 =  
+:: ~Elem18 : sig end -> {}
+link  spec 
+  List = 
+    ~Elem18 : sig end ->
+      sig
+	value nil : ind too: [`Nil {}| `Cons too]
+      end
+spec R = {List : sig
+	value nil : ind too: [`Nil {}| `Cons too]
+      end}
+R =
+: {{Elem18 : sig end}} .
+{
+List = :: List
+struct
+  value nil = {} . `Nil . con
+end}  :> {List : sig
+	value nil : ind too: [`Nil {}| `Cons too]
+      end}
+end  :> ~Elem18 : sig end -> {}
+
+Sh_list20 =  
+:: ~Elem3 : sig type t value z : t value x : t end -> {}
+link spec 
+Elem3 = sig type t value z : t value x : t end
+spec  List =
+    ~Elem3 ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem3.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem3.t -> Elem3.t ~l:t -> t 
+	value z2 : t
+      end
+List =
+struct
+  type t = ind t: [`Nil {}| `Cons {head: Elem3.t; tail: t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+    fun ~f ~l -> 
+      (fold [`Nil u -> u . `Nil . con 
+            |`Cons ht -> 
+              {head= f ~e:ht.head; tail= ht.tail} . `Cons . con]) 
+      ~it:l
+  value z2 = {head= Elem3.z; 
+	      tail= {head= Elem3.z; 
+		     tail= {} . `Nil . con}
+		    . `Cons . con}
+             . `Cons . con
+end
+spec DoMap = ~List -> sig value x2 : List.t end
+DoMap =
+  :: ~List -> sig value x2 : List.t end
+struct
+    value x2 = List.mapt ~f:(fun ~(e:Elem3.t) -> e) ~l:List.nil
+  end
+end  :> ~Elem3 : sig type t value z : t value x : t end -> {}
+
+Sh_list221 =  
+(
+{Elem =
+:: sig type t value z : t value x : t end
+struct
+  type t = [`True {}| `False {}]
+  value z = {} . `True
+  value x = {} . `False
+end}
+.
+:: 
+{List : ~Elem : sig type t value z : t value x : t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+	value z2 : t
+      end;
+
+DoMap : sig type t value x2 : t end}
+link spec 
+Elem = sig type t value z : t value x : t end
+spec  List = 
+    ~Elem : Elem ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+	value z2 : t
+      end
+spec  Map = sig type t value x2 : t end
+List =
+struct
+  type t = ind t__bug_: [`Nil {}| `Cons {head: Elem.t; tail: t__bug_}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+    fun ~f ~l -> 
+      (fold [`Nil u -> u . `Nil . con 
+            |`Cons ht -> 
+              {head= f ~e:ht.head; tail= ht.tail} . `Cons . con]) 
+      ~it:l
+  value z2 = {head= Elem.z; 
+	      tail= {head= Elem.z; 
+		     tail= {} . `Nil . con}
+		    . `Cons . con}
+             . `Cons . con
+end
+spec DoMap = ~List -> Map
+DoMap =
+struct
+    type t = List.t
+    value x2 = List.mapt ~f:(fun ~e -> Elem.x) ~l:List.z2
+  end
+end
+)  :> {DoMap : sig type t
+           value x2 : 
+                  ind t__bug_: [`Nil {}| 
+                            `Cons {head: [`True {}| `False {}]; 
+                                    tail: t__bug_}]
+       end}
+.
+::
+{R: sig value fst : [`True {}| `False {}] end}
+link
+spec 
+  X2 = sig type t
+           value x2 : 
+                  ind t__bug_: [`Nil {}| 
+                            `Cons {head: [`True {}| `False {}]; 
+                                    tail: t__bug_}]
+       end
+  spec FST = sig value fst : [`True {}| `False {}] end
+spec R = ~DoMap : X2 -> FST
+R =
+struct
+  value fst = (fold [`Nil u -> {} . `True
+                    |`Cons ht -> ht.head])
+              ~it:DoMap.x2
+end
+end  :> ~DoMap : sig type t
+           value x2 : 
+                  ind t__bug_: [`Nil {}| 
+                            `Cons {head: [`True {}| `False {}]; 
+                                    tail: t__bug_}]
+       end ->
+{R: sig value fst : [`True {}| `False {}] end}
+
+Sh_list24 =  
+:: ~Map : sig value x2 : 
+                  ind t: [`Nil {}| 
+                            `Cons {head: [`True {}| `False {}]; 
+                                    tail: t}]
+            end ->
+              sig value fst : [`True {}| `False {}] end
+struct
+  value fst = (fold [`Nil u -> {} . `True
+                    |`Cons ht -> ht.head])
+              ~it:Map.x2
+end
+
+Sh_bool3 =  
+::  {Bool :~T1 : sig type t end ->
+      sig
+	type t
+	value and_ : ~it:t ~c:t -> t 
+      end}
+link spec 
+  Bool =
+    ~T1 : sig type t end ->
+      sig
+	type t
+	value and_ : ~it:t ~c:t -> t 
+      end
+Bool =
+struct
+  type t = [`True {}| `False {}]
+  value and_ = [`True fun ~c ~it -> c
+               |`False fun ~c ~it -> {} . `False]
+end
+end
+
+Sh_bool44 =  
+::  {Bool :~T1 : sig type t end ->
+      sig
+	value or_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value if_ : ~it:[`True {}| `False {}] ~then_:T1.t ~else_:T1.t -> T1.t 
+      end}
+link spec 
+  Bool =
+    ~T1 : sig type t end ->
+      sig
+	value or_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value if_ : ~it:[`True {}| `False {}] ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+struct
+  value or_ = [`True fun ~c ~it -> {} . `True
+              |`False fun ~c ~it -> c]
+  value if_ = [`True fun ~then_ ~it ~else_ -> then_
+              |`False fun ~else_ ~it ~then_ -> else_]
+end
+end
+
+Sh_bool4 =  
+::  {Bool :~T1 : sig type t end ->
+      sig
+	value true_ : [`True|`False]
+	value false_ : [`True {}| `False {}]
+	value not_ : ~it:[`True {}| `False {}] -> [`True {}| `False {}] 
+	value and_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value or_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value if_ : ~it:[`True {}| `False {}] ~then_:T1.t ~else_:T1.t -> T1.t 
+      end}
+link spec 
+  Bool =
+    ~T1 : sig type t end ->
+      sig
+	value true_ : [`True|`False]
+	value false_ : [`True {}| `False {}]
+	value not_ : ~it:[`True {}| `False {}] -> [`True {}| `False {}] 
+	value and_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value or_ : ~it:[`True {}| `False {}] ~c:[`True {}| `False {}] ->
+          [`True {}| `False {}] 
+	value if_ : ~it:[`True {}| `False {}] ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+struct
+  value true_ = {} . `True
+  value false_ = {} . `False
+  value not_ = [`True -> `False
+               |`False -> `True]
+  value and_ = [`True fun ~c ~it -> c
+               |`False fun ~c ~it -> `False]
+  value or_ = [`True fun ~c ~it -> `True
+              |`False fun ~c ~it -> c]
+  value if_ = [`True fun ~then_ ~it ~else_ -> then_
+              |`False fun ~else_ ~it ~then_ -> else_]
+end
+end
+
+Sh_bool1 =  
+::  {Bool :~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~b:t -> t 
+	value and_ : ~b:t ~c:t -> t 
+	value or_ : ~b:t ~c:t -> t 
+	value if_ : ~b:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end}
+link spec 
+  Bool =
+    ~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~b:t -> t 
+	value and_ : ~b:t ~c:t -> t 
+	value or_ : ~b:t ~c:t -> t 
+	value if_ : ~b:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+struct
+  type t = [`True {}| `False {}]
+  value true_ = {} . `True
+  value false_ = {} . `False
+  value not_ = fun ~b -> match b with [`True -> {} . `False
+                                      |`False -> {} . `True]
+  value and_ = fun ~b ~c -> match b with [`True -> c
+                                         |`False -> {} . `False]
+  value or_ = fun ~b ~c -> match b with [`True -> {} . `True
+                                        |`False -> c]
+  value if_ = fun ~b ~then_ ~else_ -> match b with [`True -> then_
+                                                   |`False -> else_]
+end
+end
+
+Sh_bool2 =  
+:: ~T1 : sig type t end -> {}
+link spec 
+  Bool =
+    ~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+:: ~T1 : sig type t end -> Bool
+struct
+  type t = [`True {}| `False {}]
+  value true_ = {} . `True
+  value false_ = {} . `False
+  value not_ = [`True -> {} . `False
+               |`False -> {} . `True]
+  value and_ = [`True fun ~c ~it -> c
+               |`False fun ~c ~it -> {} . `False]
+  value if_ = [`True fun ~then_ ~else_ ~it -> then_
+              |`False fun ~then_ ~else_ ~it -> else_]
+end
+end  :> ~T1 : sig type t end -> {}
+
+Sh_bool22 =  
+::  {Bool : ~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end}
+link spec 
+  Bool = 
+    ~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+:: ~T1 : sig type t end -> Bool
+struct
+  type t = [`True {}| `False {}]
+  value true_ = {} . `True
+  value false_ = {} . `False
+  value not_ = [`True -> {} . `False
+               |`False -> {} . `True]
+  value and_ = [`True fun ~c ~it -> c
+               |`False fun ~c ~it -> {} . `False]
+  value if_ = [`True fun ~else_ ~then_ ~it -> then_
+              |`False fun ~then_ ~else_ ~it -> else_]
+end
+end
+
+Sh_bool212 =  
+::  {Bool :~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end}
+link spec 
+  Bool = 
+    ~T1 : sig type t end ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+Bool =
+struct
+  type t = [`True {}| `False {}]
+  value true_ = {} . `True
+  value false_ = {} . `False
+  value not_ = [`True -> {} . `False
+               |`False -> {} . `True]
+  value and_ = [`True fun ~c ~it -> c
+               |`False fun ~c ~it -> {} . `False]
+  value if_ = [`True fun ~then_ ~else_ ~it -> then_
+              |`False fun ~then_ ~else_ ~it -> else_]
+end
+end
+
+Sh_list25 = 
+:: ~Elem : sig type t end -> {}
+link spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      end
+List =
+struct
+  type t = ind t: [`Nil {}| `Cons {head: Elem.t; tail: t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+    fun ~f ~l -> 
+      match l with
+        fold [`Nil u -> u . `Nil . con 
+              |`Cons ht -> 
+                {head = f ~e:ht.head; tail = ht.tail} . `Cons . con] 
+end
+end  :>~Elem : sig type t end -> {}
+
+Sh_list26 =  
+::  {List :~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~it:t -> t 
+      end}
+link spec 
+  List = 
+    ~Elem : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value mapt : ~f: ~e:Elem.t -> Elem.t ~it:t -> t 
+      end
+List =
+struct
+  type t = ind t: [`Nil {}| `Cons {head: Elem.t; tail: t}]
+  value nil = {} . `Nil . con
+  value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+  value mapt = 
+        fold [`Nil fun ~f ~it -> {} . `Nil . con 
+              |`Cons fun ~f ~it:ht -> 
+                {head = f ~e:ht.head; tail = ht.tail} . `Cons . con] 
+end
+end
+
+Sh_char1 =  
+:: sig 
+        type t
+        value upper : ~it:t -> t
+      end
+struct
+    type t = [`a {}]
+    value upper = [`a -> {} . `a]
+  end
+
+Sh_prog14 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value c_bb : cat
+      value c_op : ~it:cat -> cat
+      value c_pp : ~it:ind il: [`Nil|`Cons {head: cat; tail: il}] -> cat
+      value c_src : ~it:funct -> cat
+      value f_op : ~it:funct -> funct
+      value f_id : ~it:cat -> funct
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB
+                   |`OP cat
+                   |`PP ind il: [`Nil|`Cons {head: cat; tail: il}]
+		   |`SRC 
+        ind fu: [`OP fu
+	          |`ID cat]]
+      type funct =
+        ind fu: [`OP fu
+	          |`ID 
+        ind cat: [`BB
+                   |`OP cat
+                   |`PP ind il: [`Nil|`Cons {head: cat; tail: il}]
+		   |`SRC
+        ind fu: [`OP fu
+	          |`ID cat]]]
+      value c_bb = {} . `BB . con
+      value c_op = fun ~it -> it . `OP . con
+      value c_pp = fun ~it -> it . `PP . con
+      value c_src = fun ~it -> it . `SRC . con
+      value f_op = fun ~it -> it . `OP . con
+      value f_id = fun ~it -> it . `ID . con
+    end
+end
+
+Sh_prog15 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value c_src : ~it:funct -> cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`SRC ind fu: [`ID]]
+      type funct =
+        ind fu: [`ID]
+      value c_src = fun ~it -> it . `SRC . con
+    end
+end
+
+Sh_prog17 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value c_src : ~it:funct -> cat
+      value f_id : ~it:cat -> funct
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`SRC ind fu: [`ID ind cat: [`SRC fu]]]
+      type funct =
+        ind fu: [`ID ind cat: [`SRC fu]]
+      value c_src = fun ~it -> it . `SRC . con
+      value f_id = fun ~it -> it . `ID . con
+    end
+end
+
+Sh_prog18 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value c_src : ~it:funct -> cat
+      value f_id : ~it:cat -> funct
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`SRC ind fu: [`ID cat]]
+      type funct =
+        ind fu: [`ID ind cat: [`SRC ind fu: [`ID cat]]]
+      value c_src = fun ~it -> it . `SRC . con
+      value f_id = fun ~it -> it . `ID . con
+    end
+end
+
+Sh_prog19 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value c_src : ~it:funct -> cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = ind cat: 
+        [`SRC ind fu: [`ID ind cat: [`SRC ind fu: [`ID cat]]]]
+      type funct = ind fu:
+        [`ID ind cat: [`SRC ind fu: [`ID cat]]]
+      value c_src = fun ~it -> it . `SRC . con
+    end
+end
+
+Sh_prog271 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+    end
+  library IList = 
+struct
+    end
+  spec LDule =
+    sig
+      type funct
+    end
+  LDule = 
+struct
+      type funct = {}
+    end
+  LDule_IList = 
+    link
+      Value = 
+        :: ~LDule -> Value
+struct
+          type t = LDule.funct
+        end
+      IList = load IList
+      LDule_IList2 = : {{IList}}
+    end . LDule_IList2
+end
+
+Sh_prog272 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+    end
+  Value = 
+    struct
+      type t = {}
+    end
+  IList = 
+    struct
+    end
+  spec LDule_IList = {{IList}}
+  LDule_IList = : {{IList}}
+end
+
+Sh_prog273 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+    end
+  library IList = 
+    struct
+    end
+  LDule_IList = 
+    link
+      Value = 
+        struct
+          type t = {}
+        end
+      IList = load IList
+      LDule_IList = : {{IList}}
+    end  . LDule_IList
+end
+
+Sh_prog275 =  
+link
+  spec Value = sig type t end
+  spec LDule_IList = {Value}
+  LDule_IList = 
+    link
+      Value = 
+        struct
+          type t = {}
+        end
+      LDule_IList = :: ~Value -> {Value} {Value = Value}
+    end  :> {LDule_IList} . LDule_IList
+end
+
+Sh_prog28 =  
+link
+  spec LDule =
+    sig
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: {}]
+    end
+  LDule = 
+    :: LDule
+struct
+      type funct =
+        ind funct: [`PP ind il: {}]
+      value funct = fun ~it -> it
+    end
+  spec I_LDule =
+  ~LDule ->
+    sig
+      value funct : ~it:LDule.funct -> {}
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold [`PP -> {} ]
+    end
+end
+
+Sh_prog29 =  
+    :: 
+      sig
+        type funct
+        value funct : ~it:funct -> {}
+      end
+struct
+      type funct =
+        ind f: [`PP ind il: {}]
+      value funct = fold [`PP -> {} ]
+    end
+
+Sh_prog30 =  
+    :: 
+      sig
+        type funct
+        value funct : ~it:funct -> {}
+      end
+struct
+      type funct =
+        ind f: ind il: {}
+      value funct = fold -> {}
+    end
+
+Sh_prog31 =  
+link
+  spec LDule =
+    sig
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: 
+                       [`Nil|`Cons {head: funct; tail: il}]]
+    end
+  LDule = 
+    :: LDule
+struct
+      type funct =
+        ind funct: [`PP ind il: 
+                       [`Nil|`Cons {head: funct; tail: il}]]
+      value funct = fun ~it -> it
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold [`PP -> {} .`ID . con]
+    end
+end
+
+Sh_prog310 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: 
+                       [`Nil|`Cons {head: funct; tail: il}]]
+      value c_bb : cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP ind il: 
+                       [`Nil|`Cons {head: funct; tail: il}]]
+      value funct = fun ~it -> it
+      value c_bb = {} . `BB . con
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type cat = LDule.cat
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+          fold [`PP -> LDule.c_bb .`ID . con]
+    end
+end
+
+Sh_prog311 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: funct]
+      value c_bb : cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value funct = fun ~it -> it
+      value c_bb = {} . `BB . con
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type cat = LDule.cat
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold [`PP -> LDule.c_bb .`ID . con]
+    end
+end
+
+Sh_prog341 =  
+  ::  ->
+    sig
+      type cat
+      type funct
+      value fu : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value fu = fold [`PP -> {} . `BB . con .`ID . con]
+    end
+
+Sh_prog342 =  
+  ::  ->
+    sig
+      type cat
+      type funct
+      value fu : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+struct
+      type cat = 
+        ind cat: {}
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value fu = fold [`PP -> {} . con .`ID . con]
+    end
+
+Sh_prog343 =  
+  ::  ->
+    sig
+      type cat
+      type funct
+      value fu : ~it:funct -> 
+        ind funct: cat
+    end
+struct
+      type cat = 
+        ind cat: {}
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value fu = fold [`PP -> {} . con . con]
+    end
+
+Sh_prog267 =  
+::  ->
+    sig
+      type funct
+      value f : ~it:funct -> {}
+    end
+struct
+      type funct =
+        ind funct: ind cat: [`SRC ind funct': cat]
+      value f = fold -> {}
+    end
+
+Sh_prog268 =  
+    ::  ->
+    sig
+      value f : ~it:ind funct: ind cat: [`SRC ind fu: cat] -> {}
+    end
+struct
+      value f = fold -> {}
+    end
+
+Sh_prog269 =  
+    ::  ->
+    sig
+      value f : ~it:ind funct: [`SRC ind cat: ind fu: cat] -> {}
+    end
+struct
+      value f = fold -> {}
+    end
+
+Sh_prog2711 =  
+    ::  ->
+    sig
+      value f : ~it:ind funct: ind cat: [`SRC ind fu: funct] -> {}
+    end
+struct
+      value f = fold -> {}
+    end
+
+Sh_prog2721 =  
+    ::  ->
+    sig
+      value f : ~it:ind funct: ind cat: ind fu: ind funct: ind cat:
+                  ind fu: cat -> {}
+    end
+ struct
+     value f = fold -> {}
+    end
+
+Sh_prog344 =  
+  ::  ->
+    sig
+      value f : ~it:ind fu: [`PP ind il: fu] -> 
+        ind funct: ind cat: {}
+    end
+struct
+      value f = fold [`PP -> {} . con . con]
+    end
+
+Sh_prog312 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: funct]
+      value c_bb : cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value funct = fun ~it -> it
+      value c_bb = {} . `BB . con
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type cat = LDule.cat
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold fun ~(it:[`PP ind il: ind funct: [`ID LDule.cat]]) ->
+                  LDule.c_bb .`ID . con
+    end
+end
+
+Sh_prog313 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP funct]
+      value c_bb : cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP funct]
+      value funct = fun ~it -> it
+      value c_bb = {} . `BB . con
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type cat = LDule.cat
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold fun ~it -> LDule.c_bb .`ID . con
+    end
+end
+
+Sh_prog314 =  
+::  ->
+    sig
+      type funct
+      value fu : ~it:funct -> {}
+    end
+struct
+      type funct = ind funct: funct
+      value fu = fold fun ~it -> {}
+    end
+
+Sh_prog315 =  
+::  ->
+    sig
+      value fu : ~it:ind funct: funct -> {}
+    end
+struct
+      value fu = fold fun ~it -> {}
+    end
+
+Sh_prog32 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: funct]
+      value c_bb : cat
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`BB]
+      type funct =
+        ind funct: [`PP ind il: funct]
+      value funct = fun ~it -> it
+      value c_bb = {} . `BB . con
+    end
+  spec I_LDule = ~LDule ->
+    sig
+      type cat
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type cat = LDule.cat
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold -> LDule.c_bb .`ID . con
+    end
+end
+
+Sh_prog33 =  
+    :: 
+      sig
+        type funct
+        value funct : ~it:funct -> {}
+      end
+struct
+      type funct =
+        ind f: ind il: il
+      value funct = fold -> {}
+    end
+
+Sh_prog34 =  
+    :: 
+      sig
+        type funct
+        value funct : ~it:funct -> {}
+      end
+struct
+      type funct =
+        ind f: ind il: f
+      value funct = fold -> {}
+    end
+
+Sh_prog36 =  
+link
+  spec I_LDule =
+    sig
+      value funct : ~it:ind funct: [`PP ind il: [`Nil]] -> 
+        ind funct: [`PP]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      value funct = fold [`PP fold [`Nil -> {} .`PP . con]]
+    end
+end
+
+Sh_prog37 =  
+link
+  spec I_LDule =
+    sig
+      value funct : ~it:ind funct: [`PP ind il: [`Nil]] -> {}
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      value funct = fold [`PP fold [`Nil -> {}]]
+    end
+end
+
+Sh_prog38 =  
+link
+  spec IList =
+    sig
+      type t
+      value cons : ~t:t -> t
+    end
+  IList = 
+    :: IList
+ struct
+     type t = {}
+      value cons = fun ~t -> t
+    end
+  spec LDule =
+    sig
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: 
+                       [`Cons il]]
+    end
+  LDule = 
+    :: LDule
+struct
+      type funct =
+        ind funct: [`PP ind il: 
+                       [`Cons il]]
+      value funct = fun ~it -> it
+    end
+  spec I_LDule =
+  ~IList ~LDule ->
+    sig
+      type funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP IList.t]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type funct = LDule.funct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold [`PP il -> (match il with 
+                  fold 
+                    [`Cons iht -> 
+                      IList.cons ~t:iht]) .`PP . con]
+    end
+end
+
+Sh_prog39 =  
+link
+  spec LDule =
+    sig
+      type funct
+      value cons : ~t:funct -> funct
+      value funct : ~it:funct -> 
+        ind funct: [`PP ind il: 
+                       [`Cons il]]
+    end
+  LDule = 
+    :: LDule
+struct
+      type funct =
+        ind funct: [`PP ind il: 
+                       [`Cons il]]
+      value cons = fun ~t -> t
+      value funct = fun ~it -> it
+    end
+  spec I_LDule =
+  ~LDule ->
+    sig
+      value funct : ~it:LDule.funct -> 
+        ind funct: [`PP LDule.funct]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      value funct = fun ~it ->
+        match LDule.funct ~it with
+	  fold [`PP il -> (match il with 
+                  fold 
+                    [`Cons iht -> 
+                      LDule.cons ~t:iht]) .`PP . con]
+    end
+end
+
+Sh_prog40 =  
+link
+  spec I_LDule =
+    sig
+      type funct
+      value f : ~it:funct -> 
+        ind f: [`PP funct]
+    end
+  I_LDule = 
+    :: I_LDule
+struct
+      type funct =
+        ind funct: [`PP ind il: [`Cons il]]
+      value f = fold [`PP il -> (match il with 
+                  fold 
+                    [`Cons iht -> (fun ~(t:ind funct: [`PP ind il: 
+                       [`Cons il]]) -> t) ~t:iht]) .`PP . con]
+    end
+end
+
+Sh_rec1 =  
+link
+  spec Nat =
+    sig
+      type nat
+      value zero : nat
+      value succ : ~it:nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:nat ~m:nat -> nat
+    end
+  Nat = 
+    :: Nat
+struct
+      type nat = ind t: [`Zero|`Succ t]
+      value zero = {} .`Zero . con
+      value succ = fun ~it -> it .`Succ . con
+      value is_zero = 
+        fold [`Zero -> {} .`True|`Succ -> {} .`False]
+      value plus = fun ~m ~n -> match n with 
+        fold
+          [`Zero -> m
+          |`Succ nn -> nn .`Succ . con]
+    end
+  spec Nat_rec = 
+  ~Nat ->
+    sig
+      type nat
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:nat ~m:Nat.nat -> Nat.nat
+    end
+  Nat_rec = 
+struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> match n with 
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end  
+end
+
+Sh_rec15 =  
+link
+  spec Nat =
+    sig
+      type nat
+      value nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ nat]
+      value zero : nat
+      value succ : ~it:nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:nat ~m:nat -> nat
+    end
+  Nat = 
+    :: Nat
+struct
+      type nat = ind t: [`Zero|`Succ t]
+      value nat = fun ~n -> n
+      value de_nat = fun ~n -> n . de
+      value zero = {} .`Zero . con
+      value succ = fun ~it -> it .`Succ . con
+      value is_zero = 
+        fold [`Zero -> {} .`True|`Succ -> {} .`False]
+      value plus = fun ~m ~n -> match n with 
+        fold
+          [`Zero -> m
+          |`Succ nn -> nn .`Succ . con]
+    end
+  spec Nat_rec = 
+  ~Nat ->
+    sig
+      type nat
+      value nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  Nat_rec = 
+    :: ~Nat ->
+    sig
+      type nat
+      value nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value nat = fun ~n -> match n with 
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.nat ~n . `Succ . con]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> match Nat.de_nat ~n with 
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end  
+end
+
+Sh_rec2 =  
+link
+  spec Nat =
+    sig
+      type nat
+      value zero : nat
+      value succ2 : ~it:nat -> nat
+      value succ3 : ~it:nat -> nat
+      value plusz : ~n:nat ~m:nat -> nat
+    end
+  Nat = 
+    :: Nat
+struct
+      type nat = ind t: [`Zero|`Succ t]
+      value zero = {} .`Zero . con
+      value succ2 = fold
+        [`Zero -> {} . `Zero . con
+        |`Succ nn -> nn . `Succ . con .`Succ . con]
+      value succ3 = fold
+        [`Zero -> {} . `Zero . con
+        |`Succ nn -> nn . `Succ . con . `Succ . con . `Succ . con]
+      value plusz = fun ~m ~n -> match n with 
+        fold
+          [`Zero -> m
+          |`Succ nn -> nn .`Succ . con]
+    end
+  spec Nat_rec = ~Nat -> Nat
+  Nat_rec = 
+    :: ~Nat -> Nat
+struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value zero = Nat.zero .`Succ
+      value succ2 = 
+        [`Zero -> {} . `Zero
+        |`Succ nn -> (Nat.succ2 ~it:nn) . `Succ]
+      value succ3 = 
+        [`Zero -> {} . `Zero
+        |`Succ nn -> (Nat.succ2 ~it:nn) . `Succ]
+      value plusz = fun ~m ~n -> match n with 
+        [`Zero -> m
+        |`Succ nn -> (Nat.plusz 
+                            ~n:(Nat.succ2 ~it:nn) 
+                            ~m:(Nat.succ3 ~it:nn)) . `Succ]
+    end  
+end
+
+Sh_rec3 =  
+link
+  spec LDule =
+    sig
+      type cat
+      type funct
+      value cat : ~it:cat -> funct
+      value funct : ~it:funct -> 
+        ind funct: [`ID cat]
+    end
+  LDule = 
+    :: LDule
+struct
+      type cat = 
+        ind cat: [`SRC cat]
+      type funct =
+        ind funct: [`ID ind cat: [`SRC cat]]
+      value cat = fun ~it -> it . `ID . con
+      value funct = fun ~it -> it 
+    end
+end
+
+Sh_rec450 =  
+link
+  spec rec Nat =
+    sig
+      type t
+      value v : {}
+    end
+  module ind Nat =
+    struct
+      type t = {}
+      value v = {}
+    end  
+end
+
+Sh_rec45 =  
+link
+  spec rec Nat =
+    sig
+      type nat
+      value zero : nat
+    end
+  module ind Nat =
+    struct
+      type nat = {}
+      value zero = {}
+    end  
+end
+
+Sh_rec451 =  
+link
+  spec Nat =
+    sig
+    end
+  module ind Nat =
+    struct
+    end  
+end
+
+Sh_rec46 =  
+link
+  spec rec Nat =
+    sig
+      value nat : ind nat: [`Zero|`Succ nat]
+    end
+  module ind Nat =
+    struct
+      value nat = `Zero . con
+    end  
+end
+
+Sh_rec5 =  
+link
+  spec rec Nat =
+    sig
+      type nat
+      value nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  library ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.nat ~n . `Succ . con]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match Nat.de_nat ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end  
+end
+
+(* loops OK:
+Sh_rec51 =  
+link
+  spec rec Nat =
+    sig
+      type nat
+      value plus : ~n:Nat.nat -> Nat.nat
+    end
+  library ind Nat =
+    struct
+      type nat = {}
+      value plus = fun ~n -> Nat.plus ~n
+    end  
+end
+*)
+
+Sh_rec62451 =  
+link
+  spec Index51 =
+    sig
+      type t
+    end
+  spec IList = 
+  ~Index51 ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Index51}
+  and LCat = 
+  ~Index51 ->
+    sig
+      type t
+    end
+  module ind LCatIList = load IList with {Index51}
+  and LCat = 
+    struct
+      type t = {}
+    end
+end
+
+Sh_rec6245 =  
+link
+  spec Index =
+    sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index}
+  and LCat =
+  ~Index ->
+    sig
+      type t
+      value cat : ~c:t -> ind t: [`PP LCatIList.t
+                                 |`BB]
+      value de_cat : ~c:t -> [`PP LCatIList.t
+                             |`BB]
+      value c_PP : ~lc:LCatIList.t -> t
+      value c_BB : t
+      value unPP : ~c:t -> [`OK LCatIList.t|`Error]
+    end
+  module ind LCatIList = load IList with {Value = LCat; Index}
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value cat = fun ~c -> c
+      value de_cat = fun ~c -> c . de
+      value c_PP = fun ~lc -> lc .`PP . con
+      value c_BB = `BB . con
+      value unPP = fun ~c ->
+	match c with
+	fold [`PP lc -> lc .`OK
+	      |`BB -> `Error ]
+    end
+end
+
+Sh_rec62 =  
+:: ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+link
+  spec Index =
+    sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index = :: Index Index}
+  and LCat =
+    sig
+      type t
+      value cat : ~c:t -> ind t: [`PP LCatIList.t
+                                 |`BB]
+      value de_cat : ~c:t -> [`PP LCatIList.t
+                             |`BB]
+      value c_PP : ~lc:LCatIList.t -> t
+      value c_BB : t
+      value unPP : ~c:t -> [`OK LCatIList.t|`Error]
+    end
+  module coind LCatIList = load IList with {Value = LCat; Index}
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value cat = fun ~c -> c
+      value de_cat = fun ~c -> c . de
+      value c_PP = fun ~lc -> lc .`PP . con
+      value c_BB = `BB . con
+      value unPP = fun ~c ->
+	match c with
+	fold [`PP lc -> lc .`OK
+	      |`BB -> `Error ]
+    end
+end  :> ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+
+Sh_rec6234 =  
+:: ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+link
+  spec Index =
+    sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index}
+  and LCat =
+    sig
+      type t
+      value cat : ~c:t -> ind t: [`PP LCatIList.t
+                                 |`BB]
+      value de_cat : ~c:t -> [`PP LCatIList.t
+                             |`BB]
+      value c_PP : ~lc:LCatIList.t -> t
+      value c_BB : t
+      value unPP : ~c:t -> [`OK LCatIList.t|`Error]
+    end
+  module ind LCatIList = load IList with {Value = LCat; Index}
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value cat = fun ~c -> c
+      value de_cat = fun ~c -> c . de
+      value c_PP = fun ~lc -> lc .`PP . con
+      value c_BB = `BB . con
+      value unPP = fun ~c ->
+	match c with
+	fold [`PP lc -> lc .`OK
+	      |`BB -> `Error ]
+    end
+end  :> ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+
+Sh_rec7 =  
+:: ~IList : sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+    end
+  module ind LCatIList =
+    :: ~IList -> LCatIList
+    link I = :: IList IList J = LCatIList
+    end   :> ~IList -> ~LCatIList -> {I:IList} . I
+  and LCat = 
+    struct
+    end
+end  :> ~IList : sig
+   end -> {}
+
+Sh_rec71 =  
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+    end
+  module ind LCatIList =
+    struct
+    end
+  and LCat = 
+    struct
+    end
+end  :> {}
+
+Sh_rec72 =  
+:: {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList =
+    struct
+    end
+  and LCat = 
+    struct
+      type t = {}
+    end
+end  :> {}
+
+Sh_rec73 =  
+:: ~IList : sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList =
+    struct
+    end
+  and LCat = 
+    struct
+      type t = {}
+    end
+I = IList
+end  :> ~IList : sig
+   end -> {}
+
+Sh_rec741 =  
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+    end
+  module ind LCatIList =
+    : {{LCat; IList}} . IList
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec74134 =  
+link
+  spec IList = 
+    sig
+   end
+  spec IList2 = 
+    sig
+   end  
+  spec rec LCatIList = IList2
+  and LCat =
+    sig
+    end
+  module ind LCatIList = IList
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec74135 =  
+link
+spec IList = 
+    sig
+   end
+  spec IList2 = 
+    sig
+   end  
+  spec rec LCatIList = IList2
+  module ind LCatIList = :: ~IList -> IList2 struct end
+end
+
+Sh_rec74 =  
+:: ~IList : sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList =
+    : {{LCat; IList}}  :> ~LCatIList ~IList -> {IList} . IList
+  and LCat = 
+    struct
+      type t = {}
+    end
+end  :> ~IList : sig
+   end -> {}
+
+Sh_rec75 =  
+:: ~IList : sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = ~IList -> IList
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList = : {{LCat}}  :> ~LCatIList ~IList -> {IList} . IList
+  and LCat = 
+    struct
+      type t = {}
+    end
+I = IList
+end  :> ~IList : sig
+   end -> {}
+
+Sh_rec76 =  
+:: ~IList : sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+    end
+  module ind LCatIList = LCatIList
+  and LCat = 
+    struct
+    end
+I = IList
+end  :> ~IList : sig
+   end -> {}
+
+Sh_rec77 =  
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = IList
+  and LCat = IList
+  module ind LCatIList = LCat
+  and LCat = LCat
+end
+
+Sh_rec78 =  
+link
+  spec rec LCatIList = sig end
+  and LCat = sig end
+  module ind LCatIList = LCat
+  and LCat = LCat
+end
+
+Sh_Prog4694 =
+link
+  spec T = sig end
+  T = struct end
+  spec Bool = 
+  ~T ->
+    sig
+    end
+  spec BoolBool = Bool with {T}
+  BoolBool = (:: Bool struct end) with {T}
+  spec Test = 
+  ~BoolBool -> 
+    sig
+    end
+  module Test =
+    struct
+    end
+end
+
+Sh_Prog4695 =
+link
+  spec T = sig end
+  T = struct end
+  spec Bool = 
+  ~T ->
+    sig
+    end
+  spec BoolBool = Bool with (:: {T} {T})
+  BoolBool = (:: Bool struct end) with (:: {T} {T})
+  spec Test = 
+  ~BoolBool -> 
+    sig
+    end
+  module Test =
+    struct
+    end
+  Result = Test
+end
+
+Sh_rec84 =  
+link
+  spec Index95 =
+    sig
+    end
+  spec LCat = ~Index95 -> 
+    sig
+    end
+  module Cat = {L = :: LCat struct end}
+end
+
+Sh_rec85 =  
+link
+  spec Index95 =
+    sig
+    end
+  spec rec LCat = ~Index95 -> 
+    sig
+    end
+  module ind LCat = 
+    struct
+    end
+end
+
+Sh_rec9 =  
+:: ~IList95 : ~Index95 : sig end ->
+    sig
+   end -> {}
+link
+  spec Index95 =
+    sig
+    end
+  spec IList95 = 
+  ~Index95 ->
+    sig
+   end
+  spec rec LCatIList95 = ~IList95 -> IList95
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList95 = LCatIList95
+  and LCat = 
+    struct
+      type t = {}
+    end
+end  :> ~IList95 : ~Index95 : sig end ->
+    sig
+   end -> {}
+
+Sh_rec95 =  
+:: ~IList95 : ~Index95 : sig end ->
+    sig
+   end -> {}
+link
+  spec Index95 =
+    sig
+    end
+  spec IList95 = 
+  ~Index95 ->
+    sig
+   end
+  spec rec LCatIList95 = ~IList95 -> IList95
+  and LCat =
+    sig
+    end
+  module ind LCatIList95 = LCatIList95
+  and LCat = 
+    struct
+    end
+end  :> ~IList95 : ~Index95 : sig end ->
+    sig
+   end -> {}
+
+Sh_rec10 =  
+:: ~IList :
+    sig
+   end -> {}
+link
+  spec IList = 
+    sig
+   end
+  spec rec LCatIList = ~IList -> IList
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList = LCatIList
+  and LCat = 
+    struct
+      type t = {}
+    end
+end  :> ~IList :
+    sig
+   end -> {}
+
+Sh_rec11 =  
+link
+  spec Value = sig end
+  spec IList = 
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = {IList}
+  and LCat =
+    sig
+    end
+  module ind LCatIList =
+    link
+      Value = (LCat)  :> Value
+      IList = load IList
+    end  :> ~LCatIList -> {IList}
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec111 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+      type t
+      value c_BB : t
+    end
+  module ind LCatIList =
+    link
+      Value = (:: LCat LCat)  :> Value
+      IList = load IList
+    end  :> ~LCatIList -> {IList} . IList
+  and LCat = 
+    struct
+      type t = ind t: [`BB]
+      value c_BB = `BB . con
+    end
+end
+
+Sh_rec12 =  
+link
+  spec rec LCatIList = sig end
+  and LCat =
+    sig
+      type t
+      value c_BB : t
+    end
+  module ind LCatIList = struct end
+  and LCat = 
+    struct
+      type t = ind t: [`BB]
+      value c_BB = `BB . con
+    end
+end
+
+Sh_rec13 =  
+link
+  spec rec LCat =
+    sig
+      type t
+      value c_BB : t
+    end
+  module ind LCat = 
+    struct
+      type t = ind t: [`BB]
+      value c_BB = `BB . con
+    end
+end
+
+Sh_rec14345 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+      type t
+      value c_BB : t
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value c_BB = `BB . con
+    end
+end
+
+Sh_rec14 =  
+:: ~Index95 : sig end -> {}
+link
+  spec Index95 =
+    sig
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index95 ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index95 = Index95}
+  and LCat =
+    sig
+      type t
+      value c_BB : t
+    end
+  module ind LCatIList = load IList with {{Value = LCat}}
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value c_BB = `BB . con
+    end
+end :> ~Index95 : sig end -> {}
+
+Sh_rec141 =  
+:: ~Index95 : sig end -> {}
+link
+  spec Index95 =
+    sig
+    end
+  spec Value = sig end
+  spec IList = 
+  ~Index95 ~Value ->
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index95 = :: Index95 Index95}
+  and LCat =
+    sig
+    end
+  module ind LCatIList = load IList with {Value = LCat; Index95}
+  and LCat = 
+    struct
+    end
+end  :> ~Index95 : sig end -> {}
+
+Sh_rec1411 =  
+link
+  spec Index =
+    sig
+    end
+  Index = struct end 
+  spec Value = sig end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat; Index}
+  and LCat = Index
+  module ind LCatIList = load IList with ({Value = LCat; Index; LCatIList} :> {Value : Index; Index})
+  and LCat = LCat
+end
+
+Sh_rec1412 =  
+link
+  spec Index95 =
+    sig
+    end
+  spec Value = sig end
+  spec IList = 
+  ~Value ->
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat = Index95
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = struct end
+end
+
+Sh_rec1415 =  
+link
+  spec IList = 
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with LCat
+  and LCat = {}
+end
+
+Sh_rec1417 =  
+link
+  spec IList = 
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {LCat}
+  and LCat = sig end
+  module ind LCatIList = load IList with {LCat}
+  and LCat = struct end
+end
+
+Sh_rec1418 =  
+link
+  spec Index =
+    sig
+    end
+  spec IList = 
+    sig
+    end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {LCat}
+  and LCat = Index
+  module coind LCatIList = load IList with {LCat}
+  and LCat = struct end
+end
+
+Sh_rec142 =  
+:: ~Index95 : sig end -> {}
+link
+  spec Index95 =
+    sig
+    end
+  spec Value = sig end
+  spec IList = 
+  ~Index95 ~Value ->
+    sig
+   end
+  Value =
+	struct
+	end
+  spec IList1 = 
+    sig
+   end
+  IList1 =
+	struct
+	end
+  library IList =
+	struct
+	end
+  spec LCatIList = 
+    IList with :: ~IList1 -> {Index95; Value; IList1} {Value = IList1; Index95; IList1}
+  module LCatIList = 
+    load IList with :: ~IList1 -> 
+      {Index95; Value; IList1} {Value = IList1; Index95; IList1}
+end  :> ~Index95 : sig end -> {}
+
+Sh_rec151 =  
+link
+  spec Value = sig end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+      value c_BB : {}
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      value c_BB = {}
+    end
+end
+
+Sh_rec16 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec R = 
+    sig
+      type t
+      value c_BB : {}
+    end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat = R
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = {}
+      value c_BB = {}
+    end
+end
+
+Sh_rec161 =  
+link
+  spec Value = sig end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat = Value
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec164 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec R = 
+    sig
+      type t
+      value c_PP : {}
+    end 
+ spec rec LCatIList = IList with {Value = LCat}
+  and LCat = R
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = {}
+      value c_PP = {}
+    end
+end
+
+Sh_rec165 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+      type t
+      value c_PP : {}
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = {}
+      value c_PP = {}
+    end
+end
+
+Sh_rec17 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+      type t
+      value c_PP : ~lc:LCatIList.t -> {}
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = {}
+      value c_PP = fun ~lc -> {}
+    end
+end
+
+Sh_rec18 =  
+link
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+      type t value r : t
+   end
+  library IList =
+	struct
+	  type t = {r:{}} value r = {r={}}
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+      type t
+      value c_PP : LCatIList.t
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+      type t = {}
+      value c_PP = LCatIList.r
+    end
+end
+
+Sh_rec181 =  
+link
+  spec Value = sig end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec19 =  
+link
+  spec IList = 
+    sig
+      type t value r : t
+   end
+  library IList =
+	struct
+	  type t = {r:{}} value r = {r={}}
+	end
+  spec rec LCatIList = IList
+  and LCat =
+    sig
+      value c_PP : LCatIList.t
+    end
+  module ind LCatIList = struct
+	  type t = {r:{}} value r = {r={}}
+	end
+  and LCat = 
+    struct
+      value c_PP = LCatIList.r
+    end
+end
+
+Sh_rec20 =  
+:: ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+link
+  spec Index =
+    sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end
+  spec rec LCatIList = ~Index ->
+    sig
+      type t
+   end
+  and LCat =
+    sig
+      type t
+      value cat : ~c:t -> ind t: [`PP LCatIList.t
+                                 |`BB]
+      value de_cat : ~c:t -> [`PP LCatIList.t
+                             |`BB]
+      value c_PP : ~lc:LCatIList.t -> t
+      value c_BB : t
+      value unPP : ~c:t -> [`OK LCatIList.t|`Error]
+    end
+  module ind LCatIList = struct
+	  type t = {}
+	end
+  and LCat = 
+    struct
+      type t = ind t: [`PP LCatIList.t
+                      |`BB]
+      value cat = fun ~c -> c
+      value de_cat = fun ~c -> c . de
+      value c_PP = fun ~lc -> lc .`PP . con
+      value c_BB = `BB . con
+      value unPP = fun ~c ->
+	match c with
+	fold [`PP lc -> lc .`OK
+	      |`BB -> `Error ]
+    end
+end  :> ~Index : sig
+      type t
+      value eq : ~i:t ~j:t -> [`True|`False]
+      value up : t
+      value it : t
+      value atj : t
+      value prim : ~i:t -> t
+    end -> {}
+
+Sh_rec21 =  
+link
+  spec rec LCatIList =
+    sig
+   end
+  and LCat =
+    sig
+      value c_BB : {}
+    end
+  module ind LCatIList = struct
+	end
+  and LCat = 
+    struct
+      value c_BB = {}
+    end
+end
+
+Sh_rec22 =  
+link
+  spec rec LCatIList =
+    sig
+      type t
+   end
+  and LCat =
+    sig
+    end
+  module ind LCatIList = struct
+	  type t = {}
+	end
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec23 =  
+:: ~Index7 : sig type t end -> {}
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {} end
+  spec rec LCatIList = IList with {Value = LCat; Index7}
+  and LCat =
+    sig
+      type t
+    end
+  module ind LCatIList = load IList with {Value = LCat; Index7}
+  and LCat = 
+    struct
+      type t = {}
+    end
+end  :> ~Index7 : sig type t end -> {}
+
+Sh_rec233 =  
+link
+  spec Value = sig end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct end
+  spec rec LCatIList = IList with {Value = LCat}
+  and LCat =
+    sig
+    end
+  module ind LCatIList = load IList with {Value = LCat}
+  and LCat = 
+    struct
+    end
+end
+
+Sh_rec241 =  
+link
+  spec Index =
+    sig
+      type t
+      value up : t
+    end
+           Index = struct type t = {} value up = {} end     
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t value nil : t
+   end
+  library IList =
+    link
+      spec IElem = 
+      ~Index ~Value -> 
+        sig
+	  type t
+	  value i : ~e:t -> Index.t
+          value v : ~e:t -> Value.t
+          value assoc : ~i:Index.t ~v:Value.t -> t
+        end
+      IElem = 
+	struct
+	  type t = {i: Index.t; v: Value.t}
+          value i = fun ~e -> e.i
+          value v = fun ~e -> e.v
+          value assoc = fun ~i ~v -> {i; v}
+	end
+      IList2 = :: IList
+	struct
+	  type t = {}
+  	  value nil = {}
+	end
+    end | IList2
+end
+
+Sh_rec24 =  
+link
+  spec Index =
+    sig
+      type t
+      value up : t
+    end
+           Index = struct type t = {} value up = {} end     
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t value nil : t
+   end
+  library IList =
+    link
+      spec IElem = 
+      ~Index ~Value -> 
+        sig
+	  type t
+	  value i : ~e:t -> Index.t
+          value v : ~e:t -> Value.t
+          value assoc : ~i:Index.t ~v:Value.t -> t
+        end
+      IElem = 
+	struct
+	  type t = {i: Index.t; v: Value.t}
+          value i = fun ~e -> e.i
+          value v = fun ~e -> e.v
+          value assoc = fun ~i ~v -> {i; v}
+	end
+      IList2 = :: IList
+	struct
+	  type t = {}
+  	  value nil = {}
+	end
+    end | IList2
+  spec rec LCatIList = IList with {Value = LCat; Index}
+  and LCat =
+    sig
+      type t value r : t
+    end
+  module ind LCatIList = load IList with {Value = LCat; Index}
+  and LCat = 
+    struct
+      type t = {} value r = {}
+    end
+end
+
+Sh_rec261 =  
+link
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LFunctIList = IList with {{Value = LFunct; Index}}
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+    end
+  module ind LFunctIList = load IList with {{Value = LFunct}}
+  and LFunct = 
+    struct
+      type t = {}
+    end
+end
+
+Sh_rec26 =  
+link
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LFunctIList = IList with {Value = LFunct; Index}
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+      value funct : ~f:t -> 
+        ind t: (Index.t)
+    end
+  module coind LFunctIList = load IList with {{Value = LFunct}}
+  and LFunct = 
+    struct
+      type t = 
+        ind t: (Index.t)
+      value funct = fun ~f -> f
+    end
+end
+
+Sh_rec2677 =  
+link
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec LFunctIList = IList with {{Value = LFunct}}
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+      value funct : ~f:t -> 
+        ind t: (Index.t)
+    end
+  module ind LFunctIList = load IList with {{Value = LFunct}}
+  and LFunct = 
+    struct
+      type t = 
+        ind t: (Index.t)
+      value funct = fun ~f -> f
+    end
+end
+
+Sh_rec266 =  
+link
+  spec Index =
+    sig
+    end
+  Index =
+    struct
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LFunctIList = ~Index -> IList with {Value = LFunct}
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+    end
+  module ind LFunctIList = load IList with {Value = LFunct}
+  and LFunct = 
+    struct
+      type t = {}
+    end
+end
+
+Sh_rec26677 =  
+link
+  spec Index =
+    sig
+    end
+  Index =
+    struct
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Value ->
+    sig
+   end
+  library IList =
+	struct
+	end
+  spec rec LFunctIList = IList with {Value = LFunct}
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+    end
+  module ind LFunctIList = load IList with {Value = LFunct}
+  and LFunct = 
+    struct
+      type t = {}
+    end
+end
+
+Sh_rec27 =  
+link
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec rec LFunctIList = sig end
+  and LFunct =
+  ~Index ->
+    sig
+      type t
+      value funct : ~f:t -> 
+        ind t: (Index.t)
+    end
+  module ind LFunctIList = struct end
+  and LFunct = 
+    struct
+      type t = 
+        ind t: (Index.t)
+      value funct = fun ~f -> f
+    end
+end
+
+Sh_rec28 =  
+link
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec rec LFunct =
+  ~Index ->
+    sig
+      value funct : ~f:ind t: (Index.t) -> {}
+    end
+  module ind LFunct = 
+    struct
+      value funct = fun ~f -> {}
+    end
+end
+
+Sh_prog2 =  
+link spec 
+T1 = sig type t end
+spec 
+  Value = sig type t end
+spec 
+  Elem = sig type t end
+spec 
+  Result = sig type t end
+spec  Bool = 
+    ~T1 ->
+      sig
+	type t
+	value true_ : t
+	value false_ : t
+	value not_ : ~it:t -> t 
+	value and_ : ~it:t ~c:t -> t 
+	value or_ : ~it:t ~c:t -> t 
+	value if_ : ~it:t ~then_:T1.t ~else_:T1.t -> T1.t 
+      end
+spec  List = 
+    ~Elem : sig type t end
+    ~Result : sig type t end ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value foldr : ~init:Result.t 
+                      ~f: ~e:Elem.t ~r:Result.t -> Result.t 
+                      ~l:t -> Result.t
+      end
+T1 = :: T1 struct type t = {} end
+Elem = :: T1 struct type t = {} end
+Result = :: T1 struct type t = {} end
+Bool =
+  :: Bool
+struct
+    type t = [`True {}| `False {}]
+    value true_ = {} . `True
+    value false_ = {} . `False
+    value not_ = [`True -> {} . `False
+                 |`False -> {} . `True]
+    value and_ = [`True fun ~c ~it -> c
+                 |`False fun ~c ~it -> {} . `False]
+    value or_ = [`True fun ~c ~it -> {} . `True
+                |`False fun ~c ~it -> c]
+  value if_ = [`True fun ~then_ ~it ~else_ -> then_
+              |`False fun ~else_ ~then_ ~it -> else_]
+  end
+List =
+  :: List
+struct
+    type t = ind t: [`Nil {}| `Cons {head: Elem.t; tail: t}]
+    value nil = {} . `Nil . con
+    value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+    value foldr = 
+      fun ~init ~f ~l -> 
+        match l with
+          fold [`Nil -> init
+                |`Cons ht -> f ~e:ht.head ~r:ht.tail]
+  end
+spec Dule =
+  ~Bool ~List -> sig end
+Dule =
+  :: ~Bool ~List -> sig end struct end
+end
+
+Sh_prog3 =  
+link spec 
+  T = sig type t end
+spec 
+  Result = sig type t end
+spec 
+  Elem = sig type t end
+spec  Char = 
+      sig 
+        type t
+        value chr : ~it:[`a {}|`b {}|`c {}
+                         |`A {}|`B {}|`C {}] -> t
+        value ord : ~it:t -> [`a {}|`b {}|`c {}
+                              |`A {}|`B {}|`C {}]
+        value upper : ~it:t -> t
+        value lower : ~it:t -> t
+      end
+spec  List =
+    ~Elem : T
+    ~Result : T ->
+      sig
+	type t
+	value nil : t
+	value cons : ~head:Elem.t ~tail:t -> t
+	value foldr : ~init:Result.t 
+                      ~f: ~e:Elem.t ~r:Result.t -> Result.t 
+                      ~l:t -> Result.t
+      end
+spec  String =
+    ~Char : Char
+    ~List ->
+      sig
+        value up : List.t
+	value it : List.t
+        value prefix : ~p:Char.t ~s:List.t -> List.t
+	value shout : ~it:List.t -> List.t
+      end
+Result = :: T struct type t = {} end
+Char =
+  :: Char
+struct
+    type t = [`a {}|`b {}|`c {}
+             |`A {}|`B {}|`C {}]
+    value chr = fun ~it -> it
+    value ord = fun ~it -> it
+    value upper = [`a -> {} . `A|`b -> {} . `B|`c -> {} . `C
+                  |`A -> {} . `A|`B -> {} . `B|`C -> {} . `C]
+    value lower = [`a -> {} . `a|`b -> {} . `b|`c -> {} . `c
+                  |`A -> {} . `a|`B -> {} . `b|`C -> {} . `c]
+  end
+Elem =
+  :: ~Char : Char -> T
+struct
+    type t = Char.t
+  end
+List =
+  :: List
+struct
+    type t = ind t: [`Nil {}| `Cons {head: Elem.t; tail: t}]
+    value nil = {} . `Nil . con
+    value cons = fun ~head ~tail -> {head; tail} . `Cons . con
+    value foldr = 
+      fun ~init ~f ~l -> 
+        match l with
+          fold [`Nil -> init
+                |`Cons ht -> f ~e:ht.head ~r:ht.tail]
+  end
+spec Dule =
+  ~Char : Char ~List -> sig end
+Dule =
+  :: ~Char : Char ~List -> sig end struct end
+end
+
+Sh_prog4 =  
+link spec 
+  List =
+    ->
+      sig
+	type t
+	value list : ~it:t ->
+          ind t': [`Nil {}]
+      end
+spec  EndoList =
+    ~List ->
+      sig
+        value foldr : ~init:List.t 
+                      ~l:List.t -> List.t
+      end
+List =
+  :: List
+struct
+    type t = ind t: [`Nil {}]
+    value list = fun ~it -> it
+  end
+EndoList =
+  :: EndoList
+struct
+    value foldr = 
+      fun ~(init:List.t) ~l -> 
+        match match l with List.list with
+          fold [`Nil -> init]
+  end
+end
+
+Sh_prog5 =  
+link spec 
+  EndoList = 
+     ->
+      sig
+      end
+spec 
+  Elem = sig type t end
+spec  CharList =
+     ->
+      {EndoList}
+spec  String =
+    ~CharList ->
+      sig
+      end
+  EndoList =
+    :: EndoList
+struct
+  end
+  CharList = : {{EndoList}}
+  String = 
+    :: String
+struct
+    end
+spec 
+  Dule = ~EndoList ~String -> sig end
+  Dule =
+    :: ~EndoList ~String -> sig end struct end
+end
+
+Sh_prog6 =  
+link spec 
+  EndoList = 
+     ->
+      sig
+      end
+  EndoList =
+    :: sig end
+struct
+    end
+  spec CharList = {EndoList : sig end}
+  CharList = :: {EndoList : sig end}
+    {EndoList = :: sig end struct end}
+spec  String =
+    ~CharList : {EndoList : sig end} ->
+      sig
+      end
+  String = 
+    :: ~CharList : {EndoList : sig end} -> sig end
+struct
+    end
+  spec Dule =
+     ~EndoList : sig end ~String :
+    ~CharList : {EndoList : sig end} ->
+      sig
+      end -> sig end
+  Dule =
+    :: ~EndoList : sig end ~String :
+    ~CharList : {EndoList : sig end} ->
+      sig
+      end -> sig end struct end
+end
+
+Sh_prog7 =  
+link spec 
+  EndoList = 
+     ->
+      sig
+      end
+spec  String =
+    ~CharList : {EndoList : sig end} ->
+      sig
+      end
+  EndoList =
+    :: sig end
+struct
+    end
+  spec CharList = {EndoList : sig end}
+  CharList = : {{EndoList}}
+  String = 
+    :: String
+struct
+    end
+  spec Dule =
+    ~EndoList : sig end ~String -> sig end
+  Dule =
+    :: ~EndoList : sig end ~String -> sig end struct end
+end
+
+Sh_prog4461 =  
+link
+  spec T = sig type t end
+  spec Bool = 
+  ~T ->
+    sig
+      type t
+    end
+  library Bool =
+    struct      
+      type t = {}
+    end
+  spec TrivBool2 = Bool with {T = :: T struct type t = {} end}
+  module TrivBool2 = load Bool with {T = :: T struct type t = {} end}
+  spec BoolBool2 = Bool with {T = :: TrivBool2 TrivBool2}
+  module BoolBool2 = load Bool with {T = TrivBool2}
+end
+
+Sh_prog446 =  
+link
+  spec T = sig type t end
+  spec Bool = 
+  ~T ->
+    sig
+      type t
+    end
+  library Bool =
+    struct      
+      type t = {}
+    end
+  spec TrivBool2 = Bool with {T = :: T struct type t = {} end}
+  module TrivBool2 = load Bool with {T = :: T struct type t = {} end}
+  spec BoolBool2 = Bool with {T = TrivBool2}
+  module BoolBool2 = load Bool with {T = TrivBool2}
+end
+
+Sh_prog105 =  
+link
+  spec Char =
+    sig 
+    end
+  spec Elem = sig end
+  spec List = 
+  ~Elem ->
+    sig
+    end
+  spec EndoList = 
+  ~List ->
+    sig
+    end
+  spec CharList = List with {Elem = Char}
+  spec CharEndoList = EndoList with {Elem = Char; List = CharList}
+  spec String =
+  ~CharEndoList ->
+    sig
+    end
+end . {}
+
+Sh_prog106 =  
+link
+ spec Char =
+    sig 
+    end
+  Char =
+    struct
+    end
+  spec Elem = sig end
+  spec List = 
+  ~Elem ->
+    sig
+    end
+  library List =
+    struct
+    end
+  spec EndoList = 
+  ~List ->
+    sig
+    end
+  library EndoList =
+    struct
+    end
+  spec CharList = List with {Elem = Char}
+  module CharList = load List with {Elem = Char}
+  spec CharEndoList = EndoList with {Elem = Char; List = CharList}
+  module CharEndoList = load EndoList with {Elem = Char; List = CharList}
+end
+
+Sh_prog107 =  
+link
+  spec Char =
+    sig 
+      type t
+    end
+  Char =
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+    end
+  library List =
+    struct
+      type t = {}
+    end
+  spec Index =
+    sig
+      type t
+    end
+  Index =
+    struct
+      type t = {}
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index ~Value ->
+    sig
+   end
+  library IList =
+    link
+      spec IElem = 
+      ~Index ~Value -> 
+        sig
+	  type t
+        end
+      IElem = 
+	struct
+	  type t = {}
+	end
+      spec IElemList = List with {Elem = IElem}
+      IElemList = load List with {Elem = IElem}
+      IList2 = 
+        :: ~IElemList -> IList
+	struct
+	end
+    end | IList2
+  spec LCatIList = IList with {Value = Char; Index}
+  LCatIList = load IList with {Value = Char; Index}
+end | {}
+
+Sh_prog748 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      value cons : Elem.t
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  spec NatList = List with {Elem = Nat}
+  spec NatListMap = ListMap with {Elem = Nat; List = NatList}
+  spec Test = 
+  ~NatListMap -> 
+    sig 
+    end
+end
+
+Sh_prog750231 =  
+link
+  spec Elem = sig end
+  Elem = 
+    struct
+    end
+  spec List = 
+  ~Elem ->
+    sig
+    end
+  List =
+    struct
+    end
+  NatListMap = (:: ~List -> sig end struct end) with {Elem; List = List}
+end
+
+Sh_prog75023 =  
+link
+  spec Elem = sig end
+  Elem = 
+    struct
+    end
+  spec List = 
+  ~Elem ->
+    sig
+    end
+  List =
+    struct
+    end
+  NatListMap = :: ~List -> sig end (:: sig end struct end) with {Elem; List = List}
+end
+
+Sh_prog750 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec NatList = List with :: ~Nat -> {Elem; Nat} {{Elem = Nat}}
+  NatList =
+    link
+      Elem = Nat
+      List = load List
+    end | List
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec NatListMap = ListMap with {Elem = Nat; List = NatList}
+  NatListMap = load ListMap with {Elem = Nat; List = NatList}
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : NatList.t
+    end
+end
+
+Sh_prog751 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec NatList = List with :: {{Elem : ~Nat -> Elem}} {{Elem = Nat}}
+  NatList =
+    link
+      Elem = Nat
+      List = load List
+    end | List
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec NatListMap = ListMap with {Elem = Nat; List = NatList}
+  NatListMap = load ListMap with {Elem = Nat; List = NatList}
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : NatList.t
+    end
+end
+
+Sh_prog753 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec NatList = List with :: ~Nat -> {Elem; Nat} {{Elem = Nat}}
+  NatList = load List with (:: ~Nat -> {Elem; Nat} {{Elem = Nat}})
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec NatListMap = ListMap with {Elem = Nat; List = NatList}
+  NatListMap = load ListMap with {Elem = Nat; List = NatList}
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : NatList.t
+    end
+end
+
+Sh_prog754234 =  
+link
+  spec Nat =
+    sig
+    end
+  Nat = 
+    struct
+    end
+  spec Elem = sig end
+  spec List = 
+  ~Elem ->
+    sig
+    end
+  library List =
+    struct
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec NatList = List with {Elem = Nat}
+  NatList = load List with {Elem = Nat}
+  library ArgsNatListMap = {Elem = Nat; List = NatList}
+  spec NatListMap = ListMap with load ArgsNatListMap
+  NatListMap = load ListMap with load ArgsNatListMap
+end
+
+Sh_prog754 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with load ArgsNatList
+  NatList = load List with load ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  library ArgsNatListMap = {Elem = Nat; List = NatList}
+  spec NatListMap = ListMap with load ArgsNatListMap
+  NatListMap = load ListMap with load ArgsNatListMap
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : NatList.t
+    end
+end
+
+Sh_prog755 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with :: ~Nat -> {Elem; Nat} load ArgsNatList
+  NatList = load List with load ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  library ArgsNatListMap = {Elem = Nat; List = NatList}
+  spec NatListMap = ListMap with load ArgsNatListMap
+end
+
+Sh_prog756 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with :: ~Nat -> {Elem; Nat} load ArgsNatList
+  NatList = load List with (:: ~Nat -> {Elem; Nat} load ArgsNatList)
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec ArgsNatListMap = {Elem : Nat; List : List; Nat}
+end
+
+Sh_prog7565 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with :: ~Nat -> {Elem; Nat} load ArgsNatList
+  NatList = load List with load ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec ArgsNatListMap = {Elem : Nat; List : NatList; Nat; NatList}
+  library ArgsNatListMap = {{Elem = Nat; List = NatList}}
+end
+
+Sh_prog757 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : t
+    end
+  library List =
+    struct
+      type t = {}
+      value cons = {}
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with :: ~Nat -> {Elem; Nat} ArgsNatList
+  NatList = load List with :: ~Nat -> ~ArgsNatList -> {Elem; Nat} ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  library ArgsNatListMap = {Elem = Nat; List = NatList}
+  spec NatListMap = ListMap with load ArgsNatListMap
+  NatListMap = load ListMap with load ArgsNatListMap
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : NatList.t
+    end
+  Test =
+    struct 
+      value test = NatList.cons
+    end
+  spec Tests = 
+  ~Nat ->
+    sig 
+    end
+  Tests =
+    :: ~Test -> Tests
+    struct 
+    end
+end
+
+Sh_prog760 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value nil : t
+    end
+  library List =
+    struct
+      type t = {}
+      value nil = {}
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+      value map1 : ~l:List.t -> {}
+    end
+  library ListMap =
+    struct
+      value map1 = 
+        fun ~l -> {}
+    end
+spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with load ArgsNatList
+  NatList = load List with load ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  library ArgsNatListMap = {Elem = Nat; List = NatList; Nat}
+  spec NatListMap = ListMap with load ArgsNatListMap
+  NatListMap = load ListMap with load ArgsNatListMap
+  spec Test = 
+  ~NatListMap -> 
+    sig 
+      value test : {}
+    end
+  Test =
+    struct 
+      value test = NatListMap.map1
+	~l:NatList.nil
+    end
+end
+
+Sh_prog761 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value nil : t
+    end
+  library List =
+    struct
+      type t = {}
+      value nil = {}
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+      value map1 : ~l:List.t -> {}
+    end
+  library ListMap =
+    struct
+      value map1 = 
+        fun ~l -> {}
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with load ArgsNatList
+  NatList =  load List with load ArgsNatList
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+    end
+  ToolNatList =
+    struct 
+    end
+  spec NatListMap = ListMap with {Elem = Nat; List = NatList}
+  NatListMap = load ListMap with {Elem = Nat; List = NatList}
+  spec Test = 
+  ~ToolNatList ~NatListMap -> 
+    sig 
+      value test : {}
+    end
+  Test =
+    struct 
+      value test = NatListMap.map1
+	~l:NatList.nil
+    end
+end
+
+spec Sh_li22 =
+~U : ~Elem : sig type t value z : t value x : t end -> 
+{DoMap : ~List:
+  ~Elem:sig type t value z : t value x : t end ->
+    sig
+      type t
+      value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value z2 : t
+    end -> sig value x2 : List.t end} -> {}
+
+Sh_p231 =  
+link
+  spec Char =
+    sig 
+      type t
+    end
+  Char =
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+    end
+  library List =
+    struct
+      type t = {}
+    end
+  spec CharList = List with {Elem = :: Elem Char}
+  module CharList = load List with {Elem = Char}
+end
+
+Sh_p23 =  
+link
+  spec Char =
+    sig 
+      type t
+    end
+  Char =
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+    end
+  library List =
+    struct
+      type t = {}
+    end
+  spec CharList = List with {Elem = Char}
+  module CharList = load List with {Elem = Char}
+  spec ArgChar = {Char; Elem : Char; List : CharList}
+  library ArgChar = {Char; Elem = Char; List = CharList}
+end
+
+Sh_p24 =  
+link
+  spec Char =
+    sig 
+      type t
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+    end
+  spec CharList = List with {Elem = Char}
+  spec ArgChar = {List : CharList; Char}
+  library ArgChar = {Char; List = CharList}
+end
+
+Sh_list23 =  
+(
+{ 
+  Elem =
+    :: sig end
+    struct
+    end
+} 
+| 
+:: {DoMap : ~Elem : sig end -> sig end}
+link
+  spec Elem = sig end
+  spec DoMap =
+  ~Elem -> sig end
+  module DoMap =
+    struct
+    end
+end
+)  :> {DoMap : 
+      sig end}
+
+Sh_list241 =  
+(
+{ 
+  Elem =
+    :: sig end
+    struct
+    end
+} 
+| 
+:: ~Elem : sig end -> 
+sig end
+struct
+    end
+)  :> sig end
+
+library Sh_list251 =  
+(:: 
+{DoMap : ~Elem : sig end -> sig end}
+link
+  spec Elem = sig end
+  spec DoMap =
+  ~Elem -> sig end
+  module DoMap =
+    struct
+    end
+end)
+  :> {DoMap : 
+      sig end}
+
+Sh_prog441 =  
+link
+  spec Bool = 
+    sig
+      type t
+    end
+  library Bool =
+    struct     
+      type t = {}
+    end
+  spec TrivBool1 = {Bool}
+  module TrivBool1 =
+    link
+      Bool = load Bool
+    end
+end
+
+Sh_prog43 =  
+link
+spec 
+  Value = sig type t end
+spec 
+  Elem = sig type t end
+  spec T = sig type t end
+  spec List = 
+  ~Elem: T ->
+    sig
+      value cons : Elem.t
+    end
+  spec LCat =
+    sig
+      type cat
+      value cons : cat
+    end
+  LCat = 
+    :: LCat
+struct
+      type cat = {}
+      value cons = {}
+    end
+  spec LCatElem = ~LCat -> T
+  library LCatElem = 
+    :: LCatElem
+struct
+      type t = LCat.cat
+    end
+  spec LCatList = List with {Elem = load LCatElem}
+  LCatList = 
+    :: LCatList
+struct
+      value cons = LCat.cons
+    end
+end
+
+Sh_listout22 =  
+(
+{ 
+  Elem =
+    :: sig type t value z : t value x : t end
+    struct
+      type t = [`True|`False]
+      value z = `True
+      value x = `False
+    end
+}
+|
+link
+  spec Elem = sig type t value z : t value x : t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value z2 : t
+    end
+  List =
+    struct
+      type t = ind t: [`Nil|`Cons {head : Elem.t; tail : t}]
+      value mapt = fun ~f ~l -> 
+        match l with
+        fold [`Nil -> `Nil . con 
+              |`Cons ht -> 
+		{head = f ~e:ht.head; tail = ht.tail} .`Cons . con] 
+      value z2 = [Elem.z; Elem.z]
+    end
+  spec DoMap =
+  ~List -> 
+    sig
+      value x2 : List.t
+    end
+  module DoMap =
+    struct
+      value x2 = List.mapt ~f:(fun ~e -> Elem.x) ~l:List.z2
+    end
+end
+) :> {DoMap : 
+      sig
+        value x2 : ind t: [`Nil| 
+                           `Cons {head : [`True|`False];
+                                  tail : t}]
+      end}
+|  
+:: ~DoMap : 
+      sig
+        value x2 : ind t: [`Nil| 
+                           `Cons {head : [`True|`False];
+                                  tail : t}]
+      end ->
+     {Fst : 
+        sig 
+          value fst : [`True| `False] 
+        end}
+link
+  spec DoMap = 
+    sig
+      value x2 : ind t: [`Nil| 
+                         `Cons {head : [`True|`False];
+                                tail : t}]
+    end
+  spec Fst = sig value fst : [`True| `False] end
+  Fst =
+    :: ~DoMap -> Fst
+    struct
+      value fst = 
+        match DoMap.x2 with
+	fold [`Nil -> `True
+              |`Cons ht -> ht.head] 
+    end
+end
+
+Sh_listout23 =  
+(
+{ 
+  Elem =
+    :: sig type t value z : t value x : t end
+    struct
+      type t = [`True|`False]
+      value z = `True
+      value x = `False
+    end
+}
+|
+link
+  spec Elem = sig type t value z : t value x : t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value z2 : t
+      value hd : ~l:t -> Elem.t
+    end
+  List =
+    struct
+      type t = ind t: [`Nil|`Cons {head : Elem.t; tail : t}]
+      value mapt = fun ~f ~l -> 
+        match l with
+        fold [`Nil -> `Nil . con 
+              |`Cons ht -> 
+		{head = f ~e:ht.head; tail = ht.tail} .`Cons . con] 
+      value z2 = {head = Elem.z; 
+		  tail = {head = Elem.z; 
+			  tail = `Nil . con}
+		           .`Cons . con}
+                   .`Cons . con
+      value hd = fun ~l -> 
+        match l with
+          fold [`Nil -> Elem.z
+                |`Cons ht -> ht.head] 
+    end
+  spec DoMap =
+  ~Elem -> 
+    sig
+      type t
+      value x2 : t
+      value hd : ~l:t -> Elem.t
+    end
+  module DoMap =
+    :: ~List -> DoMap
+    struct
+      type t = List.t
+      value x2 = List.mapt ~f:(fun ~e -> Elem.x) ~l:List.z2
+      value hd = List.hd
+    end
+end
+)
+|
+:: ~DoMap : 
+      sig
+        type t
+        value x2 : t
+        value hd : ~l:t -> [`True|`False] 
+      end ->
+     sig 
+       value fst : [`True|`False] 
+     end
+struct
+  value fst = DoMap.hd ~l:DoMap.x2
+end
+
+Sh_listout24 =  
+link
+  spec Elem = sig type t value z : t value x : t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value z2 : t
+      value hd : ~l:t -> Elem.t
+    end
+  spec DoMap = sig type t value head_of_x2 : t end
+  module Outcome =
+(
+{ 
+  Elem =
+    :: Elem
+    struct
+      type t = [`True|`False]
+      value z = `True
+      value x = `False
+    end
+}
+|
+(
+{
+  Elem = Elem;
+  List =
+    :: List
+    struct
+      type t = ind t: [`Nil|`Cons {head : Elem.t; tail : t}]
+      value mapt = fun ~f ~l -> 
+        match l with
+        fold [`Nil -> `Nil . con 
+              |`Cons ht -> 
+		{head = f ~e:ht.head; tail = ht.tail} .`Cons . con] 
+      value z2 = {head = Elem.z; 
+		  tail = {head = Elem.z; 
+			  tail = `Nil . con}
+		           .`Cons . con}
+                   .`Cons . con
+      value hd = fun ~l -> 
+        match l with
+          fold [`Nil -> Elem.z
+	       |`Cons {head; tail} -> head] 
+    end
+} 
+.
+{  
+  DoMap =
+    :: ~List -> DoMap
+    struct
+      type t = Elem.t
+      value head_of_x2 =
+        let x2 = List.mapt ~f:(fun ~e -> Elem.x) ~l:List.z2 in
+	List.hd ~l:x2
+    end
+ } 
+)) :> {DoMap : 
+      sig
+	type t
+        value head_of_x2 : [`True|`False]
+      end}
+|
+:: ~DoMap : 
+      sig
+	type t
+        value head_of_x2 : [`True|`False]
+      end ->
+     sig 
+       value fst : [`OK|`Error] 
+     end
+struct
+  value fst = 
+    match DoMap.head_of_x2 with
+    [`True  -> `Error
+    |`False  -> `OK]
+end
+end
+
+Sh_alien = 
+  :: ~Arg : sig 
+              type t
+              value v : t
+            end ->
+       sig 
+         type mine 
+         value m : {alien : Arg.t;
+                    self : mine}
+       end
+  struct
+    type mine = {mine : Arg.t}
+    value m = {alien = Arg.v;
+               self = {mine = Arg.v}}
+  end
+
+Sh_alien2 = 
+  :: ~Arg : sig 
+              type t
+              value v : t
+            end ->
+       sig 
+         value m : Arg.t
+       end
+  struct
+    value m = Arg.v
+  end
+
+library Sh_a11 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  library IList =
+	struct
+	  type t = {}
+	end
+  spec rec PCatIList = IList with {Index7; Value = PCat}
+  and PCat =
+    sig
+      type t
+    end
+  spec rec PFunctIList = IList with {Value = PFunct; Index7}
+  and PFunct =
+  ~PCat ->
+    sig
+      type t
+    end
+  spec rec PTransIList = IList with {Value = PTrans; Index7}
+  and PTrans =
+  ~PFunct ->
+    sig
+      type t
+    end
+  spec SSign =
+  ~PTrans ->
+    sig
+    end
+  SSign = 
+    struct
+    end
+end
+
+Sh_a12 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+   end
+  spec rec PCatIList = IList with {Index7; Value = PCat}
+  and PCat =
+    sig
+    end
+  spec rec PFunctIList = IList with {Value = PFunct; Index7}
+  and PFunct =
+  ~PCat ->
+    sig
+    end
+  spec rec PTransIList = IList with {Value = PTrans; Index7}
+  and PTrans =
+  ~PFunct ->
+    sig
+    end
+  spec SSign =
+  ~PTrans ->
+    sig
+    end
+  SSign = 
+    struct
+    end
+end
+
+Sh_a13 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+   end
+  spec rec PCatIList = IList with {Index7; Value = PCat}
+  and PCat =
+    sig
+    end
+  spec SSign =
+  ~PCat ->
+    sig
+    end
+  SSign = 
+    struct
+    end
+end
+
+Sh_a14 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec IList = 
+  ~Index7 ->
+    sig
+   end
+  spec rec PCatIList3 = IList with {Index7}
+  spec SSign =
+  ~PCatIList3 ->
+    sig
+    end
+  SSign = 
+    struct
+    end
+end
+
+Sh_prog1154 =  
+link
+  spec DomLDule54 =
+    sig
+      value cod : {}
+    end
+  library SDule =
+link
+  spec DomDule54 =
+    sig
+      value cod : {}
+    end
+  DomDule'' = DomDule54
+end
+  SDule_on_LDule =
+    load SDule with {DomDule54 = DomLDule54}
+end
+
+Sh_prog115 =  
+link
+  SDule_on_LDule =
+link
+  spec DomDule15 =
+    sig
+    end
+  DomDule'' = DomDule15 
+end with {DomDule15 = struct end}
+  Test3 = {SemSSign = SDule_on_LDule . DomDule''}
+end
+
+Sh_prog11572 = 
+link
+  SDule_on_LDule =
+link
+  spec DomDule =
+    sig
+    end
+  DomDule'' = :: ~DomDule -> DomDule DomDule 
+end with {DomDule = struct end}
+  Test = SDule_on_LDule . DomDule''
+  Test2 = SDule_on_LDule
+end
+
+Sh_prog1157 = 
+link
+  SDule_on_LDule =
+link
+  spec DomDule =
+    sig
+    end
+  DomDule'' = :: ~DomDule -> DomDule DomDule 
+end with {DomDule = :: sig end struct end}
+  spec DomDule'' =
+    sig
+    end
+  Test = SDule_on_LDule . DomDule''
+  Test2 = SDule_on_LDule
+end
+
+library Sh_prog1158 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec DomDule =
+  ~Index7 -> 
+    sig
+    end
+  library SDule =
+link
+  DomDule'' = DomDule 
+end
+  SDule_on_LDule =
+    load SDule with {Index7; DomDule}
+  Test3 = {SemSSign = SDule_on_LDule | DomDule''}
+end
+
+Sh_prog1159 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  library SDule =
+link
+  Index7'' = :: ~Index7 -> Index7 Index7
+end
+  SDule_on_LDule =
+    load SDule with {Index7}
+  Test3 = {SemSSign = SDule_on_LDule | Index7''}
+end
+
+Sh_prog11591 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  library SDule =
+link
+  Index7'' = Index7
+end
+  SDule_on_LDule =
+    load SDule with {Index7}
+  Test3 = {SemSSign = SDule_on_LDule . Index7''}
+end
+
+Sh_prog1160 =  
+link
+  spec Index6 =
+    sig
+      type t
+      value r : t
+    end
+  library SDule =
+link
+  Index6'' = Index6
+end
+  SDule_on_LDule =
+    load SDule with {Index6}
+  Test3 = {SemSSign = SDule_on_LDule | Index6''}
+end
+
+Sh_progtest12 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  library IList = struct type t = {} end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+      value de_cat : ~c:t ->
+	       [`PP CatIList.t
+               |`BB]
+    end
+  module coind CatIList = load IList with {{Value = Cat}}
+  and Cat = 
+    struct
+      type t = 
+	ind t: [`PP CatIList.t
+               |`BB]
+      value de_cat = fun ~c -> c . de
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+      value ind_funct : ~f:t -> 
+        ind t: [`F_ID Cat.t
+	       |`F_COMP {f1 : t; f2 : t}
+	       |`F_PR {lc : CatIList.t; i : Index7.t}
+	       |`F_RECORD {c : Cat.t; lf : FunctIList.t}
+	       |`F_pp {c : Cat.t; lf : FunctIList.t}
+	       |`F_ss {c : Cat.t; lf : FunctIList.t}
+	       |`F_ee {lf : FunctIList.t; i : Index7.t; f : t}
+	       |`F_ii t
+	       |`F_tt t]
+    end
+  module ind FunctIList = load IList with {{Value = Funct}}
+  and Funct =
+    struct
+      type t =
+        ind t: [`F_ID Cat.t
+	       |`F_COMP {f1 : t; f2 : t}
+	       |`F_PR {lc : CatIList.t; i : Index7.t}
+	       |`F_RECORD {c : Cat.t; lf : FunctIList.t}
+	       |`F_pp {c : Cat.t; lf : FunctIList.t}
+	       |`F_ss {c : Cat.t; lf : FunctIList.t}
+	       |`F_ee {lf : FunctIList.t; i : Index7.t; f : t}
+	       |`F_ii t
+	       |`F_tt t]
+      value ind_funct = fun ~f -> f
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+      value t_ID : ~c:Cat.t -> t
+    end
+  module ind TransIList = load IList with {{Value = Trans}}
+  and Trans = 
+    struct
+      type t = 
+        ind t: [`T_ID Cat.t]
+      value t_ID = fun ~c -> c .`T_ID . con
+    end
+  library SLink =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Trans ->
+    sig
+      value m_Link : ~lr:FunctIList.t ~lm:TransIList.t ~ls:FunctIList.t ->
+	[`OK Trans.t|`Error]
+    end
+  SemSLink = 
+    struct
+      value m_Link = fun ~lr ~lm ~ls ->
+	`Error
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{Trans}}
+  library SInd =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Trans ->
+    sig
+      value m_Link : ~lr:FunctIList.t ~lm:TransIList.t ~ls:FunctIList.t ->
+	[`OK Trans.t|`Error]
+    end
+  spec SemSInd =
+  ~Trans ->
+    sig
+    end
+  SemSInd =
+    :: ~SemSLink -> SemSInd
+    struct
+    end
+end
+  SemSLink = SLink_on_LDule . SemSLink
+  SInd_on_LDule = load SInd with 
+    {{SemSLink = :: ~Trans ->
+    sig
+      value m_Link : ~lr:FunctIList.t ~lm:TransIList.t ~ls:FunctIList.t ->
+	[`OK Trans.t|`Error]
+    end SemSLink}}
+end | SInd_on_LDule
+
+Sh_progtest13 =  
+link
+  spec Index7 =
+    sig
+      type t
+    end
+  spec Value = sig type t end
+M = link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  library IList = struct type t = {} end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  module ind CatIList = load IList with {{Value = Cat}}
+  and Cat = 
+    struct
+      type t = {} 
+    end
+end
+CatIList = M | CatIList
+Cat = M|Cat
+  library SLink =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Cat ->
+    sig
+      value m_Link : ~lr:CatIList.t ->
+	[`OK Cat.t|`Error]
+    end
+  SemSLink = 
+    struct
+      value m_Link = fun ~lr ->
+	`Error 
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{Cat; CatIList; Index7}}
+  library SInd =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Cat ->
+    sig
+      value m_Link : ~lr:CatIList.t ->
+	[`OK Cat.t|`Error]
+    end
+  spec SemSInd =
+  ~Cat ->
+    sig
+    end
+  SemSInd =
+    :: ~SemSLink -> SemSInd
+    struct
+    end
+end
+  SemSLink = SLink_on_LDule | SemSLink
+  SInd_on_LDule = load SInd with 
+    {{SemSLink; Cat; CatIList; Index7}}
+end
+
+Sh_progtest14 =  
+link
+   spec Cat =
+    sig
+      type t
+    end
+  module Cat = 
+    struct
+      type t = {} 
+    end
+  library SLink =
+link
+  spec Cat =
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Cat ->
+    sig
+      value m_Link : [`OK Cat.t|`Error]
+    end
+  SemSLink = 
+    struct
+      value m_Link = `Error 
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{Cat}}
+  library SInd =
+link
+  spec Cat =
+    sig
+      type t
+    end
+  spec SemSLink =
+  ~Cat ->
+    sig
+      value m_Link : [`OK Cat.t|`Error]
+    end
+  spec SemSInd =
+  ~Cat ->
+    sig
+    end
+  SemSInd =
+    :: ~SemSLink -> SemSInd
+    struct
+    end
+end
+  SemSLink = SLink_on_LDule . SemSLink
+  spec SemSLink =
+  ~Cat ->
+    sig
+      value m_Link : [`OK Cat.t|`Error]
+    end
+  SInd_on_LDule = load SInd with 
+    {{SemSLink}}
+end | SInd_on_LDule
+
+Sh_progtest15 =  
+link
+  spec Index7 =
+    sig
+      type t
+     end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  library IList = struct type t = {} end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  module coind CatIList = load IList with {{Value = Cat}}
+  and Cat = 
+    struct
+      type t = {}
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  module ind FunctIList = load IList with {{Value = Funct}}
+  and Funct =
+    struct
+      type t = {}
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  module ind TransIList = load IList with {{Value = Trans}}
+  and Trans = 
+    struct
+      type t = {}
+    end
+  spec DomDule =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> {}
+    end
+  DomDule =
+    struct
+      value dom = fun ~t -> {}
+    end
+  library SLink =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec DomDule = ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> {}
+    end
+  spec ToolSDule = 
+  ~Trans ->
+    sig
+    end
+  ToolSDule = 
+    ::  ~DomDule -> ToolSDule
+    struct
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{ 
+     DomDule}}
+  library SInd =
+link
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~Index7 ->
+    sig
+      type t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec DomDule = ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> {}
+    end
+  spec SemSInd =
+  ~Trans ->
+    sig
+    end
+  SemSInd =
+    :: ~DomDule -> SemSInd
+    struct
+    end
+end
+  ToolSDule = SLink_on_LDule | ToolSDule
+  SInd_on_LDule = load SInd with 
+    {{ToolSDule; DomDule}}
+end | SInd_on_LDule
+
+library Sh_progtest15623 =  
+link
+  spec Index7 =
+    sig
+      type t
+     end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans = ~Index7 ->
+    sig
+      type t
+    end
+  spec DomDule =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> {}
+    end
+  library SLink =
+link
+  spec ToolSDule = 
+  ~Trans ->
+    sig
+    end
+  ToolSDule = 
+    ::  ~DomDule -> ToolSDule
+    struct
+    end
+end
+end
+
+Sh_progtest156 =  
+link
+  spec Index7 =
+    sig
+      type t
+     end
+  spec Value = sig type t end
+  spec IList = 
+  ~Index7 ~Value ->
+    sig
+      type t
+   end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans = ~Index7 ->
+    sig
+      type t
+    end
+  spec DomDule =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> {}
+    end
+  library SLink =
+link
+  spec ToolSDule = 
+  ~Trans ->
+    sig
+    end
+  ToolSDule = 
+    ::  ~DomDule -> ToolSDule
+    struct
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{ 
+     DomDule}}
+  ToolSDule = SLink_on_LDule | ToolSDule
+end
+
+library Sh_progtest157 =  
+link
+  spec Index7 =
+    sig
+      type t
+     end
+  spec DomDule =
+    sig
+      value dom : {}
+    end
+  library SLink =
+link
+  spec ToolSDule = 
+  ~Index7 ->
+    sig
+    end
+  ToolSDule = 
+    :: ~DomDule -> ToolSDule
+    struct
+    end
+end
+  SLink_on_LDule = load SLink with 
+    {{ Index7;
+     DomDule}}
+  ToolSDule = SLink_on_LDule . ToolSDule
+end
+
+library Sh_progtest1571 =  
+link
+  library SLink = :: sig end struct end
+  SLink_on_LDule = (load SLink) with 
+    {Index7 = :: sig end struct end}
+end
+
+Sh_Rec116 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match Nat.de_nat ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.zero]
+    end 
+end
+
+Sh_Rec117 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match`Zero with
+        [_ -> m
+        |`Succ nn -> Nat.zero]
+    end 
+end
+Sh_Rec118 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match Nat.de_nat ~n with
+        [`Zero -> m
+        |`Succ nn -> m]
+    end 
+end
+Sh_Rec119 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> [`Zero|`Succ Nat.nat]
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value plus = fun ~m ~n -> Nat.de_nat ~n
+    end 
+end
+Sh_Rec1199 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:{} -> {}
+      value plus : -> {}
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value plus = fun -> Nat.de_nat ~n:{}
+    end
+end
+Sh_Rec120 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:{} -> {}
+      value plus : ~n:Nat.nat ~m:Nat.nat -> {}
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value de_nat = fun ~n -> n
+      value plus = fun ~m ~n -> Nat.de_nat ~n:{}
+    end
+end
+Sh_Rec121 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value de_nat : ~n:[`Zero] -> [`Zero]
+      value plus : ~n:Nat.nat -> [`Zero]
+    end
+  module coind Nat =
+    struct
+      type nat = [`Zero]
+      value de_nat = fun ~n -> n
+      value plus = fun ~n -> Nat.de_nat ~n:`Zero
+    end
+end
+Sh_Rec122 =
+link
+  spec rec Nat =
+    sig
+      value de_nat : [`Zero]
+      value plus : [`Zero]
+    end
+  module ind Nat =
+    struct
+      value de_nat = `Zero
+      value plus = Nat.de_nat
+    end
+end
+Sh_Rec215 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> [`Zero|`Succ nat]
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match `Zero with
+        [`Zero -> `Zero
+        |`Succ n -> Nat.ind_nat ~n . `Succ]
+    end 
+end
+Sh_Rec216 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> nat
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero
+        |`Succ n -> Nat.ind_nat ~n . `Succ]
+    end 
+end
+
+Sh_Rec2165 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> [`Zero|`Succ nat]
+    end
+  module coind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero
+        |`Succ n -> Nat.ind_nat ~n . `Succ]
+    end 
+end
+Sh_Rec2165098 =
+link
+  spec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> [`Zero|`Succ nat]
+    end
+  module ind Nat = :: ~Nat -> Nat
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero
+        |`Succ n -> Nat.ind_nat ~n . `Succ]
+    end 
+end
+Sh_Rec2165099 =
+link
+  spec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> [`Zero|`Succ nat]
+    end
+  module Nat = :: ~Nat1:Nat -> Nat
+    struct
+      type nat = [`Zero|`Succ Nat1.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero
+        |`Succ n -> Nat1.ind_nat ~n . `Succ]
+    end 
+end
+
+(* loops OK
+Sh_Rec217 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> nat
+    end
+  module ind Nat =
+    struct
+      type nat = Nat.nat
+      value ind_nat = fun ~n -> Nat.ind_nat ~n
+    end 
+end*)
+Sh_Rec218 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module ind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.ind_nat ~n . `Succ . con]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match Nat.de_nat ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end 
+  Result = 
+    :: ~Nat ->
+    sig 
+      value zero : Nat.nat
+      value six : Nat.nat
+    end
+    struct
+      value zero = Nat.zero
+      value six = let one = Nat.succ ~it:Nat.zero in
+      let three = Nat.plus ~m:(Nat.plus ~m:one ~n:one) ~n:one in 
+      Nat.plus ~m:three ~n:three
+    end
+end
+Sh_Rec2181 =
+link
+  spec rec Nat =
+    sig
+      type nat
+      value ind_nat : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module coind Nat =
+    struct
+      type nat = [`Zero|`Succ Nat.nat]
+      value ind_nat = fun ~n -> 
+	match n with
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.ind_nat ~n . `Succ . con]
+      value de_nat = fun ~n -> n
+      value zero = `Zero
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match Nat.de_nat ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end 
+  Result = 
+    :: ~Nat ->
+    sig 
+      value zero : Nat.nat
+      value six : Nat.nat
+    end
+    struct
+      value zero = Nat.zero
+      value six = let one = Nat.succ ~it:Nat.zero in
+      let three = Nat.plus ~m:(Nat.plus ~m:one ~n:one) ~n:one in 
+      Nat.plus ~m:three ~n:three
+    end
+end
+Rec15coind =
+link
+  spec rec Nat =
+    sig
+      value six : Nat.nat
+      type nat
+      value t2ind : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value tde : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succnat : ~it:nat -> nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    end
+  module coind Nat =
+    struct
+      value six = 
+        let one = Nat.succ ~it:Nat.zero in
+        let three = Nat.plus ~m:(Nat.plus ~m:one ~n:one) ~n:one in 
+          Nat.plus ~m:three ~n:three
+      type nat = [`Zero|`Succ Nat.nat]
+      value t2ind = fun ~n -> 
+        match n with
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.t2ind ~n . `Succ . con]
+      value tde = fun ~n -> n
+      value zero = `Zero
+      value succnat = fun ~it ->
+	match it with
+        [`Zero -> Nat.zero . `Succ
+        |`Succ n -> (Nat.succ ~it:n) . `Succ]
+      value succ = fun ~it -> it . `Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+        match Nat.tde ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    end 
+  Result = Nat
+end
+
+Sh_Prog481 =
+link
+  spec Nat =
+    sig
+      type t
+      value ind_nat : ~n:t -> ind nat: [`Zero|`Succ nat]
+      value de_nat : ~n:t -> [`Zero|`Succ t]
+      value zero : t
+      value succ : ~n:t -> t
+      value one : t
+      value is_zero : ~it:t -> [`True|`False]
+      value plus : ~n:t ~m:t -> t
+      value plus_r : ~n:t ~m:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value ind_nat = fun ~n -> n
+      value de_nat = fun ~n -> n . de
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+      value one = `Zero . con .`Succ . con
+      value is_zero = 
+        fold [`Zero -> `True
+             |`Succ -> `False]
+      value plus = fun ~m ~n -> 
+	match n with
+        fold [`Zero -> m
+             |`Succ nn -> nn .`Succ . con]
+      value plus_r = 
+        let rec plus = fun ~m ~n ->
+	  match n . de with
+            [`Zero -> m
+            |`Succ pred_n -> (plus ~m ~n:pred_n) .`Succ . con]
+	in plus
+    end
+  spec ToolNat =
+  ~Nat ->
+    sig
+      value plus_rec : ~n:Nat.t ~m:Nat.t -> Nat.t
+    end
+  ToolNat =
+    struct
+      value rec plus_rec = fun ~m ~n -> 
+	  match Nat.de_nat ~n with
+            [`Zero -> m
+            |`Succ pred_n -> Nat.succ ~n:(plus_rec ~m ~n:pred_n)]
+    end
+  Result = 
+    :: ~ToolNat ->
+    sig 
+      value zero : Nat.t
+      value one : Nat.t
+      value six : Nat.t
+      value six_r : Nat.t
+      value six_rec : Nat.t
+      value six_mix : Nat.t
+    end
+    struct
+      value zero = Nat.zero
+      value one = Nat.one
+      value six = 
+      let one = Nat.succ ~n:Nat.zero in
+      let three = Nat.plus ~m:(Nat.plus ~m:one ~n:one) ~n:one in 
+      Nat.plus ~m:three ~n:three
+      value six_r = 
+      let three = 
+	Nat.plus_r ~m:(Nat.plus_r ~m:Nat.one ~n:Nat.one) 
+	           ~n:Nat.one 
+      in
+      Nat.plus_r ~m:three ~n:three
+      value six_rec = 
+      let three = 
+	ToolNat.plus_rec ~m:(ToolNat.plus_rec ~m:Nat.one ~n:Nat.one) 
+	                 ~n:Nat.one 
+      in 
+      ToolNat.plus_rec ~m:three ~n:three
+      value six_mix = 
+      let three = 
+	Nat.plus ~m:(ToolNat.plus_rec ~m:Nat.one ~n:Nat.one) 
+	         ~n:Nat.one 
+      in 
+      Nat.plus_r ~m:three ~n:three
+    end
+end
+Sh_Prog48127 =
+link
+  spec Nat =
+    sig
+      type t
+      value plus_r : ~n:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value plus_r = 
+        let rec plus = fun ~n ->
+	  match `Zero with
+            [`Zero -> `Zero . con
+            |`Succ pred_n -> (plus ~n:pred_n) .`Succ . con]
+	in plus
+    end
+end
+Sh_Prog48123 =
+link
+  spec Nat =
+    sig
+      type t
+      value plus_r : ~n:t ~m:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value plus_r = 
+        let rec plus = fun ~m ~n ->
+	  match `Zero with
+            [`Zero -> m
+            |`Succ pred_n -> (plus ~m ~n) .`Succ . con]
+	in plus
+    end
+end
+
+(* loops OK
+Sh_Prog48128 =
+link
+  spec Nat =
+    sig
+      value r : {}
+    end
+  Nat = 
+    struct
+      value r = 
+        let rec plus = plus .`Succ . con
+	in {}
+    end
+end
+Sh_Prog48129 =
+link
+  spec Nat =
+    sig
+      value r : {}
+    end
+  Nat = 
+    struct
+      value r = 
+        let rec plus = plus . con
+	in {}
+    end
+end
+*)
+Sh_Prog48124 =
+link
+  spec Nat =
+    sig
+      type t
+      value plus : t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value rec plus = 
+	  match `Zero with
+            [`Zero -> `Zero . con
+            |`Succ -> plus .`Succ . con]
+    end
+end
+Sh_Prog48125 =
+link
+  spec Nat =
+    sig
+      type t
+      value plus_r : ~n:t ~m:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value plus_r = 
+        let rec plus = fun ~m ~n ->
+	  match n . de with
+            [`Zero -> m
+            |`Succ pred_n -> n .`Succ . con]
+	in plus
+    end
+end
+
+Sh_CoreTests = :: sig value v : {} type t end
+struct
+type t = {
+e_v8 : {bool: {}; int: []}
+; e_t2 : ind d: []
+; e_t3 : ind d: ind s: s
+; e_t4 : ind d: ind s: d
+; e_t5 : ind d: ind d: d
+; e_t6 : coind d: [`R {} |`O ind s: {rrr: ind r: d; sss: s}]}
+value v = 
+let 
+myBool = {rust = {}} 
+f = fun ~t -> t
+f1 = fun ~t ~e ~jjjj ~i -> t
+s = {}
+g = fun -> {}
+a = `Cons
+bB = {b = {}} 
+f2 = fun ~t ~e -> e
+f3 = fun ~jjjj ~i -> i
+t = {}
+in
+let r = fun ~myBool ~f ~s ~g ~f1 ~t ~f2 ~f3 ~uuuoi ~never_used ~er ~i ~rr 
+~f12 ~f13 ~f14 ~f15 ~f13' ~f14' ~f15' ~e29 ~er4 ~er5 ~er5' ~f7 ~f8 ~f9 -> {
+  e_v1 = {} . (: {}) . : {}
+; e_v2 = {a = {}} . a
+; e_v3 = {bool= myBool; int= myBool}
+; e_v4 = {bool= myBool.rust; int= myBool}
+; e_v42 = f ~t:{}
+; e_v45 = f ~t
+; e_v5 = f1 ~t ~e:s ~jjjj:s ~i:myBool
+; e_v6 = f1 ~t ~e:(g ~) ~jjjj:s ~i:myBool
+; e_v7 = g ~
+; e_v8 = {bool = {}} . : {bool : {}}
+
+; e_v11 = {a = `Nil; b = {}} . fun ~z -> match a with [`Nil -> z]
+; e_v12 = 
+  {a = `Nil; b = {}} . fun ~z -> match a with [`Cons -> z|`Nil -> b]
+; e_v125 = {a = a; b = {}} . fun ~z -> match a with [`Cons -> z]
+; e_v13 = 
+  {a = `Nil; b = bB.b} . fun ~z -> match a with [_ -> b|`Cons -> z]
+; e_v14 = 
+  let a = `Nil b = bB.b in fun ~z -> match a with [`Nil -> b| _ -> z]
+; e_v15 = 
+  let a = `Nil b = bB.b in fun ~z -> match a with [`Nil -> bB.b|`Cons -> z]
+; e_v17 = {bool = myBool; int = bB}
+; e_v18 = {bool = myBool.rust; int = s}
+; e_v19 = f2 ~t ~e:(f3 ~jjjj:s ~i:s)
+
+; e_v20 = fun ~s ~e ~wer -> e
+; e_v16 = fun ~env -> env . fun ~z -> match a with [`Nil -> myBool|`Cons -> z]
+; e_v21 = fun ~head ~tail -> {head =head; tail =tail}
+; e_v22 = fun ~head ~tail -> {head; tail}
+; e_v23 = fun ~up -> up ~u:{}
+; e_v24 = (fun ~up -> up) ~up:{}
+; e_v25 = fun ~up -> (up ~u:{})
+; e_v26 = uuuoi . `Cons . con
+; e_v27 = {} . `Nil . con
+; e_v28 = fold fun ~it ~we -> we
+; e_v29 = fold [`EE i|`OO rr]
+; e_v30 = fold fun ~it:z ~rq ~w -> rq ~it:w
+; e_v31 = (fold fun ~it:z ~rq -> rq) ~it:s ~rq:{}
+; e_v34 = unfold f12
+; e_v35 = er ~uu:unfold (f15 . de)
+; e_v36 = er4 ~uu:unfold (f13 . de) ~ooo:e29
+; e_v37 = (er5 ~uu:unfold f14) . de
+; e_v38 = er ~uu:unfold (f15' . unde)
+; e_v39 = er4 ~uu:unfold (f13' . unde) ~ooo:e29
+; e_v40 = (er5' ~uu:unfold f14') . unde
+; e_vm1 = `True . (: [`True|`False]) . (: [`True|`False]) . : [`True|`False]
+; e_vm2 = fun ~a -> a . : [`True|`False]
+; e_vm3 = (fun ~a -> a) . : ~a: [`True|`False] -> [`True|`False]
+; e_vn1 = `True . {a = : [`True|`False]; b = `Succ . con; c = `Succ}
+; e_vn2 = (f7 . de) . (funknown1 ~it:arunknown1)
+; e_vn3 = f7 . (de . (funknown2 ~it:arunknown2))
+; e_vn5 = ((unfold f8) ~it:f9) . (unde . de)
+; e_vn6 = fun ~env -> env . (qwer (~oiupoi:poipoi ~asdfasd:kjhkjh))
+; e_vn7 = fun ~env -> env . assert unde in con
+; e_vn7' = fun ~env -> env . {a1 = unde; a2 = con}
+; e_t1 = fold fun ~it -> it
+}
+
+in {}
+end
+
+Sh_Rec1177 =
+link
+  spec Nat =
+    sig
+      type nat
+      value plus : ~n:nat ~m:nat -> nat
+      type conat
+      value infinity : conat
+    end
+  module Nat =
+    struct
+      type nat = ind nat: [`Zero|`Succ nat]
+      value plus = fun ~m ~n -> 
+	match`Zero with
+        [`Zero -> m
+        |`Succ nn -> m]
+      type conat = coind t: [`coZero|`coSucc t]
+      value infinity = 
+  	match `coZero . uncon with
+	unfold it -> it .`coSucc 
+    end 
+end
+
+Sh_unf = :: sig value v : {} end
+  struct value v = let u = fun ~f12 -> unfold f12 in {} end
+
+Sh_unf2 = :: sig value v : ~i:{} -> {} end
+  struct value v = let u = fun ~i ~j -> {} in u (~j:{}) end
+
+Sh_unf3 = :: ~M:sig value u : ~i:{} ~j:{} -> {} end -> 
+sig value v : ~i:{} -> {} end
+  struct value v = M.u (~j:{}) end
+
+Sh_unf4 = :: ~M:sig value u : ~i:{} ~j:{} -> {} end -> 
+sig value v : {} end
+  struct value v = (M.u) (~j:{}) (~i:{}) ~ end
+
+Sh_unf45 = :: ~M:sig value u : ~i:{} ~j:{} -> {} end -> 
+sig value v : {} end
+  struct value v = M.(u (~j:{}) (~i:{}) ~) end
+
+Sh_unf46 = :: ~M:sig value u : ~i:{} ~j:{} -> {} end -> 
+sig value v : {} end
+  struct value v = M.(u (~j:{}) (~i:{})) ~ end
+
+Sh_unf47 = :: ~M:sig value u : ~i:{} ~j:{} -> {} end -> 
+sig value v : {} end
+  struct value v = M.(u (~j:{})) (~i:{}) ~ end
+
+Sh_unf5 = :: ~N:sig value u : ~i:{} -> {} value tr : {}end -> 
+sig value v : -> {} end
+  struct value v = (N.u) (~i:N.tr) end
+
+spec Sh_M1234 = 
+  sig 
+    value e : ~i:{} ~j:{} -> {}
+    value f : ~i:{} ~j:{} -> {} 
+  end
+
+Sh_M1234 = 
+  struct
+    value e = fun ~i:_ ~j:_ -> {}
+    value f = fun ~i:_ ~j:a : {} -> {}
+  end
+
+Sh_IndSyntax3 =
+link
+  spec Nat =
+    sig
+      type t
+      value one : t 
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value one = `Zero . con .`Succ . con
+    end
+end
+
+Sh_Er1 = 
+:: sig value v : {} end
+  struct 
+    value v = 
+    let i = fold it -> unfold -> fold -> unfold it -> fold -> unfold -> fold it
+    in {} 
+  end
+
+Sh_The_best1 = 
+link
+  spec V = 
+    sig 
+      type b
+      value v : ~it:ind t:~it:b -> b -> ~it:b -> coind t:~it:ind t:b -> 
+	~it:b -> coind t:~it:ind t:b -> ~it:b -> coind t:b
+    end
+  V = 
+    struct 
+      type b = [`True|`False]
+      value v = fold it -> unfold -> fold -> unfold -> fold -> unfold it
+    end
+end
+
+Sh_The_best_2 = 
+link
+  spec V = 
+    sig 
+      type b
+      value utt : ~it:{} -> b
+      value v : ~it:~it:{} -> b -> coind t:~it:ind t:{} -> ~it:{} -> 
+	coind t:~it:ind t:{} -> ~it:{} -> coind t:~it:ind t:{} -> b
+    end
+  V = 
+    struct 
+      type b = [`True|`False]
+      value utt = fun ~it -> `True
+      value v = unfold it -> fold -> unfold -> fold -> unfold -> fold it
+    end
+  spec Result = 
+  ~V -> 
+    sig 
+      value r1 : coind t:~it:ind t:{} -> ~it:{} -> 
+	coind t:~it:ind t:{} -> ~it:{} -> coind t:~it:ind t:{} -> V.b
+(* no functions allowed in inductive types, yet
+      value r2 : ~it:ind t:{} -> ~it:{} -> 
+	coind t:~it:ind t:{} -> ~it:{} -> coind t:~it:ind t:{} -> V.b *)
+    end
+  Result = 
+    struct 
+      value r1 = V.v ~it:V.utt
+(*    value r2 = (V.v ~it:V.utt) . unde *)
+    end
+end
+
+Sh_The_best_3 = 
+link
+  spec V = 
+    sig 
+      type b
+      value utt : ind t: ~it:{} -> b
+      value v : ~it:ind t:~it:{} -> b -> ~it:{} -> coind t:~it:ind t:{} -> 
+	~it:{} -> coind t:~it:ind t:{} -> ~it:{} -> coind t:~it:ind t:{} -> b
+    end
+  V = 
+    struct 
+      type b = [`True|`False]
+      value utt = (fun ~it -> `True) . con
+      value v =
+	fold it -> unfold -> fold -> unfold -> fold -> unfold -> fold it
+    end 
+(* no functions allowed in inductive types, yet (* *)
+  spec Result = 
+  ~V -> 
+    sig 
+      value r1 : coind t:~it:ind t:{} -> ~it:{} -> coind t:~it:ind t:{} -> V.b
+      value r2 : V.b
+    end
+  Result = 
+    struct 
+      value r1 = ((((V.v ~it:V.utt) ~it:{}) . unde) ~it:({} . con)) ~it:{}
+      value r2 = 
+        let aux = ((((V.v ~it:V.utt) ~it:{}) . unde) ~it:({} . con)) ~it:{}
+        in ((((aux . unde) ~it:({} . con)) ~it:{}) . unde) ~it:({} . con)
+    end *)
+end
+
+Sh_NatDictionary =
+link 
+  spec Order = 
+    sig  
+      type t
+      value le : ~e1:t ~e2:t -> [`True|`False]
+    end
+  spec Nat =
+    sig  
+      type t
+      value le : ~e1:t ~e2:t -> [`True|`False]
+      value zero : t
+    end
+  module Order = (:: ~Nat -> Nat Nat) :> Order
+end
+
+Sh_prog75651 =  
+link
+  spec Nat =
+    sig
+      type t
+    end
+  Nat = 
+    struct
+      type t = {}
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value cons : ~head:Elem.t ~tail:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head: Elem.t; tail: list}]
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec ListMap = 
+  ~List ->
+    sig
+    end
+  library ListMap =
+    struct
+    end
+  spec ArgsNatList = ~Nat -> {Elem; Nat}
+  library ArgsNatList = {{Elem = Nat}}
+  spec NatList = List with load ArgsNatList
+  NatList = load ArgsNatList :> {Elem} | load List
+end
+
+Sh_Prog4737 =
+link
+  spec T = sig type t end
+  spec Bool = 
+  ~T ->
+    sig
+      value if_ : ~it:[`True|`False] ~then_:T.t ~else_:T.t -> T.t 
+      value v1 : {} 
+      value v2 : {} 
+      value v3 : {} 
+      value v4 : {} 
+    end
+  library Bool =
+    struct
+      value if_ = fun ~it ~then_ ~else_ -> match it with [`True -> then_
+                                                         |`False -> else_]
+    value v1 = let j = {} in ({f = fun ~i -> i} . f) (~i:j) ~
+    value v2 = let i = {} in ({f = fun ~i -> i} . f) (~i) ~
+    value v3 = let j = {} in {f = fun -> {}} . f ~
+    value v4 = let j = {} in {f = fun ~i ~i2 -> i} . f (~i:j) (~i2:j) ~
+    end
+  spec TrivBool = Bool with {T = :: T struct type t = {} end}
+  TrivBool = load Bool with {T = :: T struct type t = {} end}
+end
+
+Sh_compchoose =
+link
+spec IndexB =
+  sig
+    type t
+    value eq : ~i:t ~it:t -> [`True|`False]
+  end
+spec ValueB = sig type t end
+spec IListB =
+~IndexB ~ValueB ->
+  sig
+    type t
+    value t2ind : ~l:t ->
+      ind t: [`Nil|`Cons {i : IndexB.t; v : ValueB.t; l : t}]
+    value tde : ~l:t -> [`Nil|`Cons {i : IndexB.t; v : ValueB.t; l : t}]
+    value nil : t
+    value cons : ~i:IndexB.t ~v:ValueB.t ~l:t -> t
+  end
+Choose = :: ~IListB -> 
+sig 
+value bchoose : ~l:IListB.t -> [`OK {i : IndexB.t; v : ValueB.t}|`Error] 
+value bchoose' : ~l:IListB.t -> [`OK {i : IndexB.t; v : ValueB.t}|`Error] 
+end
+struct
+        value bchoose = fun ~l ->
+          match IListB.t2ind ~l with
+          fold [`Nil -> `Error
+               |`Cons it -> it . {i; v} .`OK]
+        value bchoose' = fun ~l ->
+          match IListB.tde ~l  with
+          [`Nil -> `Error
+          |`Cons it -> it . {i; v} .`OK]
+end
+end
+
+Sh_compchoose2 =
+link
+spec ValueB2 = sig type t end
+spec IListB2 =
+~ValueB2 ->
+  sig
+    type t
+    value t2ind : ~l:t ->
+      ind t: [`Nil|`Cons {v : ValueB2.t; l : t}]
+    value tde : ~l:t -> [`Nil|`Cons {v : ValueB2.t; l : t}]
+  end
+Choose = :: ~IListB2 -> 
+sig value bchoose : 
+~l:IListB2.t -> [`OK {v : ValueB2.t}|`Error] end
+struct
+        value bchoose = fun ~l ->
+          match IListB2.t2ind ~l with
+          fold [`Nil -> `Error
+               |`Cons it -> it . {v} .`OK]
+end
+end
+
+Sh_modtutBools =
+link
+  spec Bool =
+    sig
+      value tt : [`True|`False]
+      value ff : [`True|`False]
+      value neg : ~it:[`True|`False] -> [`True|`False] 
+      value conj : 
+        ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False] 
+      value disj : 
+        ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False]
+    end
+  
+  module Bool =
+    :: Bool
+    struct
+      value tt = `True
+      value ff = `False
+      value neg = [`True -> `False
+                  | _ -> `True]
+      value conj = [`True fun ~b ~it-> b
+                   |`False fun ~b ~it -> `False]
+      value disj = [`True fun ~b ~it -> `True
+                   |`False fun ~b ~it -> b]
+  end  
+  spec Nat =
+    sig
+      type t
+      value t2ind : ~n:t -> ind nat: [`Zero|`Succ nat]
+      value tde : ~n:t -> [`Zero|`Succ t]
+      value zero : t
+      value succ : ~n:t -> t
+    end
+  Nat =  
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value t2ind = fun ~n -> n
+      value tde = fun ~n -> n . de
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+    end
+  spec NatOps = 
+  ~Nat ->
+    sig
+      value pred : ~n:Nat.t -> Nat.t
+      value add : Nat . ~n:t ~it:t -> t
+      value is_zero : ~it:Nat.t -> [`True|`False]
+    end
+  NatOps =
+    struct
+      value pred = fun ~(n : Nat.t) ->
+        match Nat.tde ~n with
+        [`Zero -> n
+        |`Succ nn -> nn]
+      value add = fun ~n ~it -> 
+        match Nat.t2ind ~n with
+        fold [`Zero -> it
+             |`Succ n -> Nat.succ ~n]
+      value is_zero = fun ~it ->
+        match Nat.tde ~n:it with
+        [`Zero -> `True
+        |`Succ -> `False]
+    end
+  spec List = 
+  ~ElemTut : sig type t end ->
+    sig
+      type t
+      value t2ind : 
+        ~l:t -> ind list: [`Nil|`Cons {head : ElemTut.t; tail : list}]
+      value ind2t : 
+        ~l:ind list: [`Nil|`Cons {head : ElemTut.t; tail : list}] -> t
+      value tde : 
+        ~l:t -> [`Nil|`Cons {head : ElemTut.t; tail : t}]
+      value nil : t
+      value cons : ~head:ElemTut.t ~tail:t -> t
+    end
+  library List =  
+    struct
+      type t = ind list: [`Nil|`Cons {head : ElemTut.t; tail : list}]
+      value t2ind = fun ~l -> l
+      value ind2t = fun ~l -> l
+      value tde = fun ~l -> l . de
+      value nil = `Nil . con
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+    end
+  spec NatList = List with {ElemTut = Nat}
+  NatList = load List with {ElemTut = Nat}
+  spec Test =
+  ~NatList ->
+    sig
+      value five_zeros : NatList.t
+    end
+  Result =
+    :: ~NatOps -> Test
+    struct
+      value five_zeros =
+        let copy = fun ~elem ~count ->
+          match Nat.t2ind ~n:count with
+          fold [`Zero -> NatList.nil
+               |`Succ tail -> NatList.cons ~head:elem ~tail]
+        in
+        let five_ones = copy ~elem:1 ~count:5 in
+        NatList.ind2t ~l:
+          (match NatList.t2ind ~l:five_ones with
+          map n -> NatOps.pred ~n)
+    end
+  spec Sp1 = ~NatList:NatList ~NatOps -> Test
+  spec Sp2 = 
+~NatList:NatList  
+~Nat:Nat 
+~NatOps:(~Nat:Nat ->
+           sig
+             value pred : ~n:Nat.t -> Nat.t
+             value add : Nat . ~n:t ~it:t -> t
+             value is_zero : ~it:Nat.t -> [`True|`False]
+           end)
+  -> Test
+  spec Sp3 = ~Nat:(~Bool -> Nat) ~Nat2:Nat -> ~Bool2:Bool -> Bool
+  spec Sp4 = ~Nat ~Bool ~Nat2:Nat ~Bool2:Bool -> Bool
+  library L1 = : {{Bool3 : ~Bool2:Bool -> Bool; NatOps}}
+  library Idlink = 
+: {{ElemTut : sig type t end}} .
+link
+  MyList = load List
+  MyList2 = load List
+  MyList3 = load List with {ElemTut}
+  MyList4 = MyList3
+end
+  Idmod = : {{NatOps}} . : {{NatOps}} . Nat
+  ELimod = 
+{ElemTut = :: sig type t end
+        struct type t = {} end} . load List
+end
+
+Sh_bare_mod =
+link
+
+Base =
+  :: ~Arg : sig
+              type t
+              value v : t
+            end ->
+       sig
+         type m
+         value m : Arg.t
+       end
+  struct
+    type m = Arg.t
+    value m = Arg.v
+ end
+
+Rec_good_ex1 =
+{M1 = {Arg1 = :: sig type t value v : {} end  
+             struct type t = {} value v = {} end}
+         . :: ~Arg1 : sig type t value v : {} end -> sig end  
+           struct end;
+ M2 = {Arg1 = :: sig type t end  
+             struct type t = {} end}
+         . :: ~Arg1 : sig type t end -> sig end  
+           struct end}
+Rec_good_ex2 =
+{Arg2 = :: sig type t value v : {} end  
+       struct type t = {} value v = {} end;
+ S = {Arg2 = :: sig type t end  
+            struct type t = {} end}
+        . :: ~Arg2 : sig type t end -> sig end 
+          struct end}
+
+spec Pp_no_mono1=
+  {S1 : ~Arg : sig type t end -> sig  
+          value m : Arg.t 
+        end;
+   S2 : ~Arg : sig type t end -> sig
+        end}
+spec Pp_no_mono2 =
+  {S1 : ~Arg : sig type t end -> sig 
+          value m : Arg.t 
+        end;
+   S2 : sig
+        end}
+
+Rec_err_ex55 =
+ {Arg55 = :: sig type t end  struct type t = {} end;
+ S55 = :: ~Arg55718971235 : sig type t end -> sig end  struct end}
+
+spec T56 = sig end
+Rec_err_ex56 =
+ {Arg55 = :: sig type t end  struct type t = {arg : {}} end;
+ S55 = :: ~Arg55 : sig type t end -> T56 struct end}
+
+Rec_err_ex57 =
+{Arg57 = Arg57;
+ S57 = :: ~Arg57 : sig type t end -> sig end  
+     struct end}
+
+Rec_err_ex571 =
+{Arg57 = :: ~Arg57 : sig type t end -> sig type t end  
+        struct type t = Arg57.t end;
+ S57 = :: ~Arg57 : sig type t end -> sig end  
+     struct end}
+
+spec T57 = sig type t end
+Rec_err_ex572 =
+{Arg57 = :: -> sig type t end  
+        struct type t = {arg : {}} end;
+ S = :: ~Arg57 : sig type t end -> T57
+     struct type t = {arg : Arg57.t} end}
+
+Inst_ass =
+(
+{T = :: -> sig type t value v : t end  
+     struct type t = {} value v = {} end} 
+|
+{V = :: ~T : sig type t value v : t end -> 
+          sig value v : T.t end  
+struct value v = T.v end}
+)
+|
+: {{V : sig value v : {} end}}
+
+Inst_ass2 =
+(
+{T = :: -> sig type t value v : t end  
+     struct type t = {} value v = {} end} 
+|
+{V = :: ~T : sig type t value v : t end -> 
+          sig value v : T.t end  
+struct value v = T.v end}
+)
+.
+: {{V : sig value v : {} end}}
+
+spec T = sig end
+spec IdWw = (~Arg : sig type t end -> T) with : {{Arg : sig type t end}}
+library IdWw = (:: ~Arg : sig type t end -> T struct end) 
+with : {{Arg : sig type t end}}
+library IdWw2 = : {{Arg : sig type t end}} | struct end
+library IdWw3 = : {{Arg : sig type t end}} | : {{}}
+
+Trimex =
+(:: sig type t value v : t end
+struct type t = {} value v = {} end) :>
+  sig value v : {} end
+
+TV = :: sig type t value v : t end
+     struct type t = {} value v = {} end
+WrongCoerce = TV :> sig type t end
+
+end
+
+Sh_sli =
+link
+
+library IList =
+:: ~IndexSli : sig 
+              type t     
+              value eq : ~i:t ~j:t -> [`True|`False]
+            end
+   ~Value : sig type t end ->
+     sig
+       type t
+       value nil : t
+       value cons : ~i:IndexSli.t ~v:Value.t ~l:t -> t
+     end
+struct
+  type t = 
+    ind t: [`Nil|`Cons {i : IndexSli.t; v : Value.t; l : t}]
+  value nil = `Nil . con
+  value cons = fun ~i ~v ~l -> {i; v; l} .`Cons . con
+end
+
+Result =
+{IndexSli = :: sig 
+              type t     
+              value eq : ~i:t ~j:t -> [`True|`False]
+            end
+struct type t = {} value eq = fun ~i ~j -> `True end;
+ Nat = :: sig type t end
+       struct type t = ind nat: [`Zero|`Succ nat] end;
+ Bool = :: sig type t end
+       struct type t = [`True|`False] end}
+.
+{IndexSli = IndexSli;
+ Value = Nat}
+. 
+load IList
+
+end
+
+Sh_Inst_ass =
+{V = :: -> sig value v : {} end  
+struct value v = {} end}
+|
+: {{V : sig value v : {} end}}
+
+Sh_Wwprog117 =  
+({  ElabSDule13 =
+link 
+  spec rec SDuleIList13 = 
+    sig
+      type t
+    end
+  module ind SDuleIList13 = 
+    struct
+      type t = {}
+    end
+end
+} | ElabSDule13) . SDuleIList13
+
+Sh_Wwprog1175 =  
+({  ElabSDule13 =
+link 
+  spec rec SDuleIList13 = 
+    sig
+      type t
+    end
+  module ind SDuleIList13 = 
+    struct
+      type t = {}
+    end
+end
+} | ElabSDule13) | SDuleIList13
+
+Sh_Wwprog119 =  
+{ SDuleIList14 = :: sig type t end
+    struct type t = {} end
+} | : {{SDuleIList14 : sig type t end}}
+
+spec Sh_WwPp1 =  
+{M : ~M : sig type t end -> sig type t end} 
+with {M = :: sig type t end struct type t = {} end}
+
+spec Sh_WwPp2 =  
+{M : ~M : sig type t end -> sig type t end} 
+with {M = :: ~Arg : sig type t end -> sig type t end struct type t = {} end}
+
+Sh_InstPp0 =  
+: {{M : sig type t end}}
+with {M = :: sig type t end struct type t = {} end}
+
+Sh_InstPp1 =  
+link
+spec T = sig type t end
+module Test =
+{M = :: T struct type t = {} end} 
+.
+{M = :: ~M : T -> T struct type t = {gogo : {}} end}
+end
+
+Sh_InstPp2 =  
+{M = :: sig type t end struct type t = {} end} 
+|
+{M = :: ~M : sig type t end -> sig type t end struct type t = M.t end}
+
+Sh_InstPp3 =  
+{M = :: sig type t value v : t end struct type t = {} value v = {} end} 
+|
+{M = :: ~M : sig type t value v : t end -> sig type t end 
+struct type t = M.t end}
+
+Sh_InstPp4differentthan3 =  
+{M = 
+{M = :: sig type t value v : t end struct type t = {} value v = {} end} 
+|
+:: ~M : sig type t value v : t end -> sig type t end 
+struct type t = M.t end}
+
+Sh_InstPp5 =  
+{M = 
+{M = :: sig type t value v : t end struct type t = {} value v = {} end} 
+|
+:: ~M : sig type t value v : t end -> sig type t end 
+struct type t = {gogo : {}} end}
+
+Sh_InstPp6 =  
+link
+spec T = sig type t end
+module Test =
+{M = :: sig type t end struct type t = {} end} 
+|
+{M = :: ~M : sig type t end -> T struct type t = {} end}
+end
+
+spec Sh_InstPpRem =  
+         {Arg : ~Arg : sig type t end -> sig
+           type t
+           value m : Arg.t 
+         end}
+
+Sh_InstPpRemMod =  
+  {M = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {M = :: ~M : sig type t value v : t end -> sig type t end 
+       struct type t = M.t end}
+
+Sh_InstPpRemMod2_1 =  
+link I = 
+  {H = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {{M2_1 = :: ~H : sig type t value v : t end -> 
+            sig
+              type t 
+              value v2 : H.t 
+            end 
+       struct type t = H.t value v2 = H.v end}}
+ W = I . 
+  :: ~M2_1 : ~H : sig type t value v : t end -> 
+          sig
+            type t 
+            value v2 : H.t 
+          end ->
+       sig value n : H.t end
+  struct value n = M2_1.v2 end
+end
+
+Sh_InstPpRemMod2_2 =  
+  {{M2_2 = :: sig
+              type t 
+              value v2 : t 
+            end 
+       struct type t = {} value v2 = {} end}}
+  . 
+  :: ~L2_2 : sig type t value v : t end 
+     ~M2_2 : sig
+            type t 
+            value v2 : t 
+          end ->
+       sig value n : L2_2.t end
+  struct value n = L2_2.v end
+
+Sh_InstPpRemMod2_3 =  
+link I =
+  {H = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {{M2_3 = :: sig
+              type t 
+              value v2 : t 
+            end 
+       struct type t = {} value v2 = {} end}}
+ W = 
+  I
+  . 
+  :: ~H : sig type t value v : t end 
+     ~M2_3 : sig
+            type t 
+            value v2 : t 
+          end ->
+       sig value n : H.t end
+  struct value n = H.v end
+end
+
+Sh_InstPpRemMod5 =  
+  {M1 = :: sig type t value v : t end 
+        struct type t = {} value v = {} end} 
+  .
+  {{M2 = :: ~M1 : sig type t value v : t end -> 
+              sig
+                type t 
+                value v2 : t 
+              end 
+        struct type t = M1.t value v2 = M1.v end}}
+  . 
+  :: ~M2 : ~M1 : sig type t value v : t end -> sig
+             type t 
+             value v2 : t
+           end ->
+       sig
+         value v3 : M2.t 
+       end
+  struct value v3 = M2.v2 end
+
+Sh_bigtest1 =  
+link
+  spec rec Funct =
+    sig
+      value ind_funct : ~f:{} -> 
+        ind t1: ind t2: ind t: 
+	       [`F_COMP1 {f1 : t; f2 : t; f3 : t; f4 : t; f5 : t; f6 : t}
+	       |`F_COMP2 {f1 : t; f2 : t; f3 : t; f4 : t; f5 : t; f6 : t}
+	       |`F_COMP3 {f1 : t; f2 : t; f3 : t; f4 : t; f5 : t; f6 : t}
+	       |`F_COMP4 {f1 : t1; f2 : t1; f3 : t1; f4 : t1; f5 : t1; f6 : t1}
+	       |`F_COMP5 {f1 : t1; f2 : t1; f3 : t1; f4 : t1; f5 : t1; f6 : t1}
+	       |`F_COMP6 {f1 : t2; f2 : t2; f3 : t2; f4 : t2; f5 : t2; f6 : t2}
+	       |`F_COMP7 {f1 : t2; f2 : t2; f3 : t2; f4 : t2; f5 : t2; f6 : t2}
+	       |`F_COMP8 {f1 : t2; f2 : t2; f3 : t2; f4 : t2; f5 : t2; f6 : t2}
+	       |`F_COMP9 {f1 : t2; f2 : t2; f3 : t2; f4 : t2; f5 : t2; f6 : t2}
+	       |`F_t]
+    end
+  module ind Funct =
+    struct
+      value ind_funct = fun ~f -> `F_t . con . con . con
+    end
+
+  SInd_on_LDule = {}
+
+end | SInd_on_LDule
+
+Sh_Wwprog120 =  
+({  ElabSDule14 =
+link 
+  spec SDuleIList14 = 
+    sig
+      type t
+    end
+  module ind SDuleIList14 = 
+    struct
+      type t = {}
+    end
+end
+} | ElabSDule14) . : {{SDuleIList14 : sig type t end}}
+
+(* --- specification reconstruction not complete:
+Sh_Wwprog118 =  
+link 
+  spec rec SDuleIList143 = 
+    sig
+      type t
+    end
+  module ind SDuleIList143 = 
+    struct
+      type t = {}
+    end
+end . : {{SDuleIList143 : sig type t end}}
+
+Sh_Wwprog1181 =  
+({  ElabSDule14 =
+link 
+  spec rec SDuleIList14 = 
+    sig
+      type t
+    end
+  module ind SDuleIList14 = 
+    struct
+      type t = {}
+    end
+end
+} | ElabSDule14) . : {{SDuleIList14 : sig type t end}}
+*)

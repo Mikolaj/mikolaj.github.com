@@ -1,0 +1,70 @@
+\chapter{
+Jak zaliczy"c laboratorium}
+
+Aby zaliczy"c laboratorium SML nale"ry napisa"c program.
+Powinien si"e on sk"la\-da"c z kilku do kilkunastu ma"lych
+modu"l"ow; dobrze wyspecyfikowanych, po\-"l"a\-czo\-nych
+w sensown"a ca"lo"s"c jasnymi, wyra"znie opisanymi zale"rno"sciami.
+
+Temat jest dowolny. S"lu"rymy rad"a i pomoc"a przy jego wyborze.
+Oto przyk"ladowe (troch"e nudne i wykorzystywane ju"r zbyt wiele razy) zadanie zaliczeniowe:
+
+\bigskip
+
+\bigskip
+Napisa"c $Kalkulator$, czyli program, kt"ory w"sr"od swoich modu"l"ow ma modu"l
+pasuj"acy do sygnatury \|CALCULATOR|, zdefiniowanej nast"epuj"aco:
+
+\begin{verbatim}
+signature CALCULATOR =
+sig
+    
+    val eval : string -> string
+
+    (* if s represents an arithmetic expression    *)
+    (* (which means that s is a string of digits,  *)
+    (* ~ (negation), +, -, * and parenthesis,      *)
+    (* satisfying some well known properties),     *)
+    (* then (eval s) should be equal to the string *) 
+    (* representing the value of s, or the string  *)
+    (* "division by zero" if appropriate,          *)
+    (* if s does not represent a valid arithmetic  *)
+    (* expression, (eval s) should be equal to the *)
+    (* string "syntax error"                       *)
+
+end;
+\end{verbatim}
+
+Wszelkie drobne niejasno"sci tej specyfikacji nale"ry interpretowa"c 
+na swoj"a korzy"s"c. W razie problem"ow zwr"oci"c si"e o pomoc.
+
+Wydaje si"e, "re w"sr"od modu"l"ow sk"ladaj"acych si"e na $Kalkulator$ 
+powinny by"c modu"ly \|Lexer|, \|Parser|, \|Evaluator| i \|PrettyPrinter|. 
+By"loby "ladnie i chyba wygodnie, gdyby \|Parser|
+pos"lugiwa"l si"e drzewem sk"ladni reprezentuj"acym gramatyk"e $LL(1)$ wyra"re"n,
+za"s \|Evaluator| drzewem reprezentuj"acym prostsz"a gramatyk"e:
+\begin{verbatim} 
+    datatype expression =
+        NUM of int
+      | NEGATION of expression
+      | TIMES of expression * expression
+      | PLUS of expression * expression
+      | ...
+\end{verbatim}
+
+To zadanie nie powninno by"c zbyt trudne.
+To co mo"rna tu zrobi"c lepiej lub gorzej to podzia"l programu na modu"ly,
+zdefiniowanie zale"rno"sci mi"edzy modu"lami przy pomocy funktor"ow,
+opisanie w"lasno"sci modu"l"ow sygnaturami.
+
+
+\vspace{0.3cm}
+
+{\bf Powodzenia!}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 
+
+

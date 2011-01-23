@@ -1,0 +1,133 @@
+\part*{Preface}
+\label{sec:preface}
+
+The EML Kit is an implementation of the Extended ML programming language.
+
+Extended ML (EML) is a framework for the formal development of programs
+in the programming language Standard ML (SML). High-level specifications and
+SML code, as well as a mixture of both can be expressed in 
+the Extended ML language. Thus the Extended ML language is 
+an extension of (a large subset of) Standard ML.
+
+Similarly the Definition of Extended ML~\cite{bib:KST94} extends in a sense
+the Definition of Standard ML~\cite{MTH90}. Although many things are added,
+some errors and infelicities corrected and a few presentation 
+conventions changed, the general structure is kept mostly intact 
+and as much of the original text as possible is preserved. 
+
+The EML Kit is based on the ML Kit~\cite{BRTT93}; a flexible, clean and
+modularized interpreter of the Standard ML, written in Standard ML.
+The ML Kit is a faithful and as straightforward as possible 
+implementation of the language described in the SML definition. The overall structure 
+of the ML Kit resembles the structure of the SML definition,
+abstract syntax tree is almost literally the same and
+the design of many details, such as naming conventions,
+is inspired by the Definition. 
+
+These two facts --- that the EML definition is an extension of 
+the SML definition and that the ML Kit is so close to the latter --- 
+helped us in our efforts to make the EML Kit a faithful and clean 
+implementation of Extended ML. We were able to extend the ML Kit
+analogously as the EML definition extends the SML definition,
+while retaining the style of the ML Kit programming.
+Thus we have formed a basis for the development of the future EML Programming
+Environment tools, such as the proof-obligations generator and provers.
+See the figure below.
+
+\vspace{10pt}
+
+\begin{center}
+{\footnotesize
+\setlength{\unitlength}{4.5cm}
+\begin{picture}(1.4,2.1)
+
+\put(0.7,2.1){\makebox(0,0){
+	\begin{tabular}{c}
+	EML Programming\\
+	Environment
+	\end{tabular}}}
+
+\put(0.7,1.4){\makebox(0,0){
+	\begin{tabular}{c}
+	EML Kit
+	\end{tabular}}}
+\put(0.7,1.47){\line(0,1){0.07}}
+\put(0.7,1.58){\line(0,1){0.07}}
+\put(0.7,1.69){\line(0,1){0.07}}
+\put(0.7,1.80){\line(0,1){0.07}}
+\put(0.7,1.91){\vector(0,1){0.10}}
+
+\put(0.0,0.7){\makebox(0,0){
+	\begin{tabular}{c}
+	ML Kit
+	\end{tabular}}}
+\put(0.07,0.77){\vector(1,1){0.566}}
+
+\put(1.4,0.7){\makebox(0,0){
+	\begin{tabular}{c}
+	EML Definition
+	\end{tabular}}}
+\put(1.33,0.77){\vector(-1,1){0.566}}
+
+
+\put(0.7,0.0){\makebox(0,0){
+	\begin{tabular}{c}
+	SML Definition
+	\end{tabular}}}
+\put(0.77,0.07){\vector(1,1){0.566}}
+\put(0.63,0.07){\vector(-1,1){0.566}}
+
+\end{picture}
+
+} % end of footnotesize
+\end{center}
+
+\pagebreak
+
+Moreover, it's possible that our work will be of use to people implementing
+the EML programming language on a different basis than the ML Kit.
+In particular our solutions to the problems arising when parsing
+EML programs or type-checking certain EML constructs can be of 
+interest to them. 
+
+On the other hand, also people using the ML Kit 
+as a basis for implementations of other programming languages
+which extend SML, may find some of our work useful.
+For example these fragments which deal with errors in 
+the SML definition (which have their impact on the ML Kit)
+or these which were aimed at changing the ML Kit pretty-printing.
+
+\section*{Acknowledgments}
+
+We would like to thank all the people who helped us during our work.
+First of all we would like to thank Andrzej Tarlecki who encouraged us
+to start the development of the EML Kit. Without his patient care
+and invaluable help we would never finish the task.
+We would also like to thank two other authors of the Extended ML:
+Don Sannella and Stefan Kahrs, who frequently offered us help and
+expressed interest in our work.
+ 
+The EML Kit is based on the ML Kit, an SML interpreter
+praised at length in various parts of this document.
+We would like to express our gratitude to its authors:
+Lars Birkedal, Nick Rothwell, Mads Tofte and David N. Turner, 
+for the months of work they've spent on making this
+excellent piece of a free software.
+
+Robert Maron was the leader of our team during the early
+stages of the development of the EML Kit. We have not 
+forgotten, Robert. Thank you.
+
+Moreover thanks to the people from the Warsaw Applied Logic Group:
+Jerzy Tiuryn, Pawe{\l} Urzyczyn, Damian Niwi\'nski, Micha{\l} Grabowski,
+Marek Zawadowski, Marcin Benke, Grzegorz Grudzi\'nski, Igor Walukiewicz, 
+Jacek Chrz\c{a}szcz, Stefan Dziembowski, S{\l}awomir Leszczy\'nski, 
+Daria Walukiewicz and Adam Wierzbicki.
+We doubt the work we've made would ever be undertaken
+without the atmosphere they create here in Warsaw.
+
+
+
+
+
+

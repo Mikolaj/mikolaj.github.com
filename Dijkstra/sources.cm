@@ -1,0 +1,202 @@
+(***********)
+(* sources *)
+(***********)
+
+
+Group is
+
+ 
+(********************)
+(* sources of Lexer *)
+(********************)
+
+
+	Lexer/IDENTIFIER.sml
+	Lexer/Identifier.sml
+
+	Lexer/NUMERAL.sml
+	Lexer/Numeral.sml
+
+	Lexer/FALSEVAL.sml
+	Lexer/Falseval.sml
+
+	Lexer/TOKENS.sml
+	Lexer/Tokens.sml
+
+	Lexer/MULTI_CHAR.sml
+	Lexer/MultiChar.sml
+
+	Lexer/CHAR_LIST.sml
+	Lexer/CharList.sml
+
+	Lexer/CHAR_INFO.sml
+	Lexer/CharInfo.sml
+
+	Lexer/INFO_AND_TOKEN_LIST.sml
+	Lexer/InfoAndTokenList.sml
+
+	Lexer/NUMBER.sml
+	Lexer/Number.sml
+
+	Lexer/COUNTER.sml
+	Lexer/Counter.sml
+
+	Lexer/WORD.sml
+	Lexer/Word.sml
+
+	Lexer/RECOGNIZER.sml
+	Lexer/Recognizer.sml
+
+	Lexer/CUTTER.sml
+	Lexer/Cutter.sml
+
+	Lexer/LEXER.sml
+	Lexer/Lexer.sml
+
+
+(*********************)
+(* sources of Parser *)
+(*********************)
+
+
+	Parser/LL1_GRAMMAR.sml
+	Parser/LL1Grammar.sml
+
+	Parser/PARSER_ERROR.sml
+	Parser/ParserError.sml 
+
+	Parser/OK_ERROR.sml
+	Parser/OkError.sml
+
+	Parser/PARSER.sml
+	Parser/Parser.sml
+
+ 
+(*************************)
+(* sources of Abstractor *)
+(*************************)
+
+
+	Abstractor/ABSTRACT_GRAMMAR.sml
+	Abstractor/AbstractGrammar.sml
+
+	Abstractor/ABSTRACTOR.sml
+	Abstractor/Abstractor.sml
+
+
+(******************************)
+(* sources of SemanticObjects *)
+(******************************)
+
+
+        SemanticObjects/INTEGER.sml
+	SemanticObjects/Integer.sml 
+	
+	SemanticObjects/BOOLEAN.sml
+	SemanticObjects/Boolean.sml	
+
+	SemanticObjects/POST.sml
+	SemanticObjects/Post.sml
+
+	SemanticObjects/STORABLE.sml
+	SemanticObjects/Storable.sml
+
+	SemanticObjects/LOCATION.sml
+	SemanticObjects/Location.sml
+
+	SemanticObjects/STORE.sml
+	SemanticObjects/Store.sml
+
+	SemanticObjects/TTYPE.sml
+	SemanticObjects/Ttype.sml
+
+	SemanticObjects/DENOTABLE.sml
+	SemanticObjects/Denotable.sml
+
+	SemanticObjects/NAME.sml
+	SemanticObjects/Name.sml	
+
+	SemanticObjects/ENVIRONMENT.sml
+	SemanticObjects/Environment.sml
+   
+	SemanticObjects/NAME_SET.sml
+	SemanticObjects/NameSet.sml
+ 
+	SemanticObjects/ELABORATOR_ERROR.sml
+	SemanticObjects/ElaboratorError.sml
+
+(*************************)
+(* sources of Elaborator *)
+(*************************)
+
+
+	Elaborator/ELAB_ID.sml
+	Elaborator/ElabId.sml
+
+	Elaborator/ELAB_RIGHT_ID.sml
+	Elaborator/ElabRightId.sml
+
+	Elaborator/ELAB_NUM.sml
+	Elaborator/ElabNum.sml
+
+	Elaborator/ELAB_FAL.sml
+	Elaborator/ElabFal.sml
+
+	Elaborator/ELAB_RIGHT_BL.sml
+	Elaborator/ElabRightBl.sml
+
+	Elaborator/ELAB_EXP.sml
+	Elaborator/ElabExp.sml
+
+	Elaborator/ELAB_TY.sml
+	Elaborator/ElabTy.sml
+
+	Elaborator/ELAB_TON.sml
+	Elaborator/ElabTon.sml
+
+	Elaborator/ELAB_DEC.sml
+	Elaborator/ElabDec.sml
+
+	Elaborator/ELAB_GUA.sml
+	Elaborator/ElabGua.sml
+
+	Elaborator/ELAB_BL.sml
+	Elaborator/ElabBl.sml
+
+	Elaborator/ELAB_COM.sml
+	Elaborator/ElabCom.sml
+
+	Elaborator/ELAB_PROG.sml
+	Elaborator/ElabProg.sml
+
+
+(*********************)
+(* sources of Linker *)
+(*********************)
+
+
+	Linker/LINK_LEXER.sml
+	Linker/LinkLexer.sml
+
+	Linker/LINK_PARSER.sml
+	Linker/LinkParser.sml
+
+	Linker/LINK_ABSTRACTOR.sml
+	Linker/LinkAbstractor.sml
+
+	Linker/LINK_ELABORATOR.sml
+	Linker/LinkElaborator.sml
+
+	Linker/LINKER.sml
+	Linker/Linker.sml
+
+
+(*******************)
+(* sources of Test *)
+(*******************)
+
+
+	Test/STRING2MULTI_CHAR.sml
+	Test/String2MultiChar.sml
+
+	Test/Test.sml

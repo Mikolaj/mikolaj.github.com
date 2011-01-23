@@ -1,0 +1,154 @@
+<title>A toy interpreter of the Dijkstra's language</title>
+
+<h1>A toy interpreter of the Dijkstra's language</h1>
+
+This interpreter (compiler?) was written out of my fascination over<br>
+Edsger W. Dijkstra<br>
+"A discipline of programming"<br>
+Prentice-Hall, 1976.<br>
+
+<p><hr><p>
+
+The (dis)similarity of the implemented language
+to the one described in the book, can be estimated
+on the basis of examples contained in 
+<a href="dij/">
+dij/</a> directory,
+the syntax described in 
+<a href="Abstractor/ABSTRACT_GRAMMAR.sml">
+Abstractor/ABSTRACT_GRAMMAR.sml</a> file,
+and the denotational semantics residing in 
+<a href="Elaborator/">
+Elaborator/</a> directory.
+
+<p>
+
+Any decision of not keeping with the spirit of the original,
+in the design of the semantics, was heavily thought of:
+<ul>
+<li> the concurrent assignment is not implemented,
+  because I have the feeling, that it's
+  just a special case of pattern matching with product types,
+  and so should be implemented in full generality 
+  (in the future versions, of course :) ,
+<li> the decision to move declaration of variable's type
+  from virgin assignment to variable declaration itself,
+  is due to the belief, that nothing gets lost, 
+  but the typing gets "stronger" and easier to read,
+<li> the if...fi and do...od constructs are made deterministic,
+  to avoid artificial complexity. Still they do
+  fulfill the requirements described in non-deterministic
+  fashion in the book. But in fact, the non-deterministic
+  notation seems to be very nice. It helps in manifesting,
+  the independence from the guard evaluation order, 
+  which is quite common.
+  This could also give optimizing compilers more freedom,
+  although at the cost of the need for making separate binaries
+  for testing, with run-time-random choosing of evaluation order.
+<li> the arrays are not implemented, although they can be 
+  simulated to some extent. Arrays have so imperative 
+  and simple nature, but on the other hand their proposed 
+  semantics was quite complicated and possessed 
+  no (apparent) imperative, efficient implementation. 
+  So, if not for the efficiency, what for?
+</ul>
+  
+The only ad hoc change to the original language was
+adding denotations of blocks to storable values, 
+with block application, higher-order blocks, and 
+<a href="Elaborator/ElabRightBl.sml">
+such-like</a>.
+This was needed for ad hoc input-output of programs,
+and for as hoc simulation of arrays.
+This doesn't seem to be a wild idea, or does it?
+Anyway, I tried to make a sound, elegant definition
+of blocks as values, I swear, I tried hard.
+No success :(. The final definition seems to be
+the most manageable of all, but even in this one
+blocks appearing as values posses an exotic,
+ugly, counter-intuitive and non-imperative feature,
+which is left as an exercise for the reader to find.
+
+<p><hr><p>
+
+This project started in early 1994, 
+after lectures about denotational semantics by 
+<a href="http://www.mimuw.edu.pl/faculty/M.Grabowski.e.html">
+Michal Grabowski</a>
+and labs about implementing denotational semantics 
+in Standard ML with 
+<a href="http://zls.mimuw.edu.pl/~gsg/home.html">
+Grzegorz Grudzinski</a> (hi Grzes!).
+In these times, the author of the interpreter
+still had hopes, that imperative languages can be beautiful,
+and imperative programming - not error-provoking.
+To instantiate the hopes, or drop them once and for all,
+he decided to try to make a clean, mathematically beautiful,
+executable denotational definition of the most beautiful 
+imperative language, possessing the most natural and the safest,  
+bug-eliminating variable scoping mechanisms - the Dijkstra's language.
+
+<p>
+
+Any conclusions of this project are left, 
+for an intrepid reader of SML sources, to draw :).
+Nevertheless, the fact is, that I'm quite satisfied
+with this work, done with the use of functional 
+and specification languages. Also, this was quite thrilling 
+to write, or even only rewrite, some sample programs 
+in imperative language, after so many years ...  
+
+<p><hr><p>
+
+The interpreter was written in a functional programming language
+<a href="http://foxnet.cs.cmu.edu/sml.html"> 
+Standard ML</a>
+to run on 
+<a href="http://cm.bell-labs.com/cm/cs/what/smlnj/index.html">
+SML/NJ</a> 109+. Versions 0.93-108 all crash in three places :-P.
+
+<p>
+
+The 
+<a href="ver.EML/Lexer">
+Lexer</a> was written as a case study of developing software in
+<a href="http://www.dcs.ed.ac.uk/%7Edts/eml/">Extended ML</a>
+to run on 
+<a href="http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html"> 
+EML Kit</a>. 
+File <CODE>ver.EML.build.sml</CODE> builds the EML version of the interpreter.
+
+<p>
+
+Here is the 
+<a href=".">
+root</a> of the source tree.
+The <CODE>.tar.gz</CODE> archive of the tree is available by WWW from<br>
+<CODE><a href="http://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
+http://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a><br>
+or by ftp from<br>
+<CODE><a href="ftp://zls.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
+ftp://zls.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a>.<br>
+
+<p><hr><p>
+
+    Copyright (C) 1994-1997 Mikolaj Konarski<br>
+    <a href="http://zls.mimuw.edu.pl/~mikon/home.english.html">
+    <CODE>http://zls.mimuw.edu.pl/~mikon/home.english.html</CODE></a><br>
+    <a href="mailto:mikon@mimuw.edu.pl">
+    <EM>mikon@mimuw.edu.pl</EM></a>
+
+<p>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+<p>
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    <a href="COPYING">
+    GNU General Public License</a> for more details.

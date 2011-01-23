@@ -1,0 +1,388 @@
+\part{Miscellaneous}
+\label{sec:misc}
+
+\section{Abstract syntax tree}
+\label{sec:ast}
+
+{\em Bare} language is a portion of SML {\em Full} language which suffices
+to express functionality of the whole SML\footnote{This is achieved 
+through so called derived forms, which were treated informally
+in \cite{MTH90}, and were given a formal definition in 
+Appendix~B of \cite{bib:KST94}, in the case of EML.}
+and on the other hand
+is small enough to present its syntax and semantics in a succinct way.
+The ML Kit defines several datatypes mimicking the structure of the 
+grammar of SML {\em Bare} language.
+There is a distinct datatype corresponding to every syntactic class of 
+Bare language. We call these datatypes {\em abstract syntax tree datatypes}.
+
+Close correspondence between SML syntax and the ML Kit abstract syntax 
+datatypes makes it straightforward to incorporate any changes and extensions
+to the former into the latter.
+Unfortunately, due to the fact that ``Syntactically, SML is a 
+nightmare'' (see Section~3.4 of \cite{BRTT93}), this correspondence breaks 
+down in a few places. The differences are described in detail in 
+Subsection~3.4.3 of \cite{BRTT93}, and concern issues like 
+\begin{itemize}
+  \item resolving of identifier status,
+  \item resolving infixes in patterns, expressions and {\tt fun}-bindings,
+\end{itemize}
+in a post-parsing pass.
+
+EML language extends (and slightly modifies) the syntax of SML, and these 
+changes are reflected in the abstract syntax tree datatypes of the EML Kit.
+Fortunately enough, the new syntax doesn't introduce any serious
+complications, so the changes we have made to the ML Kit are
+straightforward and faithfully correspond to changes in the syntax.
+Here we give the additions to the ML Kit abstract syntax 
+datatypes, which were needed to introduce the new syntactic constructs 
+of the {\em Core} language part of EML.
+
+{\small
+\begin{verbatim}
+datatype atexp =    ...
+      UNDEFatexp of info                (* undefined value *)
+
+and exp = ...
+      COMPARexp of info * exp * exp |   (* comparison *)
+      EXIST_QUANTexp of info * match |  (* existential quantifier *)
+      UNIV_QUANTexp of info * match |   (* universal quantifier *)
+      CONVERexp of info * exp |         (* convergence predicate *)
+
+and dec =  ...
+      EQTYPEdec of info * typbind |     (* equality type declaration *)
+
+and typbind = ...
+      QUEST_TYPBIND of info * tyvar list * tycon * typbind Option
+                                        (* question mark type binding *)
+\end{verbatim}
+}
+
+\noindent Changes incurred to the abstract syntax tree datatypes for
+the {\em Modules} language include the following:
+
+{\small
+\begin{verbatim}
+datatype strdec = ...
+  AXIOMstrdec of info * ax |           (* axiom *)
+
+and ax =
+  AXIOMax of info * axexp * ax Option  (* axiom *)
+
+and axexp = 
+  AXIOM_EXPaxexp of info * exp         (* axiomatic expression *)
+
+and strbind =
+  STRBIND of info * sglstrbind * strbind Option
+                                       (* structure binding *)
+
+and sglstrbind =
+  SINGLEsglstrbind of info * strid * psigexp * strexp |
+                                       (* single structure binding *)
+  UNDEFsglstrbind of info * strid * psigexp |
+                                       (* undefined structure binding *)
+  UNGUARDsglstrbind of info * strid * strexp
+                                       (* unguarded structure bindgin *)
+
+and psigexp =
+  PRINCIPpsigexp of info * sigexp      (* principal signature *)
+
+and sigbind =
+  SIGBIND of info * sigid * psigexp * sigbind Option
+
+and spec = ...
+  AXIOMspec of info * axdesc |         (* axiom *)
+
+and axdesc = 
+  AXDESC of info * specexp * axdesc Option
+
+and specexp =
+  SPECEXP of info * strdec * axexp
+
+and funbind =
+  FUNBINDfunbind of info * funid * strid * psigexp * psigexp * strexp * funbind Option |
+                                       (* functor binding *)
+  UNDEFfunbind of info * funid * strid * psigexp * psigexp * funbind Option
+                                       (* undefined functor binding *)
+\end{verbatim}
+}
+
+The dynamic semantics of both SML and EML define the so called {\em reduced
+syntax} (see Sections~6.1 and 7.1 of \cite{MTH90} and \cite{bib:KST94} for
+details), to reflect the fact, that certain syntactic constructs are 
+irrelevant to evaluation of ML programs (they involve types, axioms,
+sharing equations and the like, which are exploited in the elaboration).
+The ML Kit however (and the EML Kit keeps this unchanged) does not bother with
+explicitly transforming abstract syntax representation of programs into
+the reduced syntax.
+The price one pays for this is an obligation to write some code
+in the (E)ML Kit evaluator, which handles cases of superfluous
+syntax.
+As it has no counterpart in the rules of dynamic semantics, the result
+of evaluation of such code should have the same effect as simply
+ignoring it.
+
+\section{Evaluation}
+
+\subsection{Core evaluation}
+\label{sec:core_eval}
+
+The EML Dynamic Semantics for the Core is very similar to the
+SML Dynamic Semantics for the Core. The only major additions
+are the rules describing the evaluation of the new Core language constructs.
+They are listed in Table \ref{tab:new_eval}.
+
+\begin{longtable}{clll}
+\caption[The rules describing the evaluation of the new Core language constructs]
+{\bf  The rules describing the evaluation of the new Core language constructs\label{tab:new_eval}}\\
+ rule number & \sl form of the construct & \sl name of the construct & \sl phrase class\\
+109.1 &  {$\qmark$}         & undefined value            &  $\atexp$   \\
+118.1 &  $\expb_1\ \|==|\ \expb_2$ & comparison          &  $\exp$     \\            
+118.2 &  {$\existsexp$}     & existential quantifier     &  $\exp$     \\
+118.3 &  {$\forallexp$}     & universal quantifier       &  $\exp$     \\
+118.4 &  {$\termexp$}       & convergence predicate      &  $\exp$     \\
+\end{longtable}
+
+\noindent Let's look closer at rule 118.4:
+$$      % convergence predicate
+\frac{}
+     {\s,\E\ts\termexp\ra[{\tt NoCode}],\sno}
+\eqno(118.4)
+$$
+It says that {$\termexp$} evaluates to the package $[{\tt NoCode}]$,
+whatever the environment $\E$ and the expression $\expb$ are
+(they are only assumed to be well-formed and type-correct).
+
+And now the piece of the EML Kit code corresponding to this rule:
+{\small
+\begin{verbatim}
+fun evalExp(E, exp) =
+  case exp of
+  ...
+     | CONVERexp(_, _) => raiseNoCode()
+     ...
+\end{verbatim}
+} 
+
+\noindent \|CONVERexp| is the name of the abstract syntax tree node 
+(see Section~\ref{sec:ast}) representing the $\TERM$ construct.
+\|raiseNoCode| is a function implementing the EML-specific 
+special exception ${\tt NoCode}$ (see Section~\ref{sec:special}).
+
+All the rules of the Dynamic Semantics
+are deterministic, in the sense that for every given phrase and context
+there is at most one derivation of a value for the phrase in this context. 
+This justifies treating the Dynamic Semantics as a deterministic
+recipe for evaluating EML phrases, and allows the straightforward
+implementation of the rules, those mentioned in Table \ref{tab:new_eval} in particular.
+
+\subsection{Modules evaluation}
+
+There are some minor changes to dynamic semantics of SML
+concerning rules $169$, $171.1$ and $175$, which have been implemented.
+More significant changes and additions are gathered in 
+table~\ref{tab:new-eval-mod}. 
+Among them rules $164.1$, $169.1$ and $169.3$ have been implemented
+in the EML Kit.
+Rules $169.2$ and $187.1$ are handled, but do not behave correctly,
+because functions {\tt TrivEnv} and {\tt TrivStrExp} described in 
+Section~7.2 of \cite{bib:KST94} have not been implemented yet.
+Finally rules $176.1$, $184.1$ and $184.2$ are still not handled at
+all.
+
+%\newpage
+
+\begin{longtable}{cll%p{40mm}
+}
+\caption%[New rules describing the evaluation of Modules language constructs]%
+{\bf  New rules describing the evaluation of Modules language constructs\label{tab:new-eval-mod}}\\
+ rule number & \sl form of the construct & \sl name of the construct %& \sl phrase class
+\\%[5pt]
+%\endfirsthead
+% rule number & \sl form of the construct & \sl name of the construct %& \sl phrase class
+%\\[5pt]
+%\endhead
+%\endfoot
+164.1 & $\AXIOM\ \axiombind$   & axiom %                   &  $\strdec$  
+\\
+169.1 & $\strid\ :\ \psigexp\ =\ \strexp$  & single structure binding %&  $\singlestrbind$ 
+\\
+169.2 & $\strid\ : \ \psigexp\ =\ \qmark$  & single structure binding %&  $\singlestrbind$ 
+\\
+169.3 & $\strid\ =\ \strexp$  & single structure binding %&  $\singlestrbind$ 
+\\
+176.1 & $\DATATYPE\ \datdesc$ & datatype \\
+184.1 & $\tyvarseq\ \tycon\ =\ \condesc\ \langle\ \AND\ \datdesc\ \rangle$ & datatype description \\
+184.2 & $\con\ \langle \ | \ \condesc\ \rangle$ & constructor description \\
+187   & $\funid\ (\ \strid\ :\ \psigexp\ )\ :\ \psigexp'\ =\ \strexp$ & functor binding %& $\funbind$ 
+\\
+187.1 & $\funid\ (\ \strid\ :\ \psigexp\ )\ :\ \psigexp'\ =\ \qmark$ & undefined functor binding %& $\funbind$ 
+\\
+\end{longtable}
+
+\section{Output}
+
+\subsection{Pretty-printing}
+
+The ML Kit is not merely an interpreter of SML code. It is an interactive
+system, which can support the user with various information concerning 
+lexical analysis, parsing, elaboration and evaluation of SML programs 
+which are fed to it.
+In order to be able to present such data to the user in a neat and tidy
+way, several pretty-printing routines are needed.
+The ML Kit designers have written a simple, but quite general and powerful enough
+pretty-printing facility, which can print everything one can
+represent as a ``tree of strings''.
+Here is definition of the {\tt StringTree} datatype, elements of which
+can be printed by {\tt PrettyPrint} module either in a single line, or as 
+a list of lines on a page of given width:
+{\small
+\begin{verbatim}
+signature PRETTYPRINT =
+  sig
+    datatype StringTree = LEAF of string
+                        | NODE of {start : string, finish: string, indent: int,
+                                   children: StringTree list,
+                                   childsep: childsep}
+    and childsep = NONE | LEFT of string | RIGHT of string
+    ...
+  end
+\end{verbatim}
+}
+An element of {\tt StringTree} datatype is either a {\tt LEAF}, 
+consisting of a string which will not be split over lines of output;
+or it is a {\tt NODE} which corresponds to a text beginning with  
+a ``start'' string, ending with a ``finish'' string, with a list of
+``children'' coming in between, separated with ``child separator'' in
+case there are two or more of them.
+
+For example to pretty-print SML programs represented in the Kit as
+elements of abstract syntax tree datatypes, it is enough to write 
+functions which transform them to the {\tt StringTree} datatype,
+and then just use general pretty-printing routine supported by 
+{\tt PrettyPrint} module.
+Thus in order to enable pretty-printing of new syntactic constructs
+of EML language, we added to the ML Kit the following:
+\begin{itemize}
+  \item a few functions corresponding to new syntactic classes of
+EML (see Section~\ref{sec:ast}); for example function {\tt layoutAx} 
+is used to make a {\tt StringTree} out of an abstract syntax tree for
+an {\em axiom}:
+{\small
+\begin{verbatim}
+fun layoutAx ax : StringTree =
+  let
+    val axs = makeList (fn AXIOMax(_, _, opt) => opt) ax
+
+    fun layout1(AXIOMax(_, axexp, _)) =
+      PP.NODE{start="", finish="", indent=0,
+              children=[layoutAxexp axexp], 
+              childsep=PP.NONE
+             }
+  in
+    PP.NODE{start="", finish="", indent=0,
+            children=map layout1 axs,
+            childsep=PP.LEFT " and "
+           }
+  end
+
+\end{verbatim}
+}
+  \item a bunch of matches in existing functions, corresponding to new
+syntactic constructs introduced to existing syntactic classes of SML; for
+example due to introduction of {\em existential quantifiers} to the
+syntax of expressions, we included the following match to function
+{\tt layoutExp}:
+{\small
+\begin{verbatim}
+fun layoutExp exp : StringTree =
+  case exp
+  ...
+     | EXIST_QUANTexp(_, match) =>
+         PP.NODE{start="exists ", finish="", indent=7,
+                 children=[layoutMatch match],
+                 childsep=PP.NONE
+
+                }
+\end{verbatim}
+}
+\end{itemize}
+
+
+\subsection{Error detection and reporting}
+
+The ML Kit handles error detection and reporting in a clean and uniform way.
+Instead of eagerly printing messy error messages on the screen every time
+something goes wrong, it collects all such data into objects called 
+{\em reports}. These reports are then accumulated at the top level of 
+the system, where they are finally processed and printed out in 
+an appropriate format.
+
+Moreover, some of the report generation is being deferred during 
+elaboration, in order to simplify the structure of the elaborator.
+Any error information detected during elaboration is placed instead 
+into error info nodes in the abstract syntax.
+Thus after elaboration one has to browse thorough abstract syntax to 
+collect this data if there is any.
+This error info collection is done by a family of functions implemented
+in module {\tt ErrorTraverse}. For example, in order to be able 
+to extract error info from an abstract syntax tree of an {\em axiom}, we 
+added the following straightforward definition of function {\tt walk\_Ax} 
+to the {\tt ErrorTraverse} functor:
+{\small
+\begin{verbatim}
+fun walk_Ax ax =
+  case ax
+    of AXIOMax(i, axexp, ax_opt) =>
+
+         check i // walk_Axexp axexp // walk_opt walk_Ax ax_opt
+\end{verbatim}
+}
+
+
+\subsection{The EML Kit error messages}
+\label{sec:messages}
+
+Error info collected during elaboration is then converted to a {\em report}
+(which is just a printable text divided into lines of output) by means
+of {\tt reportInfo} function implemented by {\tt ErrorInfo} module.
+In order to report new types of errors which might occur after adding 
+new features to ML language, one has to add
+\begin{itemize}
+  \item new constructors to the {\tt info} datatype,
+  \item corresponding matches to {\tt reportInfo} functions to handle
+these new constructors.
+\end{itemize}
+Work on the implementation of EML static analysis described in part
+\ref{sec:elaboration} led us to 
+introduce the following error message constructors to the 
+{\tt info} datatype:
+{\small
+\begin{verbatim}
+datatype info =
+ (* Core errors: *)
+ ...
+  | SHOULD_ADMIT_EQ of TypeFcn list
+  | LOCAL_TYNAMES
+ (* General module errors: *)
+ ...
+  | AXEXP_SHOULD_BE_BOOL
+  | UNGUARD_EXPLICIT_TV_IN_AXEXP
+\end{verbatim}
+}
+These constructors are planted into info nodes of abstract syntax 
+in cases when respective errors come out during static analysis.
+Then after elaboration of erroneous phrases the following error 
+messages are issued by the system (as mentioned above, report 
+generation is done by {\tt reportInfo} function of {\tt ErrorInfo} 
+module):
+\begin{itemize}
+  \item {\tt SHOULD\_ADMIT\_EQ(tfnl)}: \\
+   {\small \tt Type function(s): <tfnl> should admit equality}
+  \item {\tt LOCAL\_TYNAMES}: \\
+   {\small \tt Local tyname(s) escape from a let expression}
+  \item {\tt AXEXP\_SHOULD\_BE\_BOOL}: \\
+   {\small \tt Axiomatic expressions must be of type bool}
+  \item {\tt UNGUARD\_EXPLICIT\_TV\_IN\_AXEXP}: \\
+   {\small \tt Unguarded explicit type variable(s) in axiomatic expression}
+\end{itemize}

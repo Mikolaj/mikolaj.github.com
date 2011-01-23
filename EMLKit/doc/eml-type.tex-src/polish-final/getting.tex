@@ -1,0 +1,202 @@
+
+\section{System EML Kit}
+\label{sec:system}
+
+\paragraph{EML Kit jest dost"epny w sieci Internet.}
+Poza wydaniem kodu "zr"o\-d"lo\-we\-go systemu EML Kit wersji 1.0,
+istnieje r"ownie"r wydanie zawieraj"ace 
+binaria dla systemu Solaris na architekturze Sun SPARC,
+oraz wydanie zawieraj"ace binaria dla systemu Linux
+na architekture i386.
+
+Wszystkie te zestawy s"a dost"epne przez anonimowe ftp z: 
+\begin{verbatim}
+ftp://zls.mimuw.edu.pl/pub/mikon/EMLKit
+\end{verbatim}
+
+Mo"rna je r"ownie"r znale"z"c na stronie domowej WWW systemu EML Kit: 
+\begin{verbatim}
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+\end{verbatim}
+
+\paragraph{EML Kit ma nast"epuj"acy copyright:}
+\begin{center}
+Copyright (C) 1993 Edinburgh and Copenhagen Universities:\\ for the ML~Kit\\
+Copyright (C) 1996, 1997 Marcin Jurdzi"nski, Miko"laj Konarski,\\ S"lawomir Leszczy"nski i Aleksy Schubert
+\end{center}
+
+EML Kit zosta"l wydany na warunkach opisanych w licencji GNU GPL, co wyja"sniaj"a i przypiecz"etowuj"a
+nas\-t"e\-pu\-j"a\-ce informacje w j"ezyku angielskim za"l"aczane do ka"rdego wydania systemu:
+\begin{quotation}  
+The EML Kit is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+The EML Kit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+\end{quotation}
+
+\pagebreak
+
+\paragraph{Autorzy systemu EML Kit s"a wdzi"eczni za wszelk"a pomoc.}
+Prace nad systemem EML Kit by"ly cz"e"sciowo wspierane przez
+nast"epuj"ace granty KBN (Komitetu Bada"n Naukowych):
+\begin{itemize}
+\item "`Formal Methods of Software Development''
+\begin{verbatim}
+http://wwwat.mimuw.edu.pl/~tarlecki/kbn93grant/index.html
+\end{verbatim}
+\item "`Logical Aspects of Software Specification and Development Methods''
+\begin{verbatim}
+http://wwwat.mimuw.edu.pl/~tarlecki/kbn96grant/index.html
+\end{verbatim}
+\end{itemize}
+
+\section{Obiekty semantyczne}
+\label{sec:semobjeml}
+
+Dziedziny prostych obiekt"ow semantycznych Semantyki Statycznej J"adra Ex\-tend\-ed~ML,
+przestawione s"a w Tabeli~\ref{simple-objects}.
+Dziedziny te: $\TyVar$, $\TyNames$ i $\StrNames$, to dowolne niesko"nczone zbiory.
+Ponadto ka"rdy $\t\in\TyNames$ posiada arno"s"c $k\geq 0$, 
+a klasa nazw typ"ow o arno"sci $k$ znaczana jest $\TyNamesk$.
+
+%\vspace{-7mm}
+\begin{figure}[h]
+%\vspace{4pt}
+\begin{displaymath}
+\begin{array}{rclr}
+\alpha\index{\alpha@{$\alpha$ (zmienne typowe)}}\ {\rm lub}\ \tyvar
+& \in   & \TyVar        & \mbox{zmienne typowe}\\
+\t\index{t (type name)}               & \in   & \TyNames\index{TyName}  & \mbox{nazwy typ"ow}\\
+\m\index{m (structure name)}            & \in   & \StrNames\index{StrName}      & \mbox{nazwy struktur}\\
+\end{array}
+\end{displaymath}
+\caption{Proste obiekty semantyczne}
+\label{simple-objects}
+%\vspace{6pt}
+\end{figure}
+
+Dziedziny z"lo"ronych obiekt"ow semantycznych Semantyki Statycznej J"a\-dra EML,
+przestawione s"a w Tabeli~\ref{compound-objects}.
+
+Gdy $A$ i $B$ s"a zbiorami, $\Fin A$ oznacza zbi"or sko"nczonych podzbior"ow $A$,
+za"s $\finfun{A}{B}$ oznacza zbi"or sko"nczonych odwzorowa"n
+(cz"e"sciowych funkcji o sko"nczonej dziedzinie) z $A$ do $B$.
+
+Dla dowolnej dziedziny obiekt"ow semantycznych $A$ definiujemy
+$\Tree{A}$ jako zbi"or sko"nczonych binarnych drzew o elementach z $A$.
+Innymi s"lowy $\Tree{A}$ jest najmniejszym rozwi"azaniem r"ownania dziedzinowego
+$$
+\Tree{A} = \{\emptylist\}\uplus
+A\uplus\{\append{x}{y}~|~x,y\in \Tree{A}\}
+$$
+
+Operacja $\uplus$ oznacza sum"e roz"l"aczn"a dziedzin.
+Zak"ladamy, "re wszystkie definiowane dziedziny s"a roz"l"aczne.
+
+%\pagebreak
+
+\begin{figure}
+%\vspace{2pt}
+\begin{displaymath}
+\begin{array}{rcl}
+        \tau\index{\tau@{$\tau$ (type)}}        
+&\in    &\Type\index{Type} = \TyVar\uplus\RecType\uplus\FunType
+                                 \uplus\ConsType\\
+ \longtauk\index{\tau k@{$\tauk$ (type vector)}}\ {\rm lub}\ \tauk
+                & \in   & \Type^k\\
+ \longalphak\ {\rm lub}\ \alphak
+                & \in   & \TyVar^k\\
+ \varrho\index{\varrho@{$\varrho$ (record type)}}
+                & \in   & \RecType\index{RecType} = \finfun{\Lab}{\Type} \\
+ \tau\rightarrow\tau'\index{\to@{$\tau\to\tau'$ (function type)}}
+                & \in   & \FunType\index{FunType} = \Type\times\Type \\
+                &       & \ConsType\index{ConsType} = \uplus_{k\geq 0}\ConsType^{(k)}\\
+        \tauk\t & \in   & \ConsType^{(k)} = \Type^k\times\TyNamesk  \\
+\typefcn\ {\rm lub}\ \typefcnk\index{\theta@{$\typefcn$ (type function)}}%
+\index{\Lambda@{$\typefcnk$ (type function)}}
+                & \in   & \TypeFcn\index{TypeFcn} = \uplus_{k\geq 0}\TyVar^k\times\Type\\
+\tych\ {\rm lub}\ \longtych
+                & \in   & \TypeScheme = \uplus_{k\geq 0}\TyVar^k\times\Type\\
+\S\ {\rm lub}\ (\m,\E)
+                & \in   & \Str = \StrNames\times\Env \\
+(\theta,\CE)    & \in   & \TyStr = \TypeFcn\times\ConEnv\\
+\SE             & \in   & \StrEnv = \finfun{\StrId}{\Str}\\
+\TE             & \in   & \TyEnv = \finfun{\TyCon}{\TyStr}\\
+\CE             & \in   & \ConEnv = \finfun{\Id}{\TypeScheme}\\
+\VE             & \in   & \VarEnv =
+\finfun{\Id}{\TypeScheme}\\
+\E\ {\rm lub}\ \longE{}
+                & \in   & \Env = \StrEnv\times\TyEnv\times\VarEnv\\
+\T              & \in   & \TyNameSets = \Fin(\TyNames)\\
+\U              & \in   & \TyVarSet = \Fin(\TyVar)\\
+\C\ {\rm lub}\ \T,\U,\E   & \in   & \Context\index{context!static semantics} =
+\TyNameSets\times\TyVarSet\times\Env\\
+\tyrea & \in & \TyRea = \TyNames\to\TypeFcn\\
+\trace & \in & \Trace = \Tree{\mbox{\SimTrace} \uplus\TraceScheme}\\
+&& \SimTrace = \Type\uplus\Env\uplus(\Context\times\Type)\uplus\phantom{\Env}\\
+&& \qquad (\Context\times\Env)\uplus(\Context\times\TyNames)\uplus\phantom{\Env}\\
+&& \qquad \TyEnv\uplus(\VarEnv\times\TyRea)\\
+&& \TraceScheme = \uplus_{k\geq 0} \TraceScheme^{(k)}\\
+\forall\alphak.\trace & \in &
+\TraceScheme^{(k)}=\mbox{TyVar}^k\times\Trace
+\end{array}
+\end{displaymath}
+\caption{Z"lo"rone obiekty semantyczne}
+\label{compound-objects}
+%\vspace{3pt}
+\end{figure}
+
+\clearpage
+
+Obiekty semantyczne Semantyki Statycznej Modu"l"ow EML
+to obiekty semantyczne Semantyki Statycznej J"adra EML,
+oraz dodatkowe obiekty semantyczne przestawione w Tabeli~\ref{module-objects}.
+
+\begin{figure}[h]
+%\vspace{2pt}
+\begin{displaymath}
+\begin{array}{rcl}
+\M              & \in   & \StrNameSets = \Fin(\StrNames)\\
+\N\ {\rm lub}\ (\M,\T)
+                & \in   & \NameSets = \StrNameSets\times\TyNameSets\\
+\sig\ {\rm lub}\ \longsig{}
+                & \in   & \Sig =  \NameSets\times\Str \\
+\funsig\ {\rm lub}\ \longfunsig{}
+                & \in   & \FunSig = \NameSets\times
+                                         (\Str\times\Sig)\\
+\G              & \in   & \SigEnv        =       \finfun{\SigId}{\Sig} \\
+\F              & \in   & \FunEnv        =       \finfun{\FunId}{\FunSig} \\
+\B\ {\rm lub}\ \N,\F,\G,\E
+                & \in   & \Basis = \NameSets\times
+                                              \FunEnv\times\SigEnv\times\Env\\
+\strrea         & \in   & \StrRea=\StrNames\to\StrNames\\
+\rea\ {\rm lub}\ \longrea{}
+                & \in   & \Rea=\TyRea\times\StrRea\\
+\trace &\in&\Trace=\Tree{\Trace_{\rm COR}\uplus\SimTrace\uplus\BoundTrace}\\
+(\N)\trace&\in&\BoundTrace=\NameSets\times\Trace\\
+&&\SimTrace = \StrNames\uplus\Rea\uplus\VarEnv\uplus\TyEnv\uplus\Env\\
+\end{array}
+\end{displaymath}
+\caption{Dalsze z"lo"rone obiekty semantyczne}
+\label{module-objects}
+%\vspace{3pt}
+\end{figure}
+
+\clearpage
+
+%\section{Przyk"ladowa elaboracja}
+%\label{sec:examplelab}
+%%%%%%%?????????????przyklad elaboracji prostego programu
+%ze srodowiskami, sladai, etc.
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

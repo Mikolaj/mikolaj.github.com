@@ -1,0 +1,317 @@
+This is TeX, Version 3.14159 (C version 6.1) (format=latex 98.5.7)  9 JUL 1998 14:53
+**\nonstopmode\input{kit-ann_1.1.tex}
+(kit-ann_1.1.tex (/usr/lib/texmf/texmf/tex/latex/base/article.cls
+Document Class: article 1996/10/31 v1.3u Standard LaTeX document class
+(/usr/lib/texmf/texmf/tex/latex/base/size12.clo
+File: size12.clo 1996/10/31 v1.3u Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+) (kit-ann_1.1.aux)
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <20.74> on input line 22.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <14.4> on input line 22.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 22.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 22.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 22.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 28.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 28.
+ [1
+
+]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 89.
+
+(/usr/lib/texmf/texmf/tex/latex/base/omscmr.fd
+File: omscmr.fd 1997/01/14 v2.5a Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 89.
+
+Overfull \hbox (2.18028pt too wide) in paragraph at lines 97--100
+\OT1/cmr/m/n/12 that it was gen-er-ated by the []\OT1/cmtt/m/n/12 CoreTrace.onS
+cheme_opt \OT1/cmr/m/n/12 func-tion. Fixed. 
+ []
+
+[2]
+Overfull \hbox (13.94191pt too wide) in paragraph at lines 110--110
+[]\OT1/cmr/bx/n/17.28 The cor-re-spon-dence over the ``Ba-sis Names''
+ []
+
+
+Overfull \hbox (29.6542pt too wide) in paragraph at lines 163--163
+[]\OT1/cmtt/m/n/10.95 In-reply-to: <Pine.SOL.3.94.970617173730.11320H-100000@du
+bh.dcs.ed.ac.uk>[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 163--163
+[]        \OT1/cmtt/m/n/10.95 (message from Ben Kleinman on Tue, 17 Jun 1997 17
+:41:24 +0100 (BST))[] 
+ []
+
+
+Overfull \hbox (41.15158pt too wide) in paragraph at lines 163--163
+[]\OT1/cmtt/m/n/10.95 The most important change looks like this (file is Module
+Environments.sml):[] 
+ []
+
+[3]
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 163--163
+[]\OT1/cmtt/m/n/10.95 The one good thing about repeating your mistakes is that 
+you know when[] 
+ []
+
+
+Overfull \hbox (18.15683pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 >> The obvious fix seems to be to replace the "+" in rule
+s 77 and 81 by[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 >> type names lurking around in the type-name component o
+f the basis;[] 
+ []
+
+
+Overfull \hbox (41.15158pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 >> signature has been dealt with, but even if they stayed
+ there for ever it[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 mikon> I might have been wrong in saying, that in the SML
+ Definition[] 
+ []
+
+[4]
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 I don't think you were wrong, although strictly speaking 
+it does not[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 mikon> The solution might be to pass the set of rigid str
+ucture names[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 In other words: one doesn't change the number of paramete
+rs of other[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 unification and instead check posthumously (after the who
+le signature[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 mikon> I would rather implement the (C of B enriched with
+ names of B)[] 
+ []
+
+
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 But that's just the implementation perspective, i.e. what
+ do you do in[] 
+ []
+
+[5]
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 any difference overall between both ways of doing it (con
+sidering that[] 
+ []
+
+
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 I'm an atheist -- praying for their equivalence probably 
+wouldn't help).[] 
+ []
+
+
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 is a bit awkward to compute, or is this info neatly avail
+able via some[] 
+ []
+
+
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 mikon> as much as possible and reasonable of the original
+ SML Definition[] 
+ []
+
+
+Overfull \hbox (41.15158pt too wide) in paragraph at lines 246--246
+[]\OT1/cmtt/m/n/10.95 mikon> the solution which changes only rule 61.2 might be
+ quite acceptable.[] 
+ []
+
+
+Overfull \hbox (35.4029pt too wide) in paragraph at lines 332--332
+[]\OT1/cmtt/m/n/10.95 In-reply-to: <6193.199706191522@kishorn.dcs.ed.ac.uk> (me
+ssage from Stefan[] 
+ []
+
+
+Overfull \hbox (35.4029pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > Alas, we didn't define what we should have defined, s
+o there is indeed[] 
+ []
+
+
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > The obvious fix seems to be to replace the "+" in rul
+es 77 and 81 by[] 
+ []
+
+
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > type names lurking around in the type-name component 
+of the basis;[] 
+ []
+
+[6]
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > signature has been dealt with, but even if they staye
+d there for ever it[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 332--332
+[]\OT1/cmtt/m/n/10.95 the solution which changes only rule 61.2 might be quite 
+acceptable.[] 
+ []
+
+
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > is when principality is imposed: we abstract all type
+ names that are[] 
+ []
+
+
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > not in the T of B component.  This is still correct, 
+but after the[] 
+ []
+
+
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > change it is now important that it is the T component
+ of the basis[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > _before_ the elaboration of the signature expression 
+took place.[] 
+ []
+
+
+Overfull \hbox (35.4029pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > BTW the problem also causes soundness hickups, becaus
+e datatypes local[] 
+ []
+
+[7]
+Overfull \hbox (29.6542pt too wide) in paragraph at lines 332--332
+[]  \OT1/cmtt/m/n/10.95 > to axioms could be freely identified with specified (
+non-rigid) types[] 
+ []
+
+
+Overfull \hbox (29.6542pt too wide) in paragraph at lines 446--446
+[]\OT1/cmtt/m/n/10.95 In-reply-to: <Pine.SOL.3.94.970617173730.11320H-100000@du
+bh.dcs.ed.ac.uk>[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 446--446
+[]        \OT1/cmtt/m/n/10.95 (message from Ben Kleinman on Tue, 17 Jun 1997 17
+:41:24 +0100 (BST))[] 
+ []
+
+
+Overfull \hbox (35.4029pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 > This, we think, is a bug in the EML kit.  Of course, 
+we're hoping it's[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 > The following signature (Which no longer does what th
+e comments claim it[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 > chf,cht,...,x,y are explicitly universally quantified
+ only in an attempt[] 
+ []
+
+[8]
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 > (* should this perhaps be a functor parameterized on 
+the CHAR struct? *)[] 
+ []
+
+
+Overfull \hbox (29.6542pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 >     (* intended to return the longest prefix of a giv
+en list matching[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 446--446
+[]  \OT1/cmtt/m/n/10.95 >     axiom forall chs => forall reg => forall chf => f
+orall cht => forall[] 
+ []
+
+[9]
+Overfull \hbox (12.40814pt too wide) in paragraph at lines 446--446
+[]\OT1/cmtt/m/n/10.95 The one good thing about repeating your mistakes is that 
+you know when[] 
+ []
+
+[10] (kit-ann_1.1.aux) ) 
+Here is how much of TeX's memory you used:
+ 274 strings out of 10906
+ 2828 string characters out of 72188
+ 48732 words of memory out of 262141
+ 3209 multiletter control sequences out of 9500
+ 10397 words of font info for 38 fonts, out of 150000 for 255
+ 14 hyphenation exceptions out of 607
+ 31i,11n,21p,177b,338s stack positions out of 300i,40n,60p,3000b,4000s
+
+Output written on kit-ann_1.1.dvi (10 pages, 19784 bytes).

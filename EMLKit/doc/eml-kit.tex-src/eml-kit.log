@@ -1,0 +1,171 @@
+This is TeX, Version 3.1415 (C version 6.1) (format=latex 96.4.25)  28 MAY 1996 15:59
+**eml-kit.tex
+(eml-kit.tex
+LaTeX2e <1995/12/01> patch level 2
+Hyphenation patterns for english, polish, loaded.
+(rinf.cls
+Document Class: rinf 1995/12/11 v0.2 IInf UW Tech Rep document class
+(/usr/local/lib/texmf/tex/latex2e/base/article.cls
+Document Class: article 1995/12/20 v1.3q Standard LaTeX document class
+(/usr/local/lib/texmf/tex/latex2e/base/size11.clo
+File: size11.clo 1995/11/30 v1.3p Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+) (rin11.clo
+File: rin11.clo 1995/12/11 v0.2 IInf UW Tech Rep file (size option)
+)
+Class rinf Info: odd side margin set to -26.0pt on input line 64.
+Class rinf Info: even side margin set to -4.0pt on input line 65.
+)
+(/usr/local/lib/texmf/tex/latex2e/contrib/tools/longtable.sty
+Package: longtable 1994/06/30 v3.12 Multi-page Table package (DPC)
+\LTleft=\skip43
+\LTright=\skip44
+\LTpre=\skip45
+\LTpost=\skip46
+\LTchunksize=\count87
+\LTcapwidth=\dimen103
+\LT@head=\box26
+\LT@firsthead=\box27
+\LT@foot=\box28
+\LT@lastfoot=\box29
+\LT@cols=\count88
+\LT@rows=\count89
+\c@LT@tables=\count90
+\LT@p@ftn=\toks15
+) (mac.tex)
+(emlmacros.tex) (eml-kit.aux (preface.aux) (intro.aux) (parsing.aux) (elab.aux)
+(misc.aux) (release.aux) (bib.aux))
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+ (in1tyt225.tex
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <10.95> on input line 18.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 18.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 18.
+ [1
+
+]) (eml-kit.toc [0]
+[1])
+\tf@toc=\write3
+ [2] (preface.tex
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 48.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 48.
+ [1
+
+]) [2] (intro.tex [3
+
+
+]) [4] (parsing.tex
+Underfull \hbox (badness 10000) in paragraph at lines 61--65
+
+ []
+
+[5
+
+
+] [6]
+Underfull \hbox (badness 10000) in paragraph at lines 150--153
+
+ []
+
+[7] [8]
+Overfull \hbox (5.35391pt too wide) in paragraph at lines 291--298
+\OT1/cmr/m/n/10.95 Analogously we ruled out some non-ter-mi-nals han-dled by no
+n-ter-mi-nals with \OT1/cmtt/m/n/10.95 bullets \OT1/cmr/m/n/10.95 and \OT1/cmtt
+/m/n/10.95 questionmarks
+ []
+
+[9] [10] [11] [12]
+Underfull \hbox (badness 10000) in paragraph at lines 559--561
+[]|\OT1/cmr/m/n/10.95 handled by \OT1/cmtt/m/n/10.95 AtExpbullet \OT1/cmr/m/n/1
+0.95 and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--563
+[]|\OT1/cmr/m/n/10.95 handled by \OT1/cmtt/m/n/10.95 ExpRowbullet \OT1/cmr/m/n/
+10.95 and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 563--565
+[]|\OT1/cmr/m/n/10.95 handled by \OT1/cmtt/m/n/10.95 AtExp[]seq1bullet \OT1/cmr
+/m/n/10.95 and
+ []
+
+
+Underfull \hbox (badness 4492) in paragraph at lines 563--565
+\OT1/cmtt/m/n/10.95 AtExp[]seq1questionmark \OT1/cmr/m/n/10.95 and then by in-
+ []
+
+[13] [14]
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 8 on input line 708.
+
+[15]) [16] (elab.tex [17
+
+
+] [18] [19] [20] [21] [22]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 435.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 459.
+
+
+(/usr/local/lib/texmf/tex/latex2e/base/OMScmr.fd
+File: OMScmr.fd 1995/12/04 v2.4e Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 459.
+ [23] [24] [25] [26]) [27]
+(misc.tex [28
+
+
+]
+Underfull \vbox (badness 1122) has occurred while \output is active []
+
+ [29]
+[30] [31] [32]) [33] (release.tex [34
+
+
+] [35]) [36] (bib.tex) [37
+
+
+] (eml-kit.aux
+(preface.aux) (intro.aux) (parsing.aux) (elab.aux) (misc.aux) (release.aux)
+(bib.aux)) ) 
+Here is how much of TeX's memory you used:
+ 1342 strings out of 10910
+ 10819 string characters out of 72432
+ 65301 words of memory out of 262141
+ 4098 multiletter control sequences out of 9500
+ 16092 words of font info for 51 fonts, out of 100000 for 255
+ 28 hyphenation exceptions out of 607
+ 27i,11n,23p,204b,442s stack positions out of 300i,40n,60p,3000b,4000s
+
+Output written on eml-kit.dvi (41 pages, 156336 bytes).

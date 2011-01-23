@@ -1,0 +1,88 @@
+Here is an attempt to explain Dule to a literate ML programmer,
+(that emerged in a discussion with Mariusz Rak).
+I hope, finally the link between lack of exponential objects
+and one-name one-meaning principle is made clear.
+
+Executive summary:
+1. ML functors are OK for keeping modules really abstract.
+2. However, you have to write lots of sharing equations.
+3. Type abbreviation, sharing equations, etc., fail in practice.
+4. Instead of functor application, use module categorical composition!
+5. With no exponential objects, every module is consumed when applied. 
+6. In the ensuing one-name one-meaning module system, sharing is trivial.
+7. Profit!
+
+The real thing:
+
+1. Parameterization (as in SML or OCaml) of a module is an accurate
+way of conveying the notion that the module is independent from the
+implementation details of other modules. The compiler itself assures
+that the module can only refer to the interfaces of parameters, 
+and so the module cannot assume a particular implementation of types 
+defined in the parameters.
+
+2. Parameterization with totally abstract interfaces does not suffice
+for modular programming, due to very frequent and interacting cases,
+where the programmer actually has to break through the abstraction
+barrier. As a rule, the programmer needs to known the identity of most 
+of the types coming from parameters, or more precisely, their equality 
+to the types from other parameters (type sharing). Otherwise, 
+the programmer cannot compose functions from different parameters.
+
+3. Existing methodologies for managing type sharing for parameterized
+modules do not scale. In SML and OCaml the programmer uses various
+kinds of sharing specifications accompanying the parameter interfaces. 
+In large programs with very fine-grained modularization, sharing 
+specifications are longer than the code of the implementation of a module. 
+Consequently, the module headers are hard to debug and they obscure 
+any non-trivial modular phenomena (e.g., multiple interfaces 
+for a single module or a type that is totally abstract in all
+but a few modules that use it).
+
+4. Dule is based on a different mechanism for expressing autonomy
+of modules. Instead of a parameterized module, that is a function from
+a cartesian product of sets of modules into a set of modules, we take
+a categorical morphism from a product of objects to an object. This is
+only a mild generalization, but here comes the difference: instead of
+the (lambda-calculus inspired) powerful set of operations for applying
+a function (a module) to its arguments, Dule is based on composition
+of categorical morphisms and the set of product operations needed to
+gather arguments together before composition.
+
+5. Categorical composition is obviously not commutative, 
+but in the absence of exponential object, its operands differ 
+also in their relation to outside "environment". Product operations 
+allow the operand corresponding to function arguments to be expanded 
+(refer to the environment) even when already engaged in the composition, 
+while the operand corresponding to the function body has all its 
+"expansion slots" filled with the arguments. Thus, once a module 
+is composed with its arguments, it is fixed and "consumed"; 
+it cannot be cloned (via product operations) to be composed 
+with other arguments, nor can it be extended with any modules 
+from the environment, which could be cloned and used elsewhere. 
+On the other hand, the result of the composition can be cloned 
+and used as arguments in many outer compositions (so arguments 
+are not consumed).
+
+6. Such immutable, one-time module composition naturally leads 
+to a module system with one-name one-meaning property.
+Dule is such a module system, created by augmenting the simple 
+categorical model with module identifiers as labels of finite products,
+a name-oriented sublanguage for defining module interfaces 
+and a lot of syntactic sugar. Sharing specifications are unneeded
+in Dule, because modules (and so types) are assumed equal, if only their
+names are equal. In the rare cases of an unintentional name clash, 
+modules can be trivially renamed using the product operations, 
+with convenient syntactic sugar for both modules and interfaces.
+Equally rare cases of sharing violation seldom involve more
+than three nodes of the module hierarchy.
+
+7. Conventional parameterized modules are still useful in their role 
+as libraries or generic modules, e.g. a module of sets or a module 
+of maps. The categorical approach requires an exponential object 
+to capture such functionality. However, an exponential object, 
+even if it would exist in the categories in question, clashes 
+with the simplicity of modular interdependencies. Dule has parameterized 
+modules as a separate, non-categorical language extension that uses
+the module renaming idioms to locally disrupt the one-name one-meaning 
+principle.

@@ -1,0 +1,661 @@
+(* Copyright (C) 2003--2006 Mikolaj Konarski, Lukasz Kozuchowski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: tutorial_core.dul,v 1.3 2006-11-08 19:00:18 mikon Exp $
+ *) 
+
+(* These are the example core values from the Dule tutorial. *)
+
+{c1 = 
+let rec fib = fun ~n ->
+  if Nat.leq ~n ~it:1 then 1
+  else Nat.add ~n:(fib ~n:(Nat.sub ~n ~it:1)) 
+               ~it:(fib ~n:(Nat.sub ~n ~it:2))
+in 
+let n = fib ~n:4 in
+assert Nat.eq ~n ~it:5 in
+n
+; c2 = 
+let disj = fun ~b ~it -> 
+  match it with [`True -> `True
+                |`False -> b]
+in 
+let b = disj ~b:`True ~it:`False
+in
+assert b
+in
+assert disj ~b:`True ~it:`True
+in
+assert disj ~b:`False ~it:`True
+in
+assert Bool.neg ~it:(disj ~b:`False ~it:`False)
+in
+b
+; c3 =
+let disj = 
+  [`True fun ~b ~it -> `True
+  |`False fun ~b ~it -> b]
+in 
+let b = disj ~b:`True ~it:`False
+in
+assert b 
+in
+assert disj ~b:`True ~it:`True 
+in
+assert disj ~b:`False ~it:`True 
+in
+assert Bool.neg ~it:(disj ~b:`False ~it:`False) 
+in
+b
+; c4 =
+let fib = fun ~n ->
+  let {this; next} = (* n and n+1 Fibonacci numbers *)
+    match n with 
+    fold [`Zero -> {this = 1; next = 1}
+         |`Succ {this; next} -> 
+	     {this = next;
+	      next = Nat.add ~n:this ~it:next}]
+  in this
+in
+let n = fib ~n:7 in
+assert Nat.eq ~n ~it:21 in
+n
+; c5 =
+let b = Bool.conj ~b:`True ~it:`False in
+assert Bool.conj ~b:`True ~it:`True in
+assert Bool.neg ~it:b in
+b
+; c7 = 
+let f = fun ~b -> if b then 7 else 5
+in
+assert Nat.eq ~n:(f ~b:`True) ~it:7 
+in
+assert Nat.eq ~n:(f ~b:`False) ~it:5 
+in
+f
+; c8 =
+let _ = Bool.conj ~b:`True ~it:(`False . : [`True|`False]) in
+let seven = 7 . : ind t: [`Zero|`Succ t] in
+fun ~b -> 
+  let _ = b . : [`True|`False] in
+  if b then seven else 0
+; c9 =
+let r =
+(if Nat.is_zero ~it:1 then `Z else `N)
+  . {z1 = : [`N|`Z]; z2 = : [`N|`Z]; z3 = `N; 
+     zr = {z1 = `Z; z2 = : [`N|`Z]}}
+in
+let b =
+  match r.z3 with
+  [`N -> `True
+  | _ -> `False]
+in
+assert b 
+in
+r     
+; c10 =
+let the_same_z = if Nat.is_zero ~it:1 then `Z else `N in
+    {z1 = the_same_z; z2 = the_same_z; z3 = `N; 
+     zr = {z1 = `Z; z2 = the_same_z}}
+; c11 =
+`True . (: [`True]).(: [`True]) . : [`True]
+; c12 =
+let v =
+{ready = `True; speed = 3; color = `Red} . speed
+in
+assert Nat.eq ~it:v ~n:3 
+in
+v
+; c13 =
+let v =
+Nat.add ~n:(Nat . pred ~n:1) ~it:5
+in
+assert Nat.eq ~it:5 ~n:v 
+in
+v
+; c14 =
+let plus_one = Nat . fun ~n -> add ~n:(succ ~n:zero) ~it:n in
+let v = plus_one ~n:4
+in
+assert Nat.eq ~n:v ~it:5 
+in
+plus_one
+; c15 =
+{strong = {} .`True; args = `Nil . con} .`OK
+; c16 =
+let ones = (unfold tail -> {head = 1; tail}) ~it:{} in
+let v = ones . unde . tail . unde . head
+in
+assert Nat.eq ~n:v ~it: (Nat.succ ~n:Nat.zero) 
+in
+v
+; c17 =
+{b = `True; t = {}} . : {b : [`True|`False]; t : {}}
+; c18 =
+{} . (: {})
+  . {t = `C} . (: {t : [`C]})
+    . fun ~(x:[`A]) -> 
+        (: {t : [`C]; x : [`A]})
+          . (let w = t in 
+            : {w : [`C]; t : [`C]; x : [`A]})
+; c19 =
+let r =
+{r1 = {a = 1; b = 2; c = 3};
+ r2 = {a = 1; b = 2; c = 3} . {a = a; b = b; c = c};
+ r3 = {a = 1; b = 2; c = 3} . {a = a; b; c};
+ r4 = {a = 1; b = 2; c = 3} . {a; b; c}}
+in
+assert Bool.conj ~b:(Nat.eq ~n:r.r1.a ~it:r.r3.a)
+                 ~it:(Nat.eq ~n:r.r1.b ~it:r.r3.b) 
+in
+r
+; c20 =
+let f =
+fun ~a ~b ~c ~d -> 
+  {a; b; c; g = 1} . {a; h = {a; g}; z = `OK}
+in
+let r = f ~a:1 ~b:2 ~c:3 ~d:4
+in
+assert Nat.eq ~n:r.h.g ~it:r.a 
+in
+f
+; c21 =
+fun ~a ~b -> 
+  let a = {a = {b = {a}}; b = a} in
+  a . a . b . a
+; c22 =
+1 .`OK . : [`OK ind t: [`Zero|`Succ t]|`Error]
+; c23 =
+1 .`OK . : [`OK ind t: [`Zero|`Succ t]]
+; c24 =
+{} .`Error . : [`OK ind t: [`Zero|`Succ t]|`Error]
+; c25 =
+1 . {ok = (: ind t: [`Zero|`Succ t]) .`OK}
+; c26 =
+let case_exp = 
+  [`OK fun ~it:n -> n
+  |`Error fun ~it:_ -> 0]
+in
+let v = case_exp ~it:`Error
+in
+assert Nat.eq ~it:0 ~n:v 
+in
+v
+; c262 =
+let f =
+[`A -> `True |`B -> `True |`C -> `True
+|_ -> `False]
+in
+assert f ~it:`A 
+in
+f
+; c263 =
+[`A -> `True |`B -> `True |`C -> `True
+|`a -> `False|`b -> `False|`c -> `False]
+; c264 =
+fun ~it:_ -> 0
+; c265 =
+[`Nil -> 0
+|`Cons _ -> 1]
+; c266 =
+[`Nil -> 0
+|`Cons {head; tail} -> head]
+; c267 =
+fun ~it:{head; tail} -> head
+; c268 =
+fun ~it -> it.head
+; c27 =
+let list_map = fun ~f ~l -> 
+  (map f) ~it:l
+in
+list_map 
+  ~f:Char.upper
+  ~l:(CharList.cons ~head:(Char.tcon ~it:`a) ~tail:CharList.nil)
+; c28 =
+let tree_map = fun ~f ~t -> 
+  (map f) ~it:t
+in
+let t = 
+  {valu = 0; 
+   left = `Empty . con; 
+   right = `Empty . con} .`Node . con
+in
+tree_map ~f:Nat.is_zero ~t
+; c31 =
+let negate_stream =
+      map [`True -> `False
+          |`False -> `True]
+    falsities = 
+      (unfold tail -> {head = `False; tail}) ~it:{}
+in
+let truths = negate_stream ~it:falsities in
+let b = truths . unde . head in
+assert b in
+b
+; c32 =
+match {b = `False; n = 0; 
+       r = {rn = 5; ro = `OK}} with
+map Nat.is_zero
+; c33 =
+let r =
+let incr =
+  (map n -> Nat.succ ~n)
+in
+{n1n2 = incr ~it:{n1 = 5; n2 = 7; b = `True} .`Two;
+ n = incr ~it:13 .`One}
+in
+let b =
+  match r.n1n2 with
+  [ `Two r2 -> Nat.eq ~it:r2.n2 ~n:8
+  | _ -> `False ]
+in
+assert b
+in
+r
+; c34 =
+`Zero . con .`Succ . con . : ind t: [`Zero|`Succ t]
+; c35 =
+let pred = fun ~n ->
+  match n . de with
+  [`Succ n_1 -> n_1
+  |`Zero -> n]
+in
+let n = pred ~n:`Zero . con in
+assert Nat.eq ~n ~it:0 in
+n
+; c36 =
+let rec add = fun ~n ~it ->
+  match n . de with
+  [`Zero -> it
+  |`Succ n_1 -> add ~n:n_1 ~it .`Succ . con]
+in
+let n = add ~n:1 ~it:2 in
+assert Nat.eq ~n ~it:3 in
+n
+; c37 =
+let add = fun ~n ~it ->
+  match n with
+  fold [`Zero -> it
+       |`Succ nn -> nn .`Succ . con]
+in
+let n = add ~n:1 ~it:2
+in
+assert Nat.eq ~it:3 ~n 
+in
+n
+; c38 =
+let v =
+fun ~tree ->
+  (fold -> 3) ~it:tree
+in
+let t =
+   {valu = 0; 
+    left = `Empty . con; 
+    right = `Empty . con} .`Node . con
+in
+assert Nat.eq ~it:(v ~tree:t) ~n:3
+in
+v
+; c39 =
+let f =
+fun ~l ->
+  match l with
+  fold [`Nil -> `Nil
+       |`Cons ht -> ht . {head; tail = tail . con} .`Cons] 
+in
+let list = {head = 7; tail = `Nil . con}. `Cons. con
+in
+let list2 = f ~l:list
+in
+let b =
+  match list2 with
+  [`Cons ht -> Nat.eq ~it:ht.head ~n:7
+  | _ -> `False]
+in
+assert b
+in
+f
+; c40 =
+let f =
+let non_nil_eq = fun ~it -> fun ~l -> 
+  match l . de with
+  [`Nil -> Bool.ff
+  |`Cons lht ->
+      let head_matches = Char.eq ~c:it.head ~it:lht.head
+          tail_equal = it.tail ~l:lht.tail in
+      Bool.conj ~b:head_matches ~it:tail_equal]
+in
+fun ~it ~l -> 
+  ((fold [`Nil -> CharListOps.is_nil
+         |`Cons non_nil_eq]) ~it) ~l
+in
+let list1 = {head = 10; tail = `Nil . con}. `Cons. con
+    list2 = {head = 10; 
+    tail = ({head = 10; tail = `Nil . con}. `Cons. con)}.`Cons.con
+in
+assert Bool.neg ~it:(f ~it:list1 ~l:list2)
+in
+f
+; c41 =
+let v =
+`coZero . uncon .`coSucc . uncon
+in
+let b = match v.unde with
+        [`coSucc v2 -> match v2.unde with
+                       [`coSucc _ -> `False
+                       |`coZero -> `True]
+        | _ -> `False]
+in
+assert b
+in
+v
+; c42 =
+let inf =
+match {} with
+unfold cn -> cn .`coSucc 
+in
+let rec number = fun ~n ~it ->
+    if Nat.eq ~n ~it:0 then
+      `True
+    else
+      match it.unde with
+      [`coSucc it2 -> number ~n:(Nat.sub ~n ~it:1) ~it:it2
+      | _ -> `False]
+in
+assert number ~n:10 ~it:inf
+in
+inf
+; c43 =
+let f =
+fun ~n ~it ->
+  match {n; it} with
+  unfold {n; it} -> 
+    match n . unde with
+    [`coZero -> 
+       match it . unde with
+       [`coZero -> `coZero
+       |`coSucc it -> {n; it} .`coSucc]
+    |`coSucc n -> {n; it} .`coSucc]
+in
+let three = f ~n:`coZero.uncon.`coSucc.uncon
+          ~it:`coZero.uncon.`coSucc.uncon.`coSucc.uncon
+    rec is_n =
+         fun ~it ~n ->
+            match it.unde with
+            [`coZero -> Nat.eq ~it:0 ~n
+            |`coSucc it2 -> 
+                if (Nat.eq ~it:0 ~n) then
+                  `False
+                else 
+                  is_n ~it:it2 ~n:(Nat.sub ~n:n ~it:1)]
+in
+assert is_n ~it:three ~n:3
+in
+f
+; c44 =
+let rec add = fun ~n ~it ->
+  match n . unde with
+  [`coZero -> it
+  |`coSucc n_1 -> add ~n:n_1 ~it .`coSucc . uncon]  
+in
+let zero = add ~n:`coZero . uncon ~it:`coZero . uncon
+    one = `coZero . uncon. `coSucc. uncon
+in
+let r = add ~n:one ~it:one
+in
+let rec is_n =
+         fun ~it ~n ->
+            match it.unde with
+            [`coZero -> Nat.eq ~it:0 ~n
+            |`coSucc it2 -> 
+                if (Nat.eq ~it:0 ~n) then
+                  `False
+                else 
+                  is_n ~it:it2 ~n:(Nat.sub ~n:n ~it:1)]
+in 
+let b1 = is_n ~it: zero ~n: 0
+    b2 = is_n ~it: r ~n: 2
+in
+assert Bool.conj ~it:b1 ~b:b2
+in
+r
+; c45 =
+fun ~sublist ->
+  let third = fun ~l ->
+    let _ = 
+      sublist 
+        . : ~l:ind t: [`Nil|`Cons {head : [`True|`False]; tail : t}]
+            ~pos:ind t: [`Zero|`Succ t] 
+            ~len:ind t: [`Zero|`Succ t] 
+              -> ind t: [`Nil|`Cons {head : [`True|`False]; tail : t}] 
+    in
+    sublist ~l ~pos:3 ~len:1
+  in 
+    third ~l:`Nil . con
+; c47 =
+let f =
+fun ~add ~n1:_ ~n2:important_n ~n3:_ ->
+  add ~n:important_n ~it:important_n
+in
+assert Nat.eq ~it: (f ~add:(Nat.add) ~n1:`Nil ~n2:2 ~n3:`A) ~n:4
+in
+f
+; c48 =
+let f =
+fun ~add ~n1:_ ~n2:nnn ~n3:_ ->
+  add ~n:nnn ~it:nnn
+in
+assert Bool.neg ~it:
+         (f ~add: (fun ~it ~n -> Bool.disj ~it ~b:n)
+            ~n1:`Nil
+            ~n2:`False
+            ~n3:`A)
+in
+f
+; c49 =
+let thunk = fun -> 1 in
+let _ = thunk . : (-> ind t: [`Zero|`Succ t]) in
+let n = thunk ~ in
+assert Nat.eq ~n ~it:1 in
+n
+; c50 =
+let f =
+fun ~n ~add ->
+  let it = 3 in
+  add ~n ~it:(add ~it ~n:2)
+in
+assert Nat.eq ~it:(f ~n:2 ~add:Nat.add) ~n:7
+in
+f
+; c51 =
+let f = fun ~x -> fun ~y1 ~y2 -> fun ~z -> x in
+((f ~x:{}) ~y2:2 ~y1:1) ~z:3
+; c52 =
+let ff =
+let f = fun ~a ~b1 ~b2 ~d -> a in
+f(~d:3 ~b1:1)
+in
+assert Nat.eq ~it:6 ~n:(ff ~a:6 ~b2:7)
+in
+ff
+; c53 =
+let ff =
+let f = fun ~a ~b1 ~b2 ~d -> a in
+fun ~a ~b2 -> f ~a ~b2 ~b1:1 ~d:3
+in
+assert Nat.eq ~it:(ff ~a:8 ~b2:3) ~n:8
+in
+ff
+; c54 =
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let fb1 = f(~b1:1) in
+let r = fb1 (~a:{}) (~d:3) ~b2:2 in
+r . : {}
+; c55 =
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let r = f(~a:{} ~d:3 ~b2:2 ~b1:1) in
+r . : (-> {})
+; c56 =
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let r = f(~a:{} ~d:3 ~b2:2 ~b1:1) in
+r ~ . : {}
+; c57 =
+let b =
+(unfold -> `True) ~it:5
+in
+assert b.unde
+in
+b
+; c58 =
+let b =
+  match 5 with (unfold -> `True)
+in
+assert b.unde
+in
+b
+; c59 =
+let b =
+  match (Nat.pred ~n:(Nat.add ~n:1 ~it:2)) . de with
+  [`Zero -> `True
+  |`Succ -> `False]
+in
+assert Bool.neg ~it:b
+in
+b
+; c60 =
+let one = 1 
+    two = 2
+in 
+let three = Nat.add ~n:one ~it:two
+in
+assert Nat.eq ~it:three ~n:3
+in
+three
+; c61 =
+let three = 
+(fun ~one ~two ->
+  Nat.add ~n:one ~it:two)
+  ~one:1 ~two:2
+in
+assert Nat.eq ~it:three ~n:3
+in
+three
+; c62 =
+let r =
+let b : [`True|`False] = `True
+    _ = fun ~unimportant -> unimportant
+    {t; f} = {} . {t = : {}; f = {}}
+in 
+{b; t}
+in
+assert r.b
+in
+r
+; c63 =
+let v =
+let rec exhaust = fun ~cn ->
+  match cn . unde with
+  [`coZero -> Nat.zero
+  |`coSucc cn -> Nat.succ ~n:(exhaust ~cn)]
+in
+exhaust ~cn:`coZero . uncon .`coSucc . uncon
+in
+assert Nat.eq ~it:v ~n:1
+in
+v
+; c64 =
+let v =
+let rec rab = {a = rab.b; b = `b} in
+let rec rf = {f = fun ~x -> rf.g ~x; 
+              g = fun ~x -> `c} in 
+rf.f ~x:rab.a
+in
+assert Nat.eq ~n:(Char.tcon ~it:v) ~it: 99
+in
+v
+; c645 =
+let f =
+fun ~n ->
+  assert Nat.leq ~n ~it:9 in
+  let m = Nat.succ ~n in
+  assert Bool.neg ~it:(Nat.is_zero ~it:m) in
+  Nat.add ~n ~it:m
+in
+assert Nat.eq ~it:(f ~n:7) ~n:15
+in
+f
+; c65 =
+let cons__avoid_duplicates =
+  let is_in = fun ~n ~l ->
+    let in_tail_or_check_head = fun ~it:{head; tail} ->
+      match tail with
+      [`True -> `True
+      |`False -> Nat.eq ~n ~it:head]
+    in
+      match l with
+      fold [`Nil -> `False
+           |`Cons in_tail_or_check_head]
+  in
+    fun ~n ~l -> 
+      assert Bool.neg ~it:(is_in ~n ~l) in
+      {head = n; tail = l} .`Cons . con
+in
+let r =
+cons__avoid_duplicates ~n:1 ~l:`Nil . con
+in
+let b = match r.de with
+        [`Cons r -> Nat.eq ~it:r.head ~n:1
+        | _ -> `False]
+in
+assert b
+in
+r
+; c67 =
+let f =
+fun ~b ->
+  match Bool.disj ~b ~it:`True with
+  [`True -> 1
+  |`False fail]
+in
+assert Nat.eq ~it:(f ~b:`False) ~n:1
+in
+f
+; c68 =
+let v =
+let intlist = {h = 1; 
+               t = {h = 2; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap =
+     (map fun ~it -> {x = it; y = it}) ~it:intlist
+  ;boolmap = 
+     (map fun ~it -> {x = it; y = it}) ~it:boollist
+  ;intmap2 =
+     monomorphic_map ~it:intlist
+  (* 
+this would be incorrect:
+  ;boolmap2 = 
+    monomorphic_map ~it:boollist
+  *)
+  }
+in r . : {intmap : ind t: [`Nil|`Cons {h : ind nat: [`Zero|`Succ nat]; t : t}]; boolmap : ind t: [`Nil|`Cons {h : {x : [`True|`False]; y : [`True|`False]}; t : t}]; intmap2 : ind t: [`Nil|`Cons {h : {x : ind nat: [`Zero|`Succ nat]; y : ind nat: [`Zero|`Succ nat]}; t : t}]}
+in
+let b = match v.intmap.de with
+        [`Cons im -> match v.intmap2.de with
+                     [`Cons im2 -> Nat.eq ~it: im.h ~n:im2.h.y
+                     | _ -> `False]
+        | _ -> `False]
+in
+assert b
+in
+v
+}

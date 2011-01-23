@@ -1,0 +1,3 @@
+Er = 
+:: ~M : sig value u : ~i:{} ~j:{} -> {} end -> sig value v : {} end
+  struct value v = M.u (~j:{}) (~i:{}) (* ~ needed here *) end

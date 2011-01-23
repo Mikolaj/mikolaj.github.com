@@ -1,0 +1,61 @@
+The README for The EML Kit 1.1 Sources Release
+
+(if you run i386 (Linux) or Sun SPARC (Solaris), you may consider 
+getting one of the Binaries Releases instead/additionally)
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+1. The EML Kit 1.1 Sources Release is available 
+through anonymous ftp from zls.mimuw.edu.pl. 
+The archive containing the release is called 
+eml11-src.tar.gz and resides in the /pub/mikon/EMLKit directory.
+There is also a link to this file from our home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+The documentation is available separately from
+the /pub/mikon/EMLKit/doc ftp directory or by WWW.
+
+To install the EML Kit first ungzip and untar the archive.
+It should contain:
+README - info about the EML Kit 1.1
+CHANGES - a list of changes to the EML Kit from version 1.0 to 1.1.
+COPYING - text of the GNU General Public License
+README.eml11-src - this file
+examples/ - some EML examples
+src/ - SML source code of the EML Kit
+tools/ - compilation tools
+
+Now, you should prepare a version of the SML/NJ 
+with Edinburgh Library loaded. Name it "sml-ed" 
+and place it in the directory above the directory 
+you unpacked the archive into.
+Alternatively you may change the NJSML variable 
+in the Makefile located in src directory,
+to reflect the name and location of the SML/NJ executable.
+The SML/NJ and the Edinburgh Library can be obtained from 
+ftp://ftp.research.bell-labs.com/dist/smlnj/release/93
+The Edinburgh Library is inside "contributed" archive. 
+
+(We have found lately, that you may need to type 
+"fun require a = ()", before saving the image "sml-ed". 
+Why? If you know why, please, let us know :)
+
+Then cd to the src directory.
+Type "make" or "make emlkit-int-NJ", to make an interpreter
+with the ML Kit style user interface.
+Type "make emlkit-eml-NJ" for a SML/NJ-like user interface.
+Type "make emlkit-batch-NJ" for the batch interpreter.
+Warning: the compilation will probably take more 
+than 10 minutes on any machine with 64 Mb or less. 
+
+2. The EML Kit is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the eml11-src.tar.gz archive.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

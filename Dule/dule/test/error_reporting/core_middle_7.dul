@@ -1,0 +1,5 @@
+Er = 
+:: sig value v : ~it:{} -> [] end
+  struct 
+    value v = map it -> map it
+  end

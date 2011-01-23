@@ -1,0 +1,3 @@
+spec M = sig type t end
+
+M = struct type t = {list : {}} . list end

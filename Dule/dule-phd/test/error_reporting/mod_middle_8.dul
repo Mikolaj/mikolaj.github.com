@@ -1,0 +1,17 @@
+Sh_InstPpRemMod3 =  
+  {M1 = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {M2 = :: ~M1 : sig type t value v : t end -> 
+            sig
+              type t 
+              value v2 : M1.t 
+            end 
+       struct type t = M1.t value v2 = M1.v end}
+  . 
+  :: ~M2 : ~M1 : sig type t value v : t end -> sig
+            type t 
+            value v2 : M1.t 
+          end ->
+       sig value n : M2.t end
+  struct value n = M2.v2 end

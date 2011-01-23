@@ -1,0 +1,37 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    privar n : int ;
+    privar j : int ;
+    privar k : int
+
+if input >= 0 ->
+
+    n :vir= input ;
+    j :vir= 1 ;
+    k :vir= 1 ;
+    do n > 1 -> begin
+
+		    pricon aux : int ;
+		    glovar j ;
+		    glovar k 
+
+		    aux :vir= j ; 
+		    j := j + k ;
+		    k := aux
+
+		end ;
+		n := n - 1
+    od ;	
+
+    output :vir= j
+
+fi
+
+end
+
+
+
+
+

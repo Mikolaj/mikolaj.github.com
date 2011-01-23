@@ -1,0 +1,1409 @@
+(* Copyright (C) 2006 Mikolaj Konarski, Lukasz Kozuchowski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: anonymous.dul,v 1.10 2007-09-21 20:17:26 mikon Exp $
+ *) 
+
+(* Examples from the paper
+     Anonymous (co)inductive types: 
+       A way for structured recursion 
+       to cohabit with modular abstraction *)
+
+(* this program depends on the prelude *)
+spec Nat = Nat
+Nat = load Nat
+
+ManyWays = 
+link
+
+(* bad ideas *)
+
+spec List = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+
+    value append : ~l1:t ~l2:t -> t 
+
+    value tde : ~it:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+
+    value foldf : ~f:~e:Elem.t ~acc:t -> t
+                  ~init:t  
+                  ~l:t -> t
+
+    value foldr : ~f:~it:[`Nil|`Cons {head : Elem.t; tail : t}] -> t
+                  ~l:t -> t
+    (* for testing *)
+    value ind2t : ~it:ind list: [`Nil|`Cons {head : Elem.t; tail : list}] -> t
+  end
+library List =  
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . con
+
+    value append = fun ~l1 ~l2 ->
+      match l1 with
+      fold [`Nil -> l2
+           |`Cons ht -> ht .`Cons . con]
+
+    value tde = fun ~it -> it . de
+
+    value foldf = fun ~f ~init ~l -> 
+      match l with
+      fold [`Nil -> init
+           |`Cons {head; tail} -> f ~e:head ~acc:tail]
+
+    value foldr = fun ~f ~l -> 
+      match l with
+      fold f
+    value ind2t = fun ~it -> it
+  end
+
+spec ListOps =
+~List ->
+  sig
+    value append : ~l1:List.t ~l2:List.t -> List.t 
+  end
+library ListOps =
+  struct
+    value rec append = fun ~l1 ~l2 ->
+      match List.tde ~it:l1 with
+      [`Nil -> l2
+      |`Cons {head; tail} -> 
+          List.cons ~head ~tail:(append ~l1:tail ~l2)] (* recursive call! *)
+  end
+
+spec ListOps' =
+~List ->
+  sig
+    value append : ~l1:List.t ~l2:List.t -> List.t 
+  end
+library ListOps' =
+  struct
+    value append = fun ~l1 ~l2 ->
+      List.foldr 
+        ~f:[`Nil -> l2
+           |`Cons {head; tail} -> List.cons ~head ~tail]
+        ~l:l1
+  end
+
+(* Testing *)
+
+spec NatList = List with {Elem = Nat}
+NatList = load List with {Elem = Nat}
+spec NatListOps = ListOps with {Elem = Nat; List = NatList}
+NatListOps = load ListOps with {Elem = Nat; List = NatList}
+spec NatListOps' = ListOps' with {Elem = Nat; List = NatList}
+NatListOps' = load ListOps' with {Elem = Nat; List = NatList}
+
+spec Result = 
+~NatList ->
+  sig
+    value catenated_lists1 : NatList.t
+    value catenated_lists2 : NatList.t
+    value catenated_lists3 : NatList.t
+    value catenated_lists1' : NatList.t
+    value catenated_lists2' : NatList.t
+    value catenated_lists3' : NatList.t
+  end
+
+Result = 
+  :: ~NatListOps ~NatListOps' -> Result
+  struct
+    value catenated_lists1 = 
+      let l1 = NatList.ind2t ~it:[1;2;3]
+          l2 = NatList.ind2t ~it:[6;7;8] in
+      let r = NatListOps.append ~l1 ~l2
+      in
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:head ~n:1
+             |`Nil -> `False]          
+      in r
+    value catenated_lists2 = 
+      let l1 = NatList.nil
+          l2 = NatList.ind2t ~it:[6;7;8] in
+      let r = NatListOps.append ~l1 ~l2
+      in
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:head ~n:6
+             |`Nil -> `False]
+      in r
+    value catenated_lists3 = 
+      let l1 = NatList.ind2t ~it:[1;2;3]
+          l2 = NatList.nil in
+      let r = NatListOps.append ~l1 ~l2
+      in
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:head ~n:1
+             |`Nil -> `False]
+      in r
+    value catenated_lists1' = 
+      let l1 = NatList.ind2t ~it:[1;2;3]
+          l2 = NatList.ind2t ~it:[6;7;8] in
+      let r = NatListOps'.append ~l1 ~l2
+      in      
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> 
+                 match (NatList.tde ~it:tail) with
+                 [ `Cons {head; tail} -> Nat.eq ~it:head ~n:2
+                 | `Nil -> `False]
+             |`Nil -> `False]
+      in r
+    value catenated_lists2' = 
+      let l1 = NatList.nil
+          l2 = NatList.ind2t ~it:[6;7;8] in
+      let r = NatListOps'.append ~l1 ~l2
+      in
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:head ~n:6
+             |`Nil -> `False]
+      in r
+    value catenated_lists3' = 
+      let l1 = NatList.ind2t ~it:[1;2;3]
+          l2 = NatList.nil in
+      let r = NatListOps'.append ~l1 ~l2
+      in
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:head ~n:1
+             |`Nil -> `False]
+      in r
+  end
+end
+
+TrueWay =
+link
+
+(* the only true way to do things *)
+
+spec List = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+library List =  
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it (* identity! *)
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . con
+  end
+
+spec ListOps =
+~List ->
+  sig
+    value append : ~l1:List.t ~l2:List.t -> List.t 
+    value is_nil : ~l:List.t -> [`True|`False]
+  end
+library ListOps =
+  struct
+    value append = fun ~l1 ~l2 ->
+      match List.t2ind ~it:l1 with
+      fold [`Nil -> l2
+           |`Cons {head; tail} -> List.cons ~head ~tail]
+    value is_nil = fun ~l -> 
+      match (List.t2ind ~it:l) . de with
+      [`Nil -> `True
+      |`Cons -> `False]
+  end
+
+spec LengthList = 
+~Nat ~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+    value length : ~l:t -> Nat.t
+  end
+
+spec LengthList1 = LengthList
+library LengthList1 =  
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . con
+    value length = fun ~l ->
+      match l with
+      fold [`Nil -> Nat.zero
+           |`Cons {head; tail} -> Nat.succ ~n:tail]
+  end
+
+spec LengthList2 = LengthList
+library LengthList2 =
+  struct
+    type t = {n : Nat.t;
+              l : ind list: [`Nil|`Cons {head : Elem.t; tail : list}]}
+    value t2ind = fun ~it:{n; l} -> l (* not identity! *)
+    value nil = {n = Nat.zero; 
+                 l = `Nil . con}
+    value cons = fun ~head ~tail:{n; l} -> 
+      {n = Nat.succ ~n; 
+       l = {head = head; tail = l} .`Cons . con}
+    value length = fun ~l:{n; l} -> n
+  end
+
+spec LengthList3 =
+~List -> LengthList
+   
+library LengthList3 =
+  struct
+    type t = {n : Nat.t;
+              l : List.t}
+    value t2ind =
+      let local_t2ind = fun ~it:{n; l} -> l in
+      fun ~it -> List.t2ind ~it:(local_t2ind ~it) (* composition *)
+    value nil = {n = Nat.zero; 
+                 l = List.nil}
+    value cons = fun ~head ~tail:{n; l} -> 
+      {n = Nat.succ ~n; 
+       l = List.cons ~head ~tail:l}
+    value length = fun ~l:{n; l} -> n
+  end
+
+spec NatList = List with {Elem = Nat}
+NatList = load List with {Elem = Nat}
+spec NatListOps = ListOps with {List = NatList; Elem = Nat}
+NatListOps = load ListOps with {Elem = Nat; List = NatList}
+spec NatLengthList1 = LengthList1 with {Nat = Nat; Elem = Nat}
+NatLengthList1 = load LengthList1 with {Nat = Nat; Elem = Nat}
+spec NatLengthList2 = LengthList2 with {Nat = Nat; Elem = Nat} 
+NatLengthList2 = load LengthList2 with {Nat = Nat; Elem = Nat}
+spec NatLengthList3 = LengthList3 with {List = NatList; Nat = Nat; Elem = Nat}
+NatLengthList3 = load LengthList3 with {List = NatList; Nat = Nat; Elem = Nat}
+
+spec Result =
+~NatList ~NatListOps ~NatLengthList1 ~NatLengthList2 ~NatLengthList3 -> 
+  sig
+    value empty_list0 : NatList.t
+    value empty_list1 : NatLengthList1.t
+    value empty_list2 : NatLengthList2.t
+    value empty_list3 : NatLengthList3.t
+    value list0 : NatList.t
+    value list1 : NatLengthList1.t
+    value list2 : NatLengthList2.t
+    value list3 : NatLengthList3.t
+    value catenated_list : NatList.t
+    value third0 : Nat.t
+    value third1 : Nat.t
+    value third2 : Nat.t
+    value third3 : Nat.t
+  end
+Result =
+  struct
+    value empty_list0 =
+      let r = NatList.nil in 
+      assert NatListOps.is_nil ~l:r in
+      r
+    value empty_list1 = 
+      let r = NatLengthList1.nil in
+      assert Nat.eq ~n:(NatLengthList1.length ~l:r) ~it:0 in
+      r
+    value empty_list2 =
+      let r = NatLengthList2.nil in
+      assert Nat.eq ~n:(NatLengthList2.length ~l:r) ~it:0 in
+      r
+    value empty_list3 =
+      let r = NatLengthList3.nil in
+      assert Nat.eq ~n:(NatLengthList3.length ~l:r) ~it:0 in
+      r
+    value list0 =
+      let r = NatList.cons ~head:Nat.zero ~tail:NatList.nil in
+      let b = match (NatListOps.is_nil ~l:r) with
+              [`True -> `False | `False -> `True]
+      in
+      assert b in
+      r
+    value list1 =
+      let r = NatLengthList1.cons ~head:(Nat.zero)
+                                  ~tail:NatLengthList1.nil
+      in 
+      assert Nat.eq ~n:(NatLengthList1.length ~l:r) ~it:1 in
+      let r2 = NatLengthList1.cons ~head:Nat.zero ~tail: r in
+      assert Nat.eq ~n:(NatLengthList1.length ~l:r2) ~it:2 in
+      r
+    value list2 =
+      let r = NatLengthList2.cons ~head:(Nat.zero)
+                                  ~tail:NatLengthList2.nil
+      in 
+      assert Nat.eq ~n:(NatLengthList2.length ~l:r) ~it:1 in
+      let r2 = NatLengthList2.cons ~head:Nat.zero ~tail: r in
+      assert Nat.eq ~n:(NatLengthList2.length ~l:r2) ~it:2 in
+      r
+    value list3 =
+      let r = NatLengthList3.cons ~head:(Nat.zero)
+                                  ~tail:NatLengthList3.nil
+      in
+      assert Nat.eq ~n:(NatLengthList3.length ~l:r) ~it:1 in
+      let r2 = NatLengthList3.cons ~head:Nat.zero ~tail: r in
+      assert Nat.eq ~n:(NatLengthList3.length ~l:r2) ~it:2 in
+      r
+    value catenated_list =
+      let l1 = NatList.nil
+          l2 = NatList.cons ~head:1 ~tail:NatList.nil
+      in
+      let r = NatListOps.append ~l1 ~l2 in
+      assert match NatListOps.is_nil ~l:r with
+             [`False -> `True | `True -> `False]
+      in r
+    value third0 =
+      let natlist = NatList.cons ~head:1 ~tail:
+        (NatList.cons ~head:2 ~tail:
+           (NatList.cons ~head:3 ~tail:NatList.nil))
+          rec nth = fun ~l ~n ->
+        match l.de with
+        [`Nil -> 0
+        |`Cons {head; tail} ->
+            if Nat.leq ~n ~it:1 then
+              head
+            else
+              nth ~l:tail ~n:(Nat.sub ~n ~it:1)]
+      in
+      let r = nth ~l:(NatList.t2ind ~it:natlist) ~n:3 in
+      assert Nat.eq ~n:3 ~it:r in
+      r
+    value third1 =
+      let natlist = NatLengthList1.cons ~head:2 ~tail:
+        (NatLengthList1.cons ~head:3 ~tail:
+           (NatLengthList1.cons ~head:4 ~tail:NatLengthList1.nil))
+          rec nth = fun ~l ~n ->
+        match l.de with
+        [`Nil -> 0
+        |`Cons {head; tail} ->
+            if Nat.leq ~n ~it:1 then
+              head
+            else
+              nth ~l:tail ~n:(Nat.sub ~n ~it:1)]
+      in
+      let r = nth ~l:(NatLengthList1.t2ind ~it:natlist) ~n:3 in
+      assert Nat.eq ~n:4 ~it:r in
+      r
+    value third2 =
+      let natlist = NatLengthList2.cons ~head:3 ~tail:
+        (NatLengthList2.cons ~head:4 ~tail:
+           (NatLengthList2.cons ~head:5 ~tail:NatLengthList2.nil))
+          rec nth = fun ~l ~n ->
+        match l.de with
+        [`Nil -> 0
+        |`Cons {head; tail} ->
+            if Nat.leq ~n ~it:1 then
+              head
+            else
+              nth ~l:tail ~n:(Nat.sub ~n ~it:1)]
+      in
+      let r = nth ~l:(NatLengthList2.t2ind ~it:natlist) ~n:3 in
+      assert Nat.eq ~n:5 ~it:r in
+      r     
+    value third3 =
+      let natlist = NatLengthList3.cons ~head:4 ~tail:
+        (NatLengthList3.cons ~head:5 ~tail:
+           (NatLengthList3.cons ~head:6 ~tail:NatLengthList3.nil))
+          rec nth = fun ~l ~n ->
+        match l.de with
+        [ `Nil -> 0
+        | `Cons {head; tail} ->
+            if Nat.leq ~n ~it:1 then
+              head
+            else
+              nth ~l:tail ~n:(Nat.sub ~n ~it:1)]
+      in
+      let r = nth ~l:(NatLengthList3.t2ind ~it:natlist) ~n:3 in
+      assert Nat.eq ~n:6 ~it:r in
+      r 
+  end 
+  
+end
+
+CoexInf =
+link
+
+(* coinductive examples: infinite lists *)
+
+spec InfList = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value ind2t : ~it:coind c: {head : Elem.t; tail : c} -> t
+    value head : ~it:t -> Elem.t
+    value tail : ~it:t -> t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+library InfList =  
+  struct
+    type t = coind c: {head : Elem.t; tail : c}
+    value ind2t = fun ~it -> it
+    value head = fun ~it -> it . unde . head
+    value tail = fun ~it -> it . unde . tail
+    value cons = fun ~head ~tail -> {head = head; tail = tail} . uncon
+  end
+
+spec InfListOps =
+~InfList ->
+  sig
+    value stutter : ~m:Elem.t -> InfList.t
+    value stutter' : ~m:Elem.t -> InfList.t
+    value alternate : ~first:Elem.t ~second:Elem.t -> InfList.t
+  end
+library InfListOps =
+  struct
+    value stutter = fun ~m -> 
+      InfList.ind2t ~it:
+        match {} with
+        unfold u -> {head = m; tail = u}
+    value stutter' = fun ~m -> 
+      InfList.ind2t ~it:
+        match {} with
+        unfold -> {head = m; tail = {}}
+    value alternate = fun ~first ~second -> 
+      InfList.ind2t ~it:
+        match `True with
+        unfold b -> 
+          match b with
+          [`True -> {head = first; tail = `False}
+          |`False -> {head = second; tail = `True}]
+  end
+
+spec NthInfList =
+~Nat ~InfList ->
+  sig
+    value nth : ~n:Nat.t ~l:InfList.t -> Elem.t
+  end
+library NthInfList =
+  struct
+    value nth = fun ~n ~l ->
+      let nth_tail = 
+        match Nat.t2ind ~it:n with
+        fold [`Zero -> l
+             |`Succ tl -> InfList.tail ~it:tl]
+      in InfList.head ~it:nth_tail
+  end
+
+(* Testing *)
+
+spec NatInfList = InfList with {Elem = Nat}
+NatInfList = load InfList with {Elem = Nat}
+spec NatInfListOps = InfListOps with {Elem = Nat; InfList = NatInfList}
+NatInfListOps = load InfListOps with {Elem = Nat; InfList = NatInfList}
+spec NatNthInfList = NthInfList with {{Elem = Nat; InfList = NatInfList}}
+NatNthInfList = load NthInfList with {{Elem = Nat; InfList = NatInfList}}
+
+spec NatList = List with {Elem = Nat}
+NatList = load List with {Elem = Nat}
+
+spec Result = 
+~NatList ->
+  sig
+    value beginning_stutter : NatList.t
+    value beginning_stutter' : NatList.t
+    value beginning_alternate : NatList.t
+  end
+
+Result = 
+  :: ~NatInfListOps ~NatNthInfList -> Result
+  struct
+    value beginning_stutter =
+      let l = NatInfListOps.stutter ~m:1 in
+      let r = NatList.ind2t ~it:
+                [NatNthInfList.nth ~l ~n:0; 
+                 NatNthInfList.nth ~l ~n:1; 
+                 NatNthInfList.nth ~l ~n:2]
+      in
+      let head = match (NatList.tde ~it:r) with
+                 [`Cons {head; tail} -> head
+                 | _ -> 0]
+      in      
+      assert Nat.eq ~it:1 ~n:head in
+      r
+    value beginning_stutter' =
+      let l = NatInfListOps.stutter' ~m:0 in
+      let r = NatList.ind2t ~it:
+                [NatNthInfList.nth ~l ~n:0; 
+                 NatNthInfList.nth ~l ~n:1; 
+                 NatNthInfList.nth ~l ~n:2]
+      in 
+      assert match (NatList.tde ~it:r) with
+             [`Cons {head; tail} -> Nat.eq ~it:0 ~n:head
+             | _ -> `False]
+      in r
+    value beginning_alternate =
+      let l = NatInfListOps.alternate ~first:1 ~second:2 in
+      let r = NatList.ind2t ~it:
+                [NatNthInfList.nth ~l ~n:0; 
+                 NatNthInfList.nth ~l ~n:1; 
+                 NatNthInfList.nth ~l ~n:2; 
+                 NatNthInfList.nth ~l ~n:3;
+                 NatNthInfList.nth ~l ~n:4;
+                 NatNthInfList.nth ~l ~n:5;
+                 NatNthInfList.nth ~l ~n:6]
+      in 
+      assert Nat.eq ~it:1 ~n: (NatNthInfList.nth ~l ~n:0) in
+      assert Nat.eq ~it:2 ~n: (NatNthInfList.nth ~l ~n:1) in
+      assert Nat.eq ~it:1 ~n: (NatNthInfList.nth ~l ~n:2) in
+      assert Nat.eq ~it:2 ~n: (NatNthInfList.nth ~l ~n:3) in
+      let head = match (NatList.tde ~it:r) with
+                 [`Cons {head; tail} -> head
+                 | _ -> 7]
+      in
+      assert Nat.eq ~it:1 ~n:head in
+      let head2 = NatInfList.head ~it:l in
+      assert Nat.eq ~it:1 ~n:head2 in 
+      let el = NatInfList.head ~it:(NatInfList.tail ~it:l) in
+      assert Nat.eq ~it:2 ~n:el in 
+      let l2 = NatInfList.cons ~head:7 ~tail:l in
+      assert Nat.eq ~it:7 ~n:(NatInfList.head ~it:l2) in
+      r
+  end
+end
+
+CoexList =
+link
+
+(* coinductive examples: colists *)
+
+spec CoList = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value ind2t : ~it:coind c: [`Nil|`Cons {head : Elem.t; tail : c}] -> t
+    value tde : ~it:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+library CoList =  
+  struct
+    type t = coind c: [`Nil|`Cons {head : Elem.t; tail : c}]
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . unde
+    value nil = `Nil . uncon
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . uncon
+  end
+
+spec CoListOps =
+~CoList ->
+  sig
+    value append : ~l1:CoList.t ~l2:CoList.t -> CoList.t 
+    value is_nil : ~l:CoList.t -> [`True|`False]
+  end
+library CoListOps =
+  struct
+    value append = fun ~l1 ~l2 ->
+      CoList.ind2t ~it:
+        match {l1; l2} with
+        unfold {l1; l2} ->
+          match CoList.tde ~it:l1 with
+          [`Nil -> 
+              match CoList.tde ~it:l2 with
+              [`Nil -> `Nil
+              |`Cons {head; tail} -> {head; tail = {l1; l2 = tail}} .`Cons]
+          |`Cons {head; tail} -> {head; tail = {l1 = tail; l2}} .`Cons]
+    value is_nil = fun ~l -> 
+      match CoList.tde ~it:l with
+      [`Nil -> `True
+      |`Cons -> `False]
+  end
+
+spec CoNat =
+  sig
+    type t
+    value ind2t : ~it:coind c: [`Zero|`Succ c] -> t
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+    value infinity : t
+  end
+CoNat = 
+  struct
+    type t = coind c: [`Zero|`Succ c]
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . unde
+    value zero = `Zero . uncon
+    value succ = fun ~n -> n .`Succ . uncon
+    value infinity = 
+      match {} with (* yes, {} suffices here *)
+      unfold u -> u .`Succ 
+  end
+spec CoLength = 
+~CoList ~CoNat ->
+  sig
+    value length : ~l:CoList.t -> CoNat.t
+  end
+library CoLength =  
+  struct
+    value length = fun ~l ->
+      CoNat.ind2t ~it:
+        match l with
+        unfold l ->
+          match CoList.tde ~it:l with
+          [`Nil -> `Zero
+          |`Cons {head; tail} -> tail .`Succ]
+  end
+
+(* Testing *)
+
+spec NthCoList =
+~Nat ~CoList ->
+  sig
+    value nth : ~n:Nat.t ~l:CoList.t -> [`OK Elem.t|`Error]
+  end
+library NthCoList =
+  struct
+    value nth = fun ~n ~l ->
+      let nth_tail = 
+        match Nat.t2ind ~it:n with
+        fold [`Zero -> l .`OK
+             |`Succ tl ->
+                 match tl with
+                 [`OK it -> 
+                     match CoList.tde ~it with
+                     [`Nil -> `Error
+                     |`Cons {head; tail} -> tail .`OK]
+                 |`Error -> `Error]]
+      in 
+      match nth_tail with 
+      [`OK it -> 
+          match CoList.tde ~it with
+          [`Nil -> `Error
+          |`Cons {head; tail} -> head .`OK]
+      |`Error -> `Error]
+  end
+
+spec NatCoList = CoList with {Elem = Nat}
+NatCoList = load CoList with {Elem = Nat}
+spec NatCoListOps = CoListOps with {Elem = Nat; CoList = NatCoList}
+NatCoListOps = load CoListOps with {Elem = Nat; CoList = NatCoList}
+spec NatNthCoList = NthCoList with {{Elem = Nat; CoList = NatCoList}}
+NatNthCoList = load NthCoList with {{Elem = Nat; CoList = NatCoList}}
+spec NatCoLength = 
+  CoLength with {Elem = Nat; CoList = NatCoList; CoNat = CoNat}
+NatCoLength = 
+  load CoLength with {Elem = Nat; CoList = NatCoList; CoNat = CoNat}
+
+spec Nth13 =
+~NatCoList ->
+  sig
+    value n13 : ~l:NatCoList.t -> {first : Nat.t; third : [`OK Nat.t|`Error]}
+  end
+Nth13 =
+  :: ~NatNthCoList -> Nth13
+  struct
+    value n13 = fun ~l ->
+      {first = 
+         match NatNthCoList.nth ~l ~n:0 with
+         [`OK e -> e 
+         |`Error -> 11];
+       third = NatNthCoList.nth ~l ~n:2}
+  end
+
+spec Cat_lists = 
+~NatCoList ->
+  sig
+    value catenated_lists1 : NatCoList.t
+    value catenated_lists2 : NatCoList.t
+    value catenated_lists3 : NatCoList.t
+    value catenated_lists4 : NatCoList.t
+    value catenated_lists5 : NatCoList.t
+    value catenated_lists6 : NatCoList.t
+    value catenated_lists7 : NatCoList.t
+    value catenated_lists8 : NatCoList.t
+  end
+
+Cat_lists = 
+  :: ~NatCoListOps -> Cat_lists
+  struct
+    value catenated_lists1 = 
+      let l1 = NatCoList.nil
+          l2 = NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists2 = 
+      let l1 = NatCoList.ind2t ~it:
+                 match {} with
+                 unfold -> {head = 3; tail = {}} .`Cons
+          l2 = NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists3 = 
+      let l1 = NatCoList.nil
+          l2 = NatCoList.ind2t ~it:
+                 match {} with
+                 unfold -> {head = 6; tail = {}} .`Cons in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists4 =
+      let l1 = NatCoList.cons ~head:3 ~tail:NatCoList.nil
+          l2 = NatCoList.cons ~head:6 ~tail:NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists5 =
+      let l1 = NatCoList.nil
+          l2 = NatCoList.cons ~head:6 ~tail:NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists6 =
+      let l1 = NatCoList.cons ~head:3 ~tail:NatCoList.nil
+          l2 = NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists7 = 
+      let l1 = NatCoList.ind2t ~it:
+                 match {} with
+                 unfold -> {head = 3; tail = {}} .`Cons
+          l2 = NatCoList.cons ~head:6 ~tail:NatCoList.nil in
+      NatCoListOps.append ~l1 ~l2
+    value catenated_lists8 =
+      let l1 = NatCoList.cons ~head:3 ~tail:NatCoList.nil
+          l2 = NatCoList.ind2t ~it:
+                 match {} with
+                 unfold -> {head = 6; tail = {}} .`Cons in
+      NatCoListOps.append ~l1 ~l2
+  end
+
+spec Result = 
+~Nat ~NatCoList ~CoNat ->
+  sig
+    value catenated_lists1 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists2 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists3 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists4 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists5 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists6 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists7 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value catenated_lists8 : {first : Nat.t; third : [`OK Nat.t|`Error]}
+    value colist1 : NatCoList.t
+    value colist2 : NatCoList.t
+    value colist3 : NatCoList.t
+    value third : Nat.t
+    value conat_zero : CoNat.t
+    value conat_one : CoNat.t
+    value conat_inf : CoNat.t
+  end
+
+Result = 
+  :: ~Cat_lists ~Nth13 ~NatCoListOps ~NatCoLength ~NatNthCoList -> Result
+  struct
+    value catenated_lists1 = 
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists1 in
+      assert Nat.eq ~it:r.first ~n:11 in
+      assert match r.third with
+             [`Error -> `True | _ -> `False]
+      in 
+      r
+    value catenated_lists2 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists2 in
+      assert Nat.eq ~it:r.first ~n:3 in
+      assert match r.third with
+             [`OK n -> Nat.eq ~n ~it:3 | _ -> `False]
+      in
+      r       
+    value catenated_lists3 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists3 in
+      assert Nat.eq ~it:r.first ~n:6 in
+      assert match r.third with
+             [`OK n -> Nat.eq ~n ~it:6 | _ -> `False]
+      in
+      r
+    value catenated_lists4 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists4 in
+      assert Nat.eq ~it:r.first ~n:3 in
+      assert match r.third with
+             [`Error -> `True | _ -> `False]
+      in
+      r
+    value catenated_lists5 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists5 in
+      assert Nat.eq ~it:r.first ~n:6 in
+      assert match r.third with
+             [`Error -> `True | _ -> `False]
+      in
+      r
+    value catenated_lists6 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists6 in
+      assert Nat.eq ~it:r.first ~n:3 in
+      assert match r.third with
+             [`Error -> `True | _ -> `False]
+      in
+      r
+    value catenated_lists7 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists7 in
+      assert Nat.eq ~it:r.first ~n:3 in
+      assert match r.third with
+             [`OK n -> Nat.eq ~n ~it:3 | _ -> `False]
+      in
+      r
+    value catenated_lists8 =
+      let r = Nth13.n13 ~l:Cat_lists.catenated_lists8 in
+      assert Nat.eq ~it:r.first ~n:3 in
+      assert match r.third with
+             [`OK n -> Nat.eq ~n ~it:6 | _ -> `False]
+      in
+      r
+    value colist1 =
+      let l = NatCoList.nil in
+      assert NatCoListOps.is_nil ~l in
+      l
+    value colist2 =
+      let l = NatCoList.cons ~head:0 ~tail:NatCoList.nil in
+      assert match NatCoListOps.is_nil ~l with
+             [`True -> `False |`False -> `True]
+      in 
+      assert match NatCoList.tde ~it:l with
+             [`Cons _ -> `True |`Nil -> `False]
+      in l
+    value colist3 =
+      let l1 = NatCoList.cons ~head:1 ~tail:
+                 (NatCoList.cons ~head:2 ~tail: NatCoList.nil)
+          l2 = NatCoList.cons ~head:3 ~tail:NatCoList.nil
+      in
+      let l3 = NatCoListOps.append ~l1 ~l2 in
+      let rec nat = fun ~n ->
+                match CoNat.tde ~it:n with
+                [`Zero -> 0
+                |`Succ n2 -> Nat.succ ~n:(nat ~n:n2)]
+          length = NatCoLength.length ~l:l3
+      in
+      assert Nat.eq ~it:3 ~n:(nat ~n:length) in
+      l3
+    value third =
+      let l1 = NatCoList.cons ~head:1 ~tail:
+                (NatCoList.cons ~head:2 ~tail:NatCoList.nil)
+      in
+      let l2 = NatCoListOps.append ~l1 ~l2:l1 in
+      let rec nat = fun ~n ->
+                match CoNat.tde ~it:n with
+                [`Zero -> 0
+                |`Succ n2 -> Nat.succ ~n:(nat ~n:n2)]
+          length = NatCoLength.length ~l:l2
+      in 
+      assert Nat.eq ~it:4 ~n:(nat ~n: length) in
+      let r = NatNthCoList.nth ~n:3 ~l:l2 in
+      assert match r with
+             [`OK n -> Nat.eq ~n ~it:2
+             | _ -> `False]
+      in 
+      match r with [`OK n -> n |`Error -> 0]
+    value conat_zero =
+      let r = CoNat.zero in 
+      assert match CoNat.tde ~it:r with
+             [`Zero -> `True | _ -> `False]
+      in
+      r
+    value conat_one =
+      let r = CoNat.succ ~n:CoNat.zero in
+      assert match CoNat.tde ~it:r with
+             [`Succ n -> match CoNat.tde ~it:n with
+                         [`Zero -> `True
+                         | _ -> `False]
+             |`Zero -> `False ]
+      in r
+     value conat_inf =
+       let r = CoNat.infinity in
+       let rec f = fun ~n ~it ->
+         if Nat.eq ~n ~it:0 then
+           `True
+         else
+           match CoNat.tde ~it with
+           [`Succ k -> f ~n:(Nat.sub ~n ~it:1) ~it:k
+           |`Zero -> `False]
+       in
+       let big_n = 10 in
+       assert f ~n:big_n ~it:r in
+       assert match (f ~n:big_n ~it:CoNat.zero) with
+              [`False -> `True |`True -> `False]
+       in
+       r
+  end
+end
+
+PolyMoly = 
+link
+
+(* Polymorphism through polytypism *)
+
+module CoreExamples =
+  :: ~Nat -> sig value v: {} end
+  struct
+value v = let _ = 
+{v1 = 
+
+let intlist = {h = Nat.zero; 
+               t = {h = Nat.succ ~n:Nat.zero; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+in
+let lenght_of_intlist = match intlist with
+                        fold [`Nil -> Nat.zero
+                             |`Cons {h; t} -> Nat.succ ~n:t]
+    lenght_of_boollist = match boollist with
+                         fold [`Nil -> Nat.zero
+                              |`Cons {h; t} -> Nat.succ ~n:t]
+    add = fun ~n ~it -> 
+      match Nat.t2ind ~it with
+      fold [`Zero -> n
+           |`Succ m -> Nat.succ ~n:m]
+in
+let r = add ~n:lenght_of_intlist ~it:lenght_of_boollist
+in
+assert Nat.eq ~n:r ~it:2
+in
+r
+;v2 =
+
+let list_map = fun ~f ~l -> 
+  match l with 
+  map f
+in
+let l = {h = `True; 
+         t = {h = `False; 
+              t = `Nil . con} .`Cons . con} .`Cons . con
+in
+let r = list_map 
+          ~f:[`True -> `False
+             |`False -> `True]
+          ~l
+in
+assert match r.de with
+       [`Cons {h; t} -> match t.de with
+                        [`Cons {h; t} -> h
+                        | _ -> `False ]
+       | _ -> `False]
+in r
+
+;v3 =
+
+let tree_map = fun ~f ~t -> 
+  match t with 
+  map f
+in
+let t = 
+  {valu = Nat.zero; 
+   left = `Empty . con; 
+   right = `Empty . con} .`Node . con
+in
+let r = tree_map ~f:Nat.is_zero ~t
+in
+assert match r.de with
+       [`Node n -> n.valu
+       |`Empty -> `False]
+in
+r
+
+;v4 =
+
+let negate_stream =
+      map [`True -> `False
+          |`False -> `True]
+    falsities = 
+      match {} with
+      unfold tail -> {head = `False; tail}
+in
+let truths = negate_stream ~it:falsities in
+let b = truths . unde . head
+in
+assert b
+in
+b
+
+;v5 =
+
+let r =
+match {b = `False; n = Nat.zero; 
+       r = {rn = Nat.succ ~n:Nat.zero; ro = `OK}} with
+map Nat.is_zero
+in
+assert r.n
+in
+r
+
+;v6 =
+
+let incr =
+  (map n -> Nat.succ ~n)
+in
+let r = {n1n2 = incr ~it:({n1 = 5; n2 = 7; b = `True} .`Two);
+         n = incr ~it:(13 .`One)}
+in
+assert match r.n with
+       [`One n -> Nat.eq ~n ~it:14
+       | _ -> `False]
+in
+r
+
+;v7 =
+
+let intlist = {h = 0; 
+               t = {h = 1; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap =
+     match intlist with
+     map fun ~it -> {x = it; y = it}
+  ;boolmap = 
+     match boollist with
+     map fun ~it -> {x = it; y = it}
+  ;intmap2 =
+     match intlist with
+     monomorphic_map
+(* this would be incorrect:
+  ;boolmap2 = 
+     match boollist with
+     monomorphic_map *)
+  }
+in
+assert match r.boolmap.de with 
+       [`Cons {h;t} -> h.x
+       | _ -> `False]
+in
+r
+
+;v8 =
+
+let intlist = {h = 0; 
+               t = {h = 1; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_delta = 
+      fun ~it -> {x = it; y = it}
+in
+let r =
+(* if [intmap] and [boolmap] are lists of records then here typing fails *)
+  {intmap =
+     match intlist with
+     map monomorphic_delta
+  ;boolmap = 
+     match boollist with
+     map monomorphic_delta
+  }
+in
+assert match r.intmap.de with
+       [`Cons {h; t} -> Nat.eq ~n:h.x ~it:0
+       |`Empty -> `False]
+in
+r
+
+;v9 =
+
+let intlist = {h = 0; 
+               t = {h = 1; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    inttree = {valu = 5; 
+               left = `Empty . con; 
+               right = `Empty . con} .`Node . con
+    monomorphic_delta = 
+      fun ~it -> {x = it; y = it}
+in
+let r =
+  {listmap =
+     match intlist with
+     map monomorphic_delta
+  ;treemap = 
+     match inttree with
+     map monomorphic_delta}
+in
+assert match r.treemap.de with
+       [`Node {valu; left; right} -> Nat.eq ~n:valu.x ~it:5
+       |`Empty -> `False]
+in
+r
+
+}  
+in {}
+  end
+
+spec List = 
+~ElemA:sig 
+        type t 
+        value action : ~it:t -> t 
+      end ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : ElemA.t; tail : list}]
+    value ind2t : ~it:ind list: [`Nil|`Cons {head : ElemA.t; tail : list}] -> t
+    value nil : t
+    value cons : ~head:ElemA.t ~tail:t -> t
+  end
+spec MapAction =
+~List ->
+  sig
+    value traverse : ~it:List.t -> List.t 
+    value traverse' : ~it:List.t -> List.t 
+  end
+library List =
+  struct
+    type t = ind list: [`Nil|`Cons {head : ElemA.t; tail : list}]
+    value t2ind = fun ~it -> it (* identity! *)
+    value ind2t = fun ~it -> it
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . con
+  end
+library MapAction =
+  struct
+    value traverse = fun ~it ->
+      List.ind2t ~it:
+        match List.t2ind ~it with
+        map ElemA.action
+    value traverse' = fun ~it ->
+      (fold [`Nil -> List.nil
+            |`Cons {head; tail} -> List.cons ~head ~tail])
+      ~it:
+        match List.t2ind ~it with
+        map ElemA.action
+   end
+
+spec NatIncr =
+~Nat ->
+  sig
+    type t
+    value zero: t
+    value action: ~it: t -> t
+    value tde : ~it:t -> [`Zero|`Succ t]
+  end
+NatIncr =
+  struct
+    type t = Nat.t
+    value zero = Nat.zero
+    value action = fun ~it -> Nat.succ ~n:it
+    value tde = fun ~it -> Nat.tde ~it
+  end
+spec NatList = List with {ElemA = NatIncr}
+NatList = load List with {ElemA = NatIncr}
+spec NatMapAction = MapAction with {ElemA = NatIncr; List = NatList}
+NatMapAction = load MapAction with {ElemA = NatIncr; List = NatList}
+           
+spec Result =
+~NatList ~NatMapAction ->
+  sig
+    value list1 : NatList.t
+    value list2 : NatList.t
+  end
+Result =
+  struct
+    value list1 =
+      let l = NatList.cons ~head:NatIncr.zero ~tail:NatList.nil in
+      let l2 = NatMapAction.traverse ~it:l in
+      assert match (NatList.t2ind ~it:l2).de with
+             [`Cons {head; tail} ->
+                 match NatIncr.tde ~it:head with
+                 [`Succ n -> match NatIncr.tde ~it:n with 
+                             [`Succ _ -> `False
+                             |`Zero -> `True]
+                 |`Zero -> `False]
+	     | _ -> `False]
+      in
+      l2    
+    value list2 =
+      let l = NatList.cons ~head:NatIncr.zero ~tail:NatList.nil in
+      let l2 = NatMapAction.traverse' ~it:l in
+      assert match (NatList.t2ind ~it:l2).de with
+             [`Cons {head; tail} ->
+                 match NatIncr.tde ~it:head with
+                 [`Succ n -> match NatIncr.tde ~it:n with 
+                             [`Succ _ -> `False
+                             |`Zero -> `True]
+                 |`Zero -> `False]
+             | _ -> `False]
+      in
+      l2     
+  end
+end
+
+AllOne = 
+link
+
+(* Everything is the same *)
+
+spec List4 = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value ind2t : ~it:ind list: [`Nil|`Cons {head : Elem.t; tail : list}] -> t
+    value tde : ~it:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+    value tcon : ~it:[`Nil|`Cons {head : Elem.t; tail : t}] -> t
+  end
+module List4 = 
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . de
+    value tcon = fun ~it -> it . con
+  end
+
+spec List = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+module List =  
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head = head; tail = tail} .`Cons . con
+  end
+List4' = 
+  :: ~List -> List4
+  struct
+    type t = List.t
+    value t2ind = List.t2ind
+    value ind2t = 
+      fold [`Nil -> List.nil
+           |`Cons {head; tail} -> List.cons ~head ~tail]
+    value tde = fun ~it -> `Nil (* dummy *)
+    value tcon = fun ~it ->
+      match it with
+        [`Nil -> List.nil
+        |`Cons {head; tail} -> List.cons ~head ~tail]
+  end
+
+List4'' = 
+  :: ~List4 -> List4
+  struct
+    type t = List4.t
+    value t2ind = List4.t2ind
+    value ind2t = fold List4.tcon
+    value tde = fun ~it ->
+      match (List4.t2ind ~it) . de with
+      map List4.ind2t
+    value tcon = List4.tcon
+  end
+
+List4''' = 
+  :: ~List4 -> List4
+  struct
+    type t = List4.t
+    value t2ind = List4.t2ind
+    value ind2t = 
+      fold [`Nil -> List4.tcon ~it:`Nil
+           |`Cons ht -> List4.tcon ~it:ht .`Cons]
+    value tde = fun ~it ->
+      match List4.t2ind ~it with
+      fold [`Nil -> `Nil
+           |`Cons {head; tail} -> 
+              {head; tail = List4.tcon ~it:tail} .`Cons] 
+    value tcon = List4.tcon
+  end
+
+List4'''' = 
+  :: ~List4 -> List4
+  struct
+    type t = List4.t
+    value t2ind = List4.t2ind
+    value ind2t = fold List4.tcon
+    value tde = fun ~it ->
+      match List4.t2ind ~it with
+      fold map List4.tcon
+    value tcon = List4.tcon
+  end
+
+spec InfList4 = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : ~it:t -> coind c: {head : Elem.t; tail : c}
+    value ind2t : ~it:coind c: {head : Elem.t; tail : c} -> t
+    value tde : ~it:t -> {head : Elem.t; tail : t}
+    value tcon : ~it:{head : Elem.t; tail : t} -> t
+  end
+module InfList4 =  
+  struct
+    type t = coind c: {head : Elem.t; tail : c}
+    value t2ind = fun ~it -> it
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . unde
+    value tcon = fun ~it -> it . uncon
+  end
+
+spec InfList = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value ind2t : ~it:coind c: {head : Elem.t; tail : c} -> t
+    value head : ~it:t -> Elem.t
+    value tail : ~it:t -> t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+module InfList =  
+  struct
+    type t = coind c: {head : Elem.t; tail : c}
+    value ind2t = fun ~it -> it
+    value head = fun ~it -> it . unde . head
+    value tail = fun ~it -> it . unde . tail
+    value cons = fun ~head ~tail -> {head = head; tail = tail} . uncon
+  end
+InfList4' = 
+  :: ~InfList -> InfList4
+  struct
+    type t = InfList.t
+    value t2ind = fun ~it -> (* dummy *)
+      match {} with
+      unfold u -> 
+	{head = InfList.head ~it; tail = u}
+    value ind2t = InfList.ind2t
+    value tde = fun ~it -> {head = InfList.head ~it; tail = InfList.tail ~it}
+    value tcon = fun ~it:{head; tail} -> InfList.cons ~head ~tail
+  end
+
+InfList4'' = 
+  :: ~InfList4 -> InfList4
+  struct
+    type t = InfList4.t
+    value t2ind = unfold InfList4.tde
+    value ind2t = InfList4.ind2t
+    value tde = InfList4.tde
+    value tcon = fun ~it ->
+      InfList4.ind2t ~it:
+        (match it with
+        map InfList4.t2ind) . uncon
+  end
+
+InfList4''' = 
+  :: ~InfList4 -> InfList4
+  struct
+    type t = InfList4.t
+    value t2ind = unfold InfList4.tde
+    value ind2t = InfList4.ind2t
+    value tde = InfList4.tde
+    value tcon = fun ~it ->
+      InfList4.ind2t ~it:
+        match it with
+        unfold map InfList4.tde
+  end
+end
+
+(* A sketch of a module corresponding to a view from
+   Philip Wadler: 
+     Views: A way for pattern matching to cohabit with data abstraction 
+ *)
+
+spec NatEvenOdd =
+~Nat ->
+  sig
+    value t2view : ~it:Nat.t -> ind t: [`Zero|`Even t|`Odd t]
+    value view2t : ~it:ind t: [`Zero|`Even t|`Odd t] -> Nat.t
+  end
+NatEvenOdd = 
+  struct
+    value t2view = fun ~it ->
+      match Nat.t2ind ~it with (* ... *) fun ~it -> `Zero . con
+    value view2t =
+      fold [`Zero -> Nat.zero
+           |`Even n -> Nat.mult ~n ~it:2
+           |`Odd n -> Nat.add ~n:(Nat.mult ~n ~it:2) ~it:1]
+  end

@@ -1,0 +1,193 @@
+\chapter{
+Modu"ly: struktury i sygnatury
+}
+
+Ka"rdy du"ry a dobry program w naturalny spos"ob dzieli si"e 
+na szereg odr"ebnych, w sporym stopniu niezale"rnych od siebie podprogram"ow. 
+(Cz"esto podzia"l ten nast"epuje ju"r w fazach projektowania i specyfikowania.)
+Ka"rdy taki podprogram sk"lada si"e z pewnej liczby typ"ow, 
+warto"sci, komentarzy, intuicji, itp.\ i wszystkie jego sk"ladniki s"a mocno ze sob"a logicznie powi"azane.
+Je"sli zamanifestujemy istnienie takiego podprogramu deklaruj"ac odpowiedni SML-owy modu"l, 
+to zar"owno dla nas, jak i dla kompilatora stanie si"e lepiej widoczne, 
+co dok"ladnie wchodzi w sk"lad podprogramu, jakie s"a zale"rnosci mi"edzy jego komponentami, itd.
+Je"sli dodatkowo przyjrzymy si"e krytycznie powsta"lemu (lub projektowanemu)
+modu"lowi i ocenimy co w nim jest istotne z punktu widzenia reszty naszego programu, 
+a co jest jedynie szczeg"o"lem implementacyjnym, 
+to b"edziemy mogli opatrzy"c go wzgl"ednie kr"otk"a, a mimo to \emph{dobr"a}, sygnatur"a. 
+
+Przyk"lad, kt"ory wiele wyja"snia:
+\begin{verbatim}
+signature TOTAL_PREORDER =
+sig
+
+    type elem
+    val leq : elem * elem -> bool 
+    (* and leq should be a total preorder *)
+
+end;
+
+signature PRIORITY_QUEUE =
+sig
+    
+    structure Item : TOTAL_PREORDER
+
+    type queue
+
+    val empty : queue
+    val insert : Item.elem * queue -> queue
+    val join : queue * queue -> queue 
+    datatype min = MIN of Item.elem * queue | EMPTY
+    val get_min : queue -> min 
+
+    (* By seq(q) we denote the sequence of Item.elem elements
+       produced by iterating get_min on queue q.
+       By num(t, q) we denote the number of occurrences of t in seq(q).
+
+       For all q, p - queues constructed using the above operations,
+       and for all t, u - elements of type Item.elem:
+       1. seq(q) should be finite and non-decreasing,
+       2. num(t, empty) should be 0,
+       3. num(t, insert(u, q)) should be num(t, q), if u <> t, 
+          or num(t, q) + 1, if u = t,
+       4. num(t, join(q, p)) should be num(t, q) + num(t, p). *)
+    
+end;
+
+signature INTEGER_LEQ =
+sig
+
+    include TOTAL_PREORDER
+    sharing type elem = int
+    (* and leq should be the natural less-equal on int *)
+
+end;
+
+structure IntegerLeq : INTEGER_LEQ =
+struct
+
+    type elem = int
+    fun leq (k, l) = ((k : int) <= l)
+
+end;
+    
+signature INT_PRIORITY_QUEUE =
+sig 
+
+    include PRIORITY_QUEUE
+    sharing type Item.elem = int           
+    (* and Item.leq should be the natural less-equal on int *)
+
+end;
+
+structure IntPQasList : INT_PRIORITY_QUEUE =
+struct
+
+    structure Item = IntegerLeq (* type sharing and requirement *)
+                                (* about Item.leq now satisfied *)
+
+    type queue = Item.elem list (* queues will be unordered lists *)
+    val empty = nil
+    val insert = op ::                            
+    val join = op @
+
+    datatype min = MIN of Item.elem * queue | EMPTY
+    fun get_min nil = EMPTY
+      | get_min (k::tail) = 
+        case get_min tail
+          of EMPTY => MIN(k, nil)
+           | MIN(n, rest) => if Item.leq (k, n) then MIN(k, n::rest)
+                             else MIN(n, k::rest)                           
+
+end;
+\end{verbatim}
+
+Nazwijmy naszkicowany powy"rej program $IntPQasList$.
+Jest on poprawny tzn.\ dobrze implementuje kolejk"e priorytetow"a liczb ca"lkowitych.
+W szcze\-g"ol\-no\-"sci \|IntPQasList| pasuje do \|INT_PRIORITY_QUEUE|,
+czyli zawiera wszystkie wymagane typy, warto"sci, itp.,
+jak r"ownie"r spe"lnia wszystkie wymagania opisane w komentarzach (sprawd"z).
+
+{\bf Definicja} (przez przyk"lad) \emph{dobroci}:
+M"owimy, ze sygnatura \|INTEGER_LEQ| jest \emph{dobra} 
+dla struktury \|IntegerLeq| w programie $IntPQasList$, gdy"r:
+\begin{enumerate}
+
+\item \|IntegerLeq| pasuje do \|INTEGER_LEQ| 
+
+\item jesli napiszemy dowoln"a struktur"e \|A| pasuj"ac"a do \|INTEGER_LEQ|, 
+to program $IntPQasList$ z \|IntegerLeq| podmienionym na \|A| pozostanie poprawny
+
+\end{enumerate}
+
+\emph{Dobra} sygnatura pozwala nam i kompilatorowi rozumowa"c o module, jako ca"lo"sci,
+wy"l"acznie na podstawie jego sygnatury, bez zagl"adania do kodu.
+Wspomaga to abstrakcyjne my"slenie o programie, 
+bardzo u"latwia piel"egnacj"e i modyfikacj"e, 
+pozwala na roz"l"aczna kompilacj"e modu"l"ow, etc.
+
+Gdyby w programie $IntPQasList$ zamiast \|INTEGER_LEQ| 
+zdefiniowa"c nast"epuj"ac"a sygnatur"e:
+\begin{verbatim}
+signature INTEGER_LEQ' =
+sig
+
+    include TOTAL_PREORDER
+    sharing type elem = int
+    (* and leq should additionally be antisymmetric *)
+
+end;
+\end{verbatim}
+
+to nie by"laby ona \emph{dobr"a} sygnatur"a dla \|IntegerLeq|.
+Oto dow"od:
+
+\begin{verbatim}
+structure A : INTEGER_LEQ' =
+struct
+
+    type elem = int
+    fun leq (k, l) = ((k : int) >= l) (* comment satisfied *)
+
+end;
+\end{verbatim}
+
+Wida"c, "re \|A| pasuje do \|INTEGER_LEQ'|. 
+Ale program $IntPQasList$ z \|INTEGER_LEQ'| zamiast \|INTEGER_LEQ|,
+gdy podmienimy w nim \|IntegerLeq| na \|A|, przestaje by"c poprawny, 
+gdy"r porz"adek na \|Item.elem| w module \|IntPQasList| 
+jest odwrotny ni"r wymagany w jego specyfikacji.
+
+\bigskip
+{\bf Pisz zawsze \emph{dobre} sygnatury!}
+
+
+\section*{Zadania}
+\begin{zadania}         % Ten sam efekt daje \begin{exercises}, he he.
+
+\item
+Napisz modu"ly \|COMPLEX_LEQ| (liczby zespolone uporz"adkowane wed"lug ich modu"l"ow), 
+\|COMPLEX_PRIORITY_QUEUE|, \|ComplexLeq|, \|ComplexPQasList|. Sprawd"z poprawno"s"c i przetestuj.
+
+\item
+Napisz program $IntPQasOrderedList$. Upewnij si"e, "re modu"l \|IntPQasOrderedList| pasuje do sygnatury \|INT_PRIORITY_QUEUE|.
+Pomy"sl o z"lo"rono"sci czasowej $IntPQasList$ oraz $IntPQasOrderedList$.
+
+\item
+Napisz program sortuj"acy liczby ca"lkowite przy u"ryciu kolejki priorytetowej. 
+Wykorzystaj $IntPQasList$ jako jego podprogram. 
+Czy \|INT_PRIORITY_QUEUE| jest \emph{dobr"a} sygnatur"a 
+dla \|IntPQasList| w tym programie?
+
+\item
+Zmodyfikuj program z poprzedniego zadania tak,
+aby korzysta"l z $IntPQasOrderedList$.
+Jaki algorytm sortowania wynika z u"rycia \|insert| 
+a jaki z u"rycia \|join| przy tworzeniu kolejki?
+
+\end{zadania}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

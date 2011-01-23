@@ -1,0 +1,62 @@
+
+Formalizm Extended~ML zosta"l w 1994 roku opisany w swojej definicji~\cite{bib:KST94}.
+Od tego czasu Extended ML wykorzystywany jest
+do tworzenia oprogramowania i do cel"ow edukacyjnych.
+Trwaj"a prace nad teori"a dowodu EML. Rozwijane s"a prototypowe 
+narz"edzia wspomagaj"ace proces konstrukcji oprogramowania.
+Ci"agle ulepszana jest i poprawiana sama definicja formalizmu,
+w czym autor tej pracy chlubi si"e mie"c sw"oj malutki udzia"l.
+
+Od samego pocz"atku wyra"zne jest znaczenie analizy statycznej EML.
+Zdefiniowana ona zosta"la w cz"e"sci definicji zwanej Semantyk"a Statyczn"a.
+Jej wst"epne implementacje by"ly jednym z najwa"rniejszych element"ow 
+kolejnych wersji systemu EML Kit, stanowi"ac o jego u"ryteczno"sci w praktycznych zastosowaniach.
+Pobie"rny opis ostatecznej implementacji zawartej w systemie EML Kit 1.0,
+wraz z dok"ladnym om"owieniem niekt"orych szczeg"o"l"ow, 
+zosta"l zamieszczony w raporcie na temat systemu EML~Kit~\cite{JKS96}.
+Ponadto Stefan Kahrs po"swi"eci"l prac"e~\cite{Kah94} opisowi 
+r"o"rnic mi"edzy analiz"a statyczn"a Extended ML i analiz"a statyczn"a Standard ML.
+A ta z kolei rozpatrywana by"la w wielu pozycjach, na przyk"lad w~\cite{MT91} czy w~\cite{Ler92}.
+
+Bie"r"aca aktywno"s"c naukowa wok"o"l Extended ML skupiona jest na
+Semantyce Weryfikacyjnej EML i zagadnieniach, kt"ore mo"rna by nazwa"c jej "`implementacj"a''.
+Z kolei Semantyka Weryfikacyjna cz"esto odwo"luje si"e do Semantyki Statycznej,
+na przyk"lad w celu wyra"renia w"lasno"sci posiadania typu.
+Co wi"ecej, Semantyka Statyczna jest obci"a"rona odpowiedzialno"sci"a
+za zbieranie r"o"rnorakich informacji na potrzeby Semantyki Weryfikacyjnej.
+Wszystko to sprawia, i"r niezb"edna jest pe"lna i godna zaufania
+implementacja Semantyki Statycznej EML, co sta"lo si"e motywacj"a do opisanych tu przedsi"ewzi"e"c. 
+
+Niniejsz"a prac"a mam nadziej"e zamkn"a"c temat w"lasno"sci 
+analizy statycznej EML i metod jej przeprowadzania.
+W pracy tej zdaj"e r"ownie"r spraw"e z najciekawszych aspekt"ow 
+jej implementacji w ramach systemu EML Kit.
+Szczeg"oln"a uwag"a obdarzy"lem dwa problemy, powstaj"ace podczas sprawdzania
+poprawno"sci typowej program"ow napisanych w j"ezyku Extended ML.
+Pierwszy problem to analiza statyczna sygnatur, 
+w kt"orych mog"a jednocze"snie wyst"epowa"c aksjomaty i postulaty r"owno"sci typ"ow.
+Drugi to zbieranie "slad"ow podczas analizy statycznej.
+Wskaza"lem "zr"od"la gro"znych b"l"ed"ow, jakie mog"a by"c pope"lnione
+je"sli te problemy nie s"a potraktowane z wystarczaj"ac"a ostro"rno"sci"a.
+Na tym tle naszkicowa"lem poprawne rozwi"azania, 
+wspominaj"ac r"ownie"r o pewnych ich wariantach.
+Udowodni"lem tak"re szereg w"lasno"sci Semantyki Statycznej EML,
+kt"ore potem pos"lu"ry"ly mi do dowodu poprawno"sci podanych algorytm"ow.
+Na ko"ncu przedstawi"lem rzeczywist"a implementacj"e opisanych rozwi"aza"n,
+w tej postaci w jakiej jest ona cz"e"sci"a systemu EML~Kit.
+
+\section*{Podzi"ekowania}
+
+Szczeg"olnie serdecznie chcia"lbym podzi"ekowa"c Andrzejowi Tarleckiemu, mojemu promotorowi.
+
+Pozosta"lym autorom Extended ML: Stefanowi Kahrsowi i Donowi Sannelli, jestem wdzi"eczny
+za "ryczliw"a uwag"e i czas jaki mi po"swi"ecili.
+Z wdzi"e\-czno\-"sci"a pozdrawiam przyjaci"o"l, z kt"orymi wsp"olnie pracowa"lem nad systemem EML Kit:
+Marcina Jurdzi"nskiego, S"lawomira Leszczy"nskiego, Roberta Marona i Aleksego Schuberta. 
+Za dobre s"lowo dzi"ekuj"e Marcinowi Benke, S"lawomirowi Bia\-"le\-ckie\-mu,
+S"lawomirowi Lasocie i Micha"lowi Grabowskiemu.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

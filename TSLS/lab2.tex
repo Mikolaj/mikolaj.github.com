@@ -1,0 +1,146 @@
+\chapter{
+Listy \& stuff
+}
+
+Poznali"smy tuple: 
+\begin{verbatim}
+    (2, "errr", 3.14);
+\end{verbatim}
+Listy to co"s zupe"lnie innego:
+\begin{verbatim}
+    [2, 55, 15346];
+    ["This", "is", "a", "list", ", yeah."];
+    [];
+\end{verbatim}
+
+Te nawiasy kwadratowe to skr"otowy spos"ob zapisu list.
+Tak naprawd"e listy konstruuje si"e w ten spos"ob:
+\begin{verbatim}
+    2::(55::(15346::nil));
+\end{verbatim}
+lub bez niepotrzebnych nawias"ow:
+\begin{verbatim}
+    2::55::15346::nil;
+    "This"::"is"::"a"::"list"::", yeah."::nil;
+    nil;
+\end{verbatim}
+
+M"owi"ac "sci"sle: infiksowy konstruktor \|::| dostaje jako argumenty
+warto"s"c~$x$ i list"e~$l$, kt"orej elementy s"a tego samego typu co~$x$,
+i daje w~wyniku $l$ z doklejonym na pocz"atku elementem $x$.
+Na przyk"lad (u"rywaj"ac mieszanej notacji) \|1::[2, 3, 4]| 
+reprezentuje t"e sam"a list"e co  \|[1, 2, 3, 4]|
+
+Kilka przyk"lad"ow:
+\begin{verbatim}
+    val mylist = [1, 2, 3];
+    fun null l = (l = []);
+    null mylist;
+    null [];
+    fun interval (n, m) = if n > m then [] else n::interval (n+1, m);
+    interval (~31, 72);
+\end{verbatim}
+
+Jest troche wbudowanych funkcji na listach,
+w szczeg"olno"sci
+\|hd| oddaj"aca pierwszy element listy i~\|tl|, oddaj"aca list"e bez pierwszego elementu.
+\begin{verbatim}
+    val head = hd mylist
+    val tail = tl mylist
+    val what = head :: tail
+\end{verbatim}
+
+Funkcje na listach mo"rna definiowac za pomoca pattern matchingu
+\begin{verbatim}
+    fun null [] = true
+      | null (head::tail) = false
+\end{verbatim}
+a tu b"edzie potrzebny wyj"atek (exception):
+\begin{verbatim}
+    exception Empty
+    fun hd [] = raise Empty
+      | hd (head::tail) = head
+\end{verbatim}
+
+Dalej ju"r "latwo \|:-)|
+
+
+\section*{Zadania}
+\begin{exercises}
+
+\item%[Zadanie 2.1] 
+Przy pomocy pattern matchingu napisz funkcj"e \|tl|.
+
+\item%[Zadanie 2.2]
+U"rywaj"ac funkcji \|null|, \|hd|, \|tl|,
+napisz funkcj"e \|sum|, kt"ora dodaje do kupy
+wszystkie elementy danej listy liczb ca"lkowitych.
+Zr"ob to samo przy pomocy pattern matchingu.
+
+\item%[Zadanie 2.3]
+U"rywaj"ac funkcji \|null|, \|hd|, \|tl|,
+napisz funkcj"e \|length|, kt"ora oblicza d"lugo"s"c listy.
+Zr"ob to samo przy pomocy pattern matchingu.
+
+\item%[Zadanie 2.4]
+U"rywaj"ac funkcji \|null|, \|hd|, \|tl|,
+napisz funkcj"e \|last|, kt"ora daje w wyniku ostatni element listy.
+Zr"ob to samo przy pomocy pattern matchingu.
+
+\item%[Zadanie 2.5]
+Napisz funkcj"e \|append|, kt"ora "l"aczy dwie listy.
+Na przyk"lad:
+ $$\f{append} ([1, 2], [3, 4, 6]) = [1, 2, 3, 4, 6]$$
+
+\item%[Zadanie 2.6]
+Napisz funkcje \|take| i \|drop|, z parametrem \|(l,n)|,
+kt"ore odpowiednio bior"a lub odrzucaj"a 
+pierwsze \|n| element"ow listy \|l|.
+Upewnij si"e, "re dla ka"rdego $(l, n)$ 
+$$
+\f{append} (\f{take} (l, n), \f{drop} (l, n)) = l
+$$
+
+%\item%[Zadania 2.8a]
+%Czy wiesz dlaczego w poprzednim zadaniu napisane jest ``z parametrem \|(l,n)|'', a
+%nie ``z parametrami \|(l,n)|''?
+
+\item%[Zadanie 2.7]
+Napisz, korzystaj"ac z funkcji \|drop| i~\|hd|,
+funkcj"e \|nth|, kt"ora daje $n$-ty element listy.
+Czy funkcja dzia"la"laby szybciej, gdyby skorzysta"c z~\|take| i \|last|? 
+
+\item%[Zadanie 2.8]
+Napisz funkcj"e \|flatten|, kt"ora dostaje list"e list, 
+a daje w wyniku list"e wszystkich element"ow tych list
+(nie martw si"e powt"orzeniami czy kolejno"sci"a).
+
+\item%[Zadanie 2.9]
+Napisz \|quicksort|.
+
+\item%[Zadanie 2.10]
+Przy pomocy list napisz funkcje realizuj"ace arytmetyk"e na DU\-"RYCH
+liczbach ca"lkowitych. U"ryj ich do policzenia $500!$ albo lepiej
+$1000!$. Jaka jest z"lo"rono"s"c liczenia $n!$ w ten spos"ob?
+
+\item%[Zadanie 2.11]
+Napisz to samo w C lub Pascalu. Por"ownaj czas zu"ryty na pisanie i
+wykonanie programu.
+
+\end{exercises}
+
+Poza tym mo"rna zrobi"c \|mergesort| albo funkcje obliczaj"ace
+wszystkie permutacje, kombinacje, etc. danej listy 
+albo par"e funkcji: \|zip| i~\|split|; \|zip| dostaje dwie listy
+liczb ca"lkowitych a oddaje list"e par: para pierwszych element"ow
+obu list, potem drugich, itd, \|split| jest funkcj"a (prawie) odwrotn"a.
+
+Wszystkie napisane programy warto przetestowa"c ---
+jest to "latwe i przyjemne, bo u"rywamy interpretera. 
+
+{\bf Zach"ecamy do wszelakich eksperyment"ow!}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

@@ -1,0 +1,17 @@
+Wwprog121 =
+{Arg = :: sig type t value v : t end
+       struct type t = {other : {}} value v = {other = {}} end
+}
+|
+(
+: {{Arg : sig type t value v : t end}}
+.
+{}
+.
+{Arg = :: sig type t value v : t end
+       struct type t = {} value v = {} end
+}
+. 
+:: ~Arg : sig type t value v : t end -> sig value v : Arg.t end
+struct value v = Arg.v end
+)

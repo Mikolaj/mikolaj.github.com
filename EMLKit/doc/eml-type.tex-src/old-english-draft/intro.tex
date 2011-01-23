@@ -1,0 +1,393 @@
+\section{\secover}
+\label{sec:over}
+
+\subsection{\secsml}
+\label{sec:sml}
+
+\ifthenelse{\boolean{ifglish}}
+{
+
+
+The EML Kit can be used for type-checking and testing EML programs
+at all stages of their development. 
+
+The EML Kit can help in teaching EML or SML programming
+or in developing SML software with the EML formalism. 
+
+The EML Kit lets the EML authors and all the people involved in
+the EML-related work fiddle with a straightforward implementation of the EML language.
+
+Current research concerning EML is centered on the Verification
+Semantics of EML and on issues which one may call ``implementation''
+of the Verification Semantics. These include designing a proof theory
+for EML and building prototype provers. 
+The Verification Semantics heavily uses the Static Semantics, 
+e.g. for expressing the property of having a type.
+Moreover the Static Semantics of the EML is burdened with
+the responsibility of gathering various information for the Verification Semantics.
+The EML Kit contains an implementation of the Static Semantics of EML,
+including the ``gathering'' mechanisms.
+
+The EML Kit can be thought of (with some amount of good will)
+as a fully deterministic, algorithmic and detailed
+description of the EML static and dynamic semantics.
+
+The EML definition describes the EML language using
+a kind of BNF notation for its grammar, and an extension
+of the formalism called Natural Semantics for the Static and Dynamic Semantics.
+This form of presentation makes it possible to
+describe such a large system as EML in a relatively compact
+and clean way. There is a price to pay, however.
+Some small mistakes long remain unnoticed.
+Some mechanisms seem simple and unambiguous, 
+but the first attempt to implement them
+shows that they are not.
+Some global relations between parts of the Definition 
+are obscure until the modules hierarchy
+is described in a serious module-handling formalism, like the 
+one of the SML programming language.
+
+We hope that this report will describe results
+of the analysis of EML from the perspective
+of the EML Kit, as well as give an overview of the EML Kit seen 
+as an EML ``denotational definition''. We reckon, that  
+a knowledge of at least the Definition of Extended ML~\cite{bib:KST94} 
+is essential for the understanding of our paper.
+
+Now, there is a great need for an ``implementation'' 
+of the EML Verification Semantics. We hope the EML Kit will help in
+as well as benefit from the current work on the EML proof theory,
+proof obligation generators, prototype provers, etc.
+Yet, as for now only the syntax and type correctness of 
+axioms is checked by the EML Kit - there is no extra aid
+in proving them correct, sufficient or whatever. 
+
+
+
+In this paper I will describe two problems,
+that arose during the work on the implementation of the EML type-checking.
+The first problem is elaboration of EML signatures in the presence of axioms,
+and the second is collection of traces during the elaboration process.
+I will try to indicate the sources of dangerous errors, 
+that can be made if no special care is taken of these problems.
+On this background I will sketch the correct solutions, mentioning some of their variants. 
+At the end I will comment on the actual implementation of the correct algorithms, 
+as they were incorporated into the EML Kit.
+
+
+Standard ML (SML) \cite{MTH90} is a functional programming language,
+equipped with powerful modularization tools.
+Signatures are one of the components of the SML module system:
+}
+{}
+\begin{verbatim}
+signature TOTAL_PREORDER =
+sig
+    type elem 
+    val leq : elem * elem -> bool 
+    (* leq should be a total preorder *)
+end
+\end{verbatim}
+\begin{verbatim}
+structure OddRational : TOTAL_PREORDER =
+struct
+    type elem = int * int
+    fun leq ((m, n), (k, l)) = 
+        if n = 0 andalso l = 0 
+            then m < 0 orelse (m > 0 andalso k > 0)
+        else if (n < 0 andalso l >= 0) orelse (n >= 0 andalso l < 0)
+                 then k * n <= m * l
+             else m * l <= k * n 
+end
+\end{verbatim}
+
+\subsection{\seceml}
+\label{sec:eml}
+
+Extended ML (EML) \cite{bib:KST94} is a framework for the formal development of programs in Standard ML.
+High-level specifications and SML code, 
+as well as a mixture of both can be expressed in the Extended ML language.
+As a language EML is an extension of (a large subset of) SML.
+In particular, EML signatures may contain axioms:
+
+\begin{verbatim}
+signature TOTAL_PREORDER =
+sig
+    type elem 
+    val leq : elem * elem -> bool 
+    axiom forall (a, b) => leq (a, b) orelse leq (b, a)
+    and forall (c, d, e) => 
+        (leq (c, d) andalso leq (d, e)) implies leq (c, e)
+end
+\end{verbatim}
+
+\subsection{\secformal}
+\label{sec:formal}
+
+\ifthenelse{\boolean{ifglish}}
+{
+Similarly the Definition of Extended ML~\cite{bib:KST94} extends in a sense
+the Definition of Standard ML~\cite{MTH90}. Although many things are added,
+some errors and infelicities corrected and a few presentation 
+conventions changed, the general structure is kept mostly intact 
+and as much of the original text as possible is preserved. 
+
+The Definition of Extended ML uses a formalism called Natural Semantics 
+(a kind of operational semantics) to describe the static semantics of EML.
+There is a collection of semantic objects, defined using mathematical notation,
+and a set of rules to be used in derivation of judgments of the form
+\[C\ts{\it phrase}\ra A\]
+which can be read ``{\it phrase} elaborates to $A$ in context $C$''
+($C$, $A$ are semantic objects, {\it phrase} is an EML phrase).
+}
+{}
+
+\subsection{\seckit}
+\label{sec:kit}
+
+\ifthenelse{\boolean{ifglish}}
+{
+The EML Kit \cite{JKS96} aims to be (the basis and test-bed for) a comfortable
+framework for the formal development of programs, using the 
+Extended ML language, formalism and methodology.
+
+Version 1.0, developed by Marcin Jurdzi\'nski, Miko{\l}aj Konarski, 
+S{\l}awomir Leszczy\'nski and Aleksy Schubert,
+is a complete implementation of the Extended ML 
+programming language. It allows for parsing, type-checking 
+and evaluation of arbitrary EML code, be it pure 
+Standard ML or full-blown EML with its axioms and other specification constructs. 
+All of this is done in a strict adherence 
+to the formally defined EML Syntax, Static Semantics and Dynamic Semantics.
+
+Now, there is a great need for an ``implementation'' 
+of the EML Verification Semantics. We hope the EML Kit will help in
+as well as benefit from the current work on the EML proof theory,
+proof obligation generators, prototype provers, etc.
+Yet, as for now only the syntax and type correctness of 
+axioms is checked by the EML Kit - there is no extra aid
+in proving them correct or sufficient. 
+
+The EML Kit is based on the ML Kit~\cite{BRTT93}; a flexible, clean and
+modularized interpreter of the Standard ML, written in Standard ML.
+The ML Kit is a faithful and as straightforward as possible 
+implementation of the language described in the SML definition. The overall structure 
+of the ML Kit resembles the structure of the SML definition,
+abstract syntax tree is almost literally the same and
+the design of many details, such as naming conventions,
+is inspired by the Definition. 
+}
+{}
+
+\subsection{\secdepend}
+\label{sec:depend}
+
+\ifthenelse{\boolean{ifglish}}
+{
+The two facts --- that the EML definition is an extension of 
+the SML definition and that the ML Kit is so close to the latter --- 
+helped us in our efforts to make the EML Kit a faithful and clean 
+implementation of Extended ML. We were able to extend the ML Kit
+analogously as the EML definition extends the SML definition,
+while retaining the style of the ML Kit programming.
+Thus we have formed a basis for the development of the future EML Programming
+Environment tools, such as the proof-obligations generator and provers.
+See the familiar looking diagram below.
+}
+{}
+
+\vspace{10pt}
+
+\begin{center}
+{\footnotesize
+\setlength{\unitlength}{4.5cm}
+\begin{picture}(1.4,2.1)
+
+\put(0.7,2.1){\makebox(0,0){
+        \begin{tabular}{c}
+        "Srodowisko\\
+        Programistyczne EML
+        \end{tabular}}}
+
+\put(0.7,1.4){\makebox(0,0){
+        \begin{tabular}{c}
+        EML Kit
+        \end{tabular}}}
+\put(0.7,1.47){\line(0,1){0.07}}
+\put(0.7,1.58){\line(0,1){0.07}}
+\put(0.7,1.69){\line(0,1){0.07}}
+\put(0.7,1.80){\line(0,1){0.07}}
+\put(0.7,1.91){\vector(0,1){0.10}}
+
+\put(0.0,0.7){\makebox(0,0){
+        \begin{tabular}{c}
+        ML Kit
+        \end{tabular}}}
+\put(0.07,0.77){\vector(1,1){0.566}}
+
+\put(1.4,0.7){\makebox(0,0){
+        \begin{tabular}{c}
+        Definicja EML
+        \end{tabular}}}
+\put(1.33,0.77){\vector(-1,1){0.566}}
+
+
+\put(0.7,0.0){\makebox(0,0){
+        \begin{tabular}{c}
+        Definicja SML
+        \end{tabular}}}
+\put(0.77,0.07){\vector(1,1){0.566}}
+\put(0.63,0.07){\vector(-1,1){0.566}}
+
+\end{picture}
+
+} % end of footnotesize
+\end{center}
+
+\section{\secanal}
+\label{sec:anal}
+
+\subsection{\secall}
+\label{sec:all}
+
+\subsection{\secbasic}
+\label{sec:basic}
+
+\subsubsection{\secsemantic}
+\label{sec:semantic}
+
+\subsubsection{\secjudgments}
+\label{sec:judgments}
+\ifthenelse{\boolean{ifglish}}
+{
+Judgments are sentences of the form
+\[C\ts{\it phrase}\ra A\]
+which can be read ``{\it phrase} elaborates to $A$ in context $C$''
+($C$, $A$ are semantic objects, {\it phrase} is an EML phrase).
+
+The rules of the Static Semantics of EML serve to derive judgments, for example
+of the form :
+$$\B\ts\sigexp\ra\S,\trace$$
+Here $\B$ is a basis, $\sigexp$ is a signature expression and $\S$ is a semantic structure.
+The $\trace$ is a trace --- for a time being we can think of it as a derivation tree;
+i.e. a tree labeled by the instances of the rules, representing a correct derivation
+of a judgment found in its root. The whole derivation can be read  
+``in the basis $\B$ $\sigexp$ elaborates to $\S$ and $\trace$''.
+}
+{}
+
+\subsubsection{\secprincipal}
+\label{sec:principal}
+
+\ifthenelse{\boolean{ifglish}}
+{
+We say that $(\N)\S$ with $\trace$ is principal for $\sigexp$ in $\B$
+when (in simplification):
+\begin{itemize}
+\item $\B\vdash\sigexp\ra\S,\trace$,
+\item whenever $\B\vdash\sigexp\ra\S',\trace'$, then
+      $\sigord{\longsig{}}{}{\S'}$ and $\trace\succ\trace'$.
+\end{itemize}
+The ``$\sigord{}{}$'' relation is signature instantiation
+and the ``$\succ$'' relation is trace generalization.
+Both have intuitively understandable meaning.     
+}
+{}
+\subsection{\secinterest}
+\label{sec:interest}
+
+\subsubsection{\secindeterm}
+\label{sec:indeterm}
+\ifthenelse{\boolean{ifglish}}
+{
+Fundamental concepts of the Static Semantics are defined 
+using quantification over derivations. For example
+{\it phrase} is said to possess a type $\tau$ in a context $C$, 
+if there exists a derivation of the sentence
+\[C\ts{\it phrase}\ra\tau\]
+
+\noindent Let's take a closer look at the simplest one:
+$$        % convergence predicate
+\frac{\C\ts\expb\ra\tau,\U,\trace}
+     {\C\ts\termexp\ra\BOOL,\U,\emptylist}
+\eqno(11.4) 
+$$ 
+This can be read: "if $\expb$ can elaborate in the context $C$ to the type $\tau$,
+set $U$ and trace $\trace$ then $\termexp$ can elaborate in the
+context $C$ to the type $\BOOL$, set $U$ and empty trace".
+For the purpose of implementation we can read it
+"if $\expb$ elaborates in the context $C$ to its most general type $\tau$,
+set $U$ and its most general trace $\trace$ then $\termexp$ elaborates in the
+context $C$ to the type $\BOOL$, set $U$ and empty trace". 
+This reformulation can be justified by an easy proof
+that Milner's algorithms extended to cover this rule remains correct.
+}
+{}
+\subsubsection{\secimposing}
+\label{sec:imposing}
+
+Axioms can impose type sharing
+\begin{verbatim}
+functor F (Arg : sig
+                     type t
+                     val f : t -> int
+                     type u
+                     val a : u
+                     axiom f a = 0
+                 end) :
+sig
+    val b : int
+end =
+struct
+    val b = Arg.f Arg.a
+end
+\end{verbatim}     
+
+\subsection{\secanaleml}
+\label{sec:analeml}
+
+\ifthenelse{\boolean{ifglish}}
+{
+Static Semantics in indeterministic.
+In addition some of the conditions in the rules
+express properties of the form ``for all derivations
+such that $\phi$ holds, $\psi$ must hold'' --- good examples
+are the principality requirements appearing in the Static Semantics for Modules.
+
+Because of the quantification over infinite sets,
+it is impossible to implement Static Semantics of EML
+literally.
+One has to translate it into a more ``denotational'' form
+(some prefer to call it a ``deterministic'' form)
+before it can be straightforwardly (at last)
+implemented in a programming language like SML.
+Such a reformulation is a non-trivial task.
+
+Fortunately the similar problem concerning SML 
+has been solved quite a while ago.
+Milner's algorithm \cite{DM82} 
+is a well known skeleton for 
+an SML Core language type-checker,
+and the proof of the Principality Theorem
+from Section~A.2 of the Commentary on Standard~ML \cite{MT91}
+is a good guideline for dealing with SML Modules language.
+Last but not least, the ML Kit is a very clean and modest
+reformulation/implementation of the SML Static Semantics,
+based on the above-mentioned ideas. 
+
+Our work on reformulating the EML-specific
+fragments of the Static Semantics sometimes
+amounted to trivial extensions of e.g.
+Milner's algorithm, the only work being
+a struggle with the ML Kit machinery.
+Sometimes however the extension required a proof of correctness,
+or a very good knowledge of the ML Kit design.
+And still sometimes a new approach had to be found,
+proven correct and implemented within the ML Kit frames.
+}
+{}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

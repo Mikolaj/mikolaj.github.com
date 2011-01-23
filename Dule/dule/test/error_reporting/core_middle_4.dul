@@ -1,0 +1,7 @@
+Er = 
+:: sig value v : {} end
+  struct 
+    value v = 
+    let i = fun ~f -> [`Zero f] ~it:`Zero ~r:(f (~it:{}))
+    in {} 
+  end

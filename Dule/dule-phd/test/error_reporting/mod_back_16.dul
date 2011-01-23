@@ -1,0 +1,15 @@
+Wwprog121 =
+link
+spec V = sig type t value v : t end
+M = 
+{Arg = :: V
+       struct type t = {a : {}} value v = {a = {}} end}
+|
+(
+{Arg = :: ~Arg : sig type t value v : t end -> V
+       struct type t = {b : {}} value v = {b = {}} end}
+. 
+:: ~Arg : sig type t value v : t end -> sig value v : Arg.t end
+struct value v = Arg.v end
+)
+end

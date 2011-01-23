@@ -1,0 +1,899 @@
+(* Copyright (C) 2003--2006 Mikolaj Konarski, Lukasz Kozuchowski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: tutorial_modules.dul,v 1.22 2006-11-08 19:00:18 mikon Exp $
+ *) 
+
+(* These are the example modules from the Dule tutorial. *)
+
+Tutorial =
+link
+
+Tut_link =
+link
+spec Bool =
+  sig
+    value tt : [`True|`False]
+    value ff : [`True|`False]
+    value neg : ~it:[`True|`False] -> [`True|`False] 
+    value conj : 
+      ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False] 
+    value disj : 
+      ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False]
+  end
+
+module Bool =
+  :: Bool
+  struct
+    value tt = `True
+    value ff = `False
+    value neg = [`True -> `False
+                |`False -> `True]
+    value conj = [`True fun ~b ~it -> b
+                 |`False fun ~b ~it -> `False]
+    value disj = [`True fun ~b ~it -> `True
+                 |`False fun ~b ~it -> b]
+  end  
+
+spec Nat =
+  sig
+    type t
+    value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+  end
+Nat =  
+  struct
+    type t = ind nat: [`Zero|`Succ nat]
+    value t2ind = fun ~it -> it
+    value tde = fun ~it -> it . de
+    value zero = `Zero . con
+    value succ = fun ~n -> n .`Succ . con
+  end
+spec NatAdd = 
+~Nat:Nat ->
+  sig
+    value pred : ~n:Nat.t -> Nat.t
+    value add : Nat . ~n:t ~it:t -> t
+    value is_zero : ~it:Nat.t -> [`True|`False]
+  end
+NatAdd =
+  struct
+    value pred = fun ~(n : Nat.t) ->
+      match Nat.tde ~it:n with
+      [`Zero -> n
+      |`Succ nn -> nn]
+    value add = fun ~n ~it -> 
+      match Nat.t2ind ~it with
+      fold [`Zero -> n
+           |`Succ n -> Nat.succ ~n]
+    value is_zero = fun ~it ->
+      match Nat.tde ~it with
+      [`Zero -> `True
+      |`Succ -> `False]
+  end
+spec List = 
+~Elem:sig type t end ->
+  sig
+    type t
+    value t2ind : 
+      ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; 
+                                      tail : list}]
+    value ind2t : 
+      ~it:ind list: [`Nil|`Cons {head : Elem.t; 
+                                 tail : list}] -> t
+    value tde : 
+      ~it:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+library List =  
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . de
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+  end
+spec NatList = List with {Elem = Nat}
+NatList = load List with {Elem = Nat}
+spec Test =
+~NatList ->
+  sig
+    value true : [`True|`False]
+    value false : [`True|`False]
+    value neg : [`True|`False]
+    value conj : [`True|`False]
+    value disj : [`True|`False]    
+    value zero : Nat.t
+    value one : Nat.t
+    value two : Nat.t 
+    value empty_list : NatList.t    
+    value five_zeros : NatList.t
+  end
+Test =
+  :: ~NatAdd ~Bool -> Test
+  struct
+    value true =
+      assert Bool.tt
+      in
+      Bool.tt
+    value false =
+      assert match Bool.ff with
+             [`True -> `False |`False -> `True]
+      in
+      Bool.ff
+    value neg =
+       let b = Bool.neg ~it:Bool.ff
+       in
+       assert b
+       in
+       b
+    value conj =
+       let b = Bool.neg ~it:(Bool.conj ~b:Bool.ff ~it:Bool.tt)
+       in
+       assert b
+       in
+       assert Bool.neg ~it:(Bool.conj ~b:Bool.ff ~it:Bool.ff)
+       in
+       assert Bool.neg ~it:(Bool.conj ~b:Bool.tt ~it:Bool.ff)
+       in
+       assert Bool.conj ~b:Bool.tt ~it:Bool.tt
+       in
+       b
+    value disj =
+       let b = Bool.disj ~b:Bool.ff ~it:Bool.tt
+       in
+       assert b
+       in
+       assert Bool.neg ~it:(Bool.disj ~b:Bool.ff ~it:Bool.ff)
+       in
+       assert Bool.disj ~b:Bool.tt ~it:Bool.ff
+       in
+       assert Bool.disj ~b:Bool.tt ~it:Bool.tt
+       in
+       b
+    value zero =
+       assert NatAdd.is_zero ~it: Nat.zero
+       in
+       Nat.zero
+    value one =
+       let r = Nat.succ ~n:Nat.zero
+       in
+       assert Bool.neg ~it:(NatAdd.is_zero ~it: r)
+       in
+       assert NatAdd.is_zero ~it:(NatAdd.pred ~n:r)
+       in
+       r
+    value two =
+      let one = Nat.succ ~n:Nat.zero
+      in
+      let r = NatAdd.add ~n:one ~it:one
+      in
+      assert Bool.neg ~it:(NatAdd.is_zero ~it: r)
+      in
+      assert Bool.neg ~it:(NatAdd.is_zero ~it: (NatAdd.pred ~n: r))
+      in
+      assert NatAdd.is_zero ~it:(NatAdd.pred ~n:(NatAdd.pred ~n:r))
+      in
+      r
+    value empty_list =
+      let r = NatList.nil
+      in
+      assert match NatList.tde ~it:r with
+             [`Nil -> `True | _ -> `False]
+      in
+      r          
+    value five_zeros =
+      let copy = fun ~elem ~count ->
+        match Nat.t2ind ~it:count with
+        fold [`Zero -> NatList.nil
+             |`Succ tail -> NatList.cons ~head:elem ~tail]
+      in
+      let five_ones = copy ~elem:1 ~count:5 in
+      let r = NatList.ind2t ~it:
+                match NatList.t2ind ~it:five_ones with
+                map n -> NatAdd.pred ~n
+      in
+      assert match NatList.tde ~it: r with
+             [`Cons {head; tail} -> NatAdd.is_zero ~it:head
+             |`Nil -> `False]
+      in
+      r
+  end
+
+  spec Sp1 = ~NatList:NatList ~NatAdd -> Test
+  spec Sp2 = ~NatList ~NatAdd:NatAdd -> Test
+  spec Sp3 = 
+~NatList 
+~Nat 
+~NatAdd:(~Nat ->
+         sig
+           value pred : ~n:Nat.t -> Nat.t
+           value add : Nat . ~n:t ~it:t -> t
+           value is_zero : ~it:Nat.t -> [`True|`False]
+         end)
+  -> Test
+  spec Sp4 = ~Nat:(~Bool -> Nat) ~Nat2:Nat -> ~Bool2:Bool -> Bool
+  spec Sp5 = ~Nat ~Bool ~Nat2:Nat ~Bool2:Bool -> Bool
+
+  module Explicit1 = 
+:: sig type t end
+struct type t = {} end
+  module Explicit2 = 
+:: sig type t end
+((:: sig type t type u value v : u end
+  struct type t = {} type u = {} value v = {} end)
+   :> sig type t end)
+
+  spec Test7 = ~NatList ->
+                 sig
+                   value five_zeros : NatList.t
+                 end
+  module Test2 = 
+:: Test7
+  (:: ~NatAdd -> Test7
+   struct
+     value five_zeros = 
+      let copy = fun ~elem ~count ->
+        match Nat.t2ind ~it:count with
+        fold [`Zero -> NatList.nil
+             |`Succ tail -> NatList.cons ~head:elem ~tail]
+      in
+      let five_ones = copy ~elem:1 ~count:5 in
+      let r = NatList.ind2t ~it:
+                match NatList.t2ind ~it:five_ones with
+                map n -> NatAdd.pred ~n
+      in
+      assert match NatList.tde ~it: r with
+             [`Cons {head; tail} -> NatAdd.is_zero ~it:head
+             |`Nil -> `False]
+      in
+      r      
+   end)
+
+module Pr1 = 
+{Trivial = {T = {}}; Void = struct end} | Void
+
+spec TreeOps = sig end
+spec Balance = sig end
+spec Sort = sig end
+
+spec TreeSort = ~TreeOps ~Balance -> Sort
+MySort1 = TreeSort
+
+spec TreeSortSpec = ~TreeOps ~Balance -> Sort
+MySort2 = :: TreeSortSpec 
+         TreeSort
+
+MySort3 = :: ~TreeOps ~Balance ~TreeSort:Sort -> Sort 
+         TreeSort
+
+  module Pr5 =
+link
+  spec NatAny = ~Nat -> sig value any : Nat.t end
+  NatAny = struct value any = Nat.zero end
+  library TestPr = :: ~NatAny -> sig value v : Nat.t end 
+                 struct value v = NatAny.any end
+  LoadedTest = load TestPr with {{NatAny}}
+end
+
+  module Record1 =
+:: {Nat : Nat; NatList : NatList; MyBool : Bool}
+{Nat = Nat; NatList = NatList; MyBool = Bool}
+  module Record2 =
+:: {Nat; NatList; MyBool : Bool}
+{Nat; NatList; MyBool = Bool}
+
+  module DoubleRecord01 =
+{{Trivial = {}; 
+  Dependent = :: ~Parm:sig end -> sig end struct end;
+  K2'' = :: ~M1'':sig end -> sig end  M2''}}
+
+  module DoubleRecord011 =
+{{Trivial = {}; 
+  Dependent = :: ~Parm:sig end -> sig end struct end;
+  K2 = :: ~M1':sig end -> sig end  M2'}}
+
+  module DoubleRecord02 =
+ {Trivial = {}; 
+  Dependent = :: ~Parm:sig end -> sig end struct end;
+  Parm = Parm;
+  K2 = :: ~M1':sig end -> sig end  M2';
+  M1' = M1';
+  M2' = M2'}
+
+  module DoubleRecord1 =
+link
+  spec M1 = sig type t value c : t end
+  spec M2 = sig end
+  spec M4 = M2
+  spec M6 = M2
+  spec M7 = M2
+  spec M8 = M2
+
+  spec M3 = ~M1 ~M2 -> sig end
+  M3 = struct end
+  spec M5 = ~M4 -> sig end
+  M5 = struct end
+  spec M9 = ~M6 ~M7 ~M8 -> sig end
+  M9 = struct end
+  library L = :: ~M3 ~M5 ~DifferentName:M9 -> 
+                   sig value c : M1.t end
+              struct value c = M1.c end
+  LInst = load L with {{M3; M5; DifferentName = M9}} 
+end
+
+spec Singelton =
+~NatList ->
+  sig
+    value singleton : ~elem:Nat.t -> NatList.t
+  end
+
+spec NatList2 = 
+~Nat ->
+  sig
+    type t
+    value t2ind : 
+      ~it:t -> ind list: [`Nil|`Cons {head : Nat.t; 
+                                      tail : list}]
+    value ind2t : 
+      ~it:ind list: [`Nil|`Cons {head : Nat.t; 
+                                 tail : list}] -> t
+    value tde : 
+      ~it:t -> [`Nil|`Cons {head : Nat.t; tail : t}]
+    value nil : t
+    value cons : ~head:Nat.t ~tail:t -> t
+  end
+
+TrivElem = struct type t = {} end
+NatList3 = {Elem = TrivElem} | load List
+
+spec NatElem = ~Nat -> sig type t end
+NatElem = struct type t = Nat.t end
+NatList4 = {Elem = NatElem :> Elem} | load List
+
+spec Elem = sig type t end
+spec NatElem5 = ~Nat -> Elem
+NatElem5 = struct type t = Nat.t end
+NatList5 = {Elem = NatElem5} | load List
+
+  module Trim = 
+{Elem = Nat :> sig type t end} | load List
+  module Trim2 = 
+link
+spec Nat' =
+  sig
+    type t
+    value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+    value eq : ~n:t ~it:t -> [`True|`False]
+  end
+Nat' = load Nat :> Nat' (* the prelude version is too rich *)
+spec Stamp = 
+  sig 
+    type t
+    value zero : t
+    value succ : ~n:t -> t
+    value eq : ~n:t ~it:t -> [`True|`False]
+  end
+Stamp = Nat' :> Stamp
+
+spec Expressions = 
+~Nat' ~Stamp ->
+  sig
+    value zero : Nat'.t
+    value one : Nat'.t
+    value zero2 : Stamp.t
+    value one2 : Stamp.t
+  end
+Expressions =
+  struct
+    value zero =
+      let r = Nat'.zero
+      in
+      assert match Nat'.tde ~it:r with 
+            [`Zero -> `True |`Succ -> `False]
+      in
+      r
+    value one =
+      let r = Nat'.succ ~n:Nat'.zero
+      in
+      assert match Nat'.tde ~it:r with
+             [`Succ t -> Nat'.eq ~it:t ~n:Nat'.zero
+             |`Zero -> `False]
+      in
+      r
+    value zero2 = 
+      let r = Stamp.zero
+      in
+      let r2 = Stamp.zero
+      in
+      assert Stamp.eq ~n:r ~it:r2
+      in
+      r
+    value one2 =
+      let r = Stamp.succ ~n:Stamp.zero
+      in
+      assert match Stamp.eq ~n:r ~it:Stamp.zero with
+             [`True -> `False |`False -> `True]
+      in
+      assert Stamp.eq ~n:r ~it:r
+      in
+      r
+  end
+  
+spec HashConsedExpressions =
+~Stamp ~Expressions ->
+  sig
+  end
+HashConsedExpressions = struct end
+end
+
+Coerce =
+  (:: sig type t value v : t end
+   struct type t = {} value v = {} end) :>
+     sig value v : {} end
+
+StillCoerce =
+  (:: sig type t value v : t end
+   struct type t = {} value v = {} end) :> 
+     sig type t value v : t end :>
+       sig value v : {} end
+
+TV = :: sig type t value v : t end
+     struct type t = {} value v = {} end
+WeakCoerce = TV :> sig type t (* value v : {} *) end
+
+TVCoerced = (:: sig type t value v : t end
+             struct type t = {} value v = {} end)
+               :> sig type t value v : {} end
+end
+
+Tut_PrExample =
+link
+
+spec Bool = 
+  sig 
+    type t 
+    value t2ind : ~it:t -> [`True|`False]
+    value tt : t 
+    value ff : t 
+  end
+Bool =
+  struct
+    type t = [`True|`False]
+    value t2ind = fun ~it -> it
+    value tt = `True
+    value ff = `False
+  end
+spec Nat =
+~Bool ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+    value pred : ~n:t -> t
+    value add : ~n:t ~it:t -> t
+    value is_zero : ~it:t -> Bool.t
+ end
+Nat = 
+link
+  spec NatBasic =
+    sig
+      type t
+      value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+      value tde : ~it:t -> [`Zero|`Succ t]
+      value zero : t
+      value succ : ~n:t -> t
+    end
+  NatBasic =  
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value t2ind = fun ~it -> it
+      value tde = fun ~it -> it . de
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+    end
+  spec NatAdd = 
+  ~Bool ~NatBasic ->
+    sig
+      value pred : ~n:NatBasic.t -> NatBasic.t
+      value add : NatBasic . ~n:t ~it:t -> t
+      value is_zero : ~it:NatBasic.t -> Bool.t
+    end
+  NatAdd =
+    struct
+      value pred = fun ~n ->
+        match NatBasic.tde ~it:n with
+        [`Zero -> n
+        |`Succ nn -> nn]
+      value add = fun ~n ~it -> 
+        match NatBasic.t2ind ~it with
+        fold [`Zero -> n
+             |`Succ n -> NatBasic.succ ~n]
+      value is_zero = fun ~it ->
+        match NatBasic.tde ~it with
+        [`Zero -> Bool.tt
+        |`Succ -> Bool.ff]
+    end
+  NatWhole = :: ~NatBasic ~NatAdd -> Nat
+    struct
+      type t = NatBasic.t
+      value t2ind = NatBasic.t2ind
+      value tde = NatBasic.tde
+      value zero = NatBasic.zero
+      value succ = NatBasic.succ
+      value pred = NatAdd.pred
+      value add = NatAdd.add
+      value is_zero =  NatAdd.is_zero
+    end  
+end | NatWhole
+
+spec Test =
+  ~Nat ->
+    sig
+      value zero: Nat.t
+      value one: Nat.t
+      value two: Nat.t
+    end
+Test =
+  struct
+    value zero =
+      assert Bool.t2ind ~it:(Nat.is_zero ~it:Nat.zero)
+      in
+      Nat.zero
+    value one =
+      let r = Nat.succ ~n:Nat.zero
+      in
+      assert match Bool.t2ind ~it:(Nat.is_zero ~it: r) with
+             [`True -> `False | `False -> `True]
+      in
+      assert Bool.t2ind ~it: (Nat.is_zero ~it:(Nat.pred ~n:r))
+      in
+      r
+    value two =
+      let one = Nat.succ ~n:Nat.zero
+      in
+      let r = Nat.add ~n:one ~it:one
+      in
+      assert match Bool.t2ind ~it:(Nat.is_zero ~it: r) with
+             [`True -> `False | `False -> `True]
+      in
+      assert match Bool.t2ind ~it:
+                             (Nat.is_zero ~it: (Nat.pred ~n: r))
+             with
+             [`True -> `False | `False -> `True]
+      in
+      assert Bool.t2ind ~it:
+                (Nat.is_zero ~it:(Nat.pred ~n:(Nat.pred ~n:r)))
+      in
+      r              
+  end
+
+end
+
+Tut_ind1 =
+link
+spec IdIndex = sig type t end
+
+spec Bool = Bool
+Bool = load Bool
+spec Char = Char
+Char = load Char
+spec CharList = CharList
+CharList = load CharList
+spec String = String
+String = load String
+
+spec SpAlone =
+~Dule:sig type t end ->
+  sig
+    type t
+    value tde : ~s:t -> 
+             [`S_Ww {m1 : Dule.t; s2 : t}]
+
+    value s_Ww : ~m1:Dule.t ~s2:t -> t
+  end
+spec DuleAlone =
+~IdIndex ~Sp:sig type t end ->
+  sig
+    type t
+    value tde : ~m:t -> 
+             [`M_Pr IdIndex.t
+             |`M_Inst {m1 : t; m2 : t}
+             |`M_Trim {m1 : t; r2 : Sp.t}]
+
+    value m_Pr : ~i:IdIndex.t -> t
+    value m_Inst : ~m1:t ~m2:t -> t
+    value m_Trim : ~m1:t ~r2:Sp.t -> t
+  end
+spec rec Sp = SpAlone with {Dule}
+and Dule = DuleAlone with {IdIndex; Sp}
+module ind Sp = 
+  struct
+    type t = 
+      ind t: [`S_Ww {m1 : Dule.t; s2 : t}]
+    value tde = fun ~s -> s . de
+    value s_Ww = fun ~m1 ~s2 -> {m1; s2} .`S_Ww . con
+  end
+and Dule = 
+  struct
+    type t = 
+      ind t: [`M_Pr IdIndex.t
+             |`M_Inst {m1 : t; m2 : t}
+             |`M_Trim {m1 : t; r2 : Sp.t}]
+    value tde = fun ~m -> m . de
+
+    value m_Pr = fun ~i -> i .`M_Pr . con
+    value m_Inst = fun ~m1 ~m2 -> {m1; m2} .`M_Inst . con
+    value m_Trim = fun ~m1 ~r2 -> {m1; r2} .`M_Trim . con
+  end
+spec PrintSpAlone =
+~Sp:SpAlone ~String -> 
+  sig
+    value print : ~s:Sp.t -> CharList.t
+  end
+library PrintSpAlone = struct value print = fun ~s -> CharList.nil end
+PrintSp = load PrintSpAlone with {{Sp; String}}
+
+spec ChSp =
+~Sp ->
+  sig
+    value check_s : ~s:Sp.t -> [`OK|`Error]
+  end
+spec ChDule =
+~Dule ->
+  sig
+    value check_m : ~m:Dule.t -> [`OK|`Error]
+  end
+spec rec CheckSp = ChSp
+and CheckDule = ChDule
+module ind CheckSp = 
+  struct 
+    value check_s = fun ~s ->
+      match Sp.tde ~s with
+      [`S_Ww {m1; s2} ->
+          match CheckDule.check_m ~m:m1 with
+          [`OK m1 ->
+              match CheckSp.check_s ~s:s2 with
+              [`OK s2 -> `OK
+              |`Error er -> er .`Error]
+          |`Error er -> er .`Error]]
+  end
+and CheckDule = 
+  struct 
+    value check_m = fun ~m ->
+      match Dule.tde ~m with
+      [`M_Pr i -> `OK
+      |`M_Inst {m1; m2} ->
+          match CheckDule.check_m ~m:m1 with
+          [`OK m1 ->
+              match CheckDule.check_m ~m:m2 with
+              [`OK m2 -> `OK                 
+              |`Error er -> er .`Error]
+          |`Error er -> er .`Error]
+      |`M_Trim {m1; r2} ->
+          match CheckDule.check_m ~m:m1 with
+          [`OK m1 ->
+              match CheckSp.check_s ~s:r2 with
+              [`OK r2 -> `OK
+              |`Error er -> er .`Error]
+          |`Error er -> er .`Error]]
+  end
+spec PrintWarning =
+~CheckDule:ChDule ~String -> 
+  sig
+    value warn : ~m:Dule.t -> CharList.t
+  end
+PrintWarning = struct value warn = fun ~m -> CharList.nil end
+
+end
+
+Tut_ind2 =
+link
+spec IdIndex = sig type t end
+spec Value = IdIndex
+
+spec IList =
+~IdIndex ~Value ->
+  sig
+    type t
+    value nil : t
+    value cons : ~i:IdIndex.t ~v:Value.t ~l:t -> t
+  end
+library IList = 
+  struct
+    type t = 
+      ind t: [`Nil|`Cons {i : IdIndex.t; v : Value.t; l : t}]
+    value nil = `Nil . con
+    value cons = fun ~i ~v ~l -> {i; v; l} .`Cons . con
+  end
+spec rec CatIList = IList with {Value = Cat; IdIndex}
+and Cat =
+  sig
+    type t
+    value tde : ~c:t ->
+             [`C_PP CatIList.t
+             |`C_BB]
+    value c_PP : ~lc:CatIList.t -> t
+    value c_BB : t
+  end
+module ind CatIList = load IList with {{Value = Cat}}
+and Cat =
+  struct
+    type t = 
+      ind t: [`C_PP CatIList.t
+             |`C_BB]
+    value tde = fun ~c -> c . de
+    value c_PP = fun ~lc -> lc .`C_PP . con
+    value c_BB = `C_BB . con
+  end
+
+end
+
+(* Example inspired by Jacek Chrzaszcz.
+   Illustrates subsection {Solving conflicts}. *)
+IntSet =
+link 
+  spec Order = 
+    sig  
+      type t
+      value leq : ~n:t ~it:t -> [`True|`False]
+    end
+  spec Int =
+    sig  
+      type t
+      value leq : ~n:t ~it:t -> [`True|`False]
+      value zero : t
+    end
+  spec Queue =
+  ~Order -> 
+    sig
+      type t
+      value empty : t
+      value append : ~e:Order.t ~q:t -> t
+    end
+  spec Set = 
+  ~Queue -> 
+    sig
+      type t
+      value empty : t
+      value add : ~e:Order.t ~s:t -> t
+      value set2queue : ~s:t -> Queue.t
+    end
+
+  spec IntQueue = Queue with {Order = Int}
+
+  (* case 1: [IntQueue] has stronger [Order] than [Set] *)
+
+  module IntQueue =
+    struct
+      type t = ind l: [`Nil|`Cons {head : Int.t; tail : l}]
+      value empty = `Nil . con
+      value append = fun ~e:_ ~q -> (* contrived *)
+	{head = Int.zero; tail = q} .`Cons . con
+    end
+
+  library Set =
+    struct
+      type t = Queue.t
+      value empty = Queue.empty
+      value add = fun ~e ~s -> Queue.append ~e ~q:s
+      value set2queue = fun ~s -> s
+    end
+
+(* we would like to just apply [Set] to [IntQueue],
+   but there is a conflict, because [IntQueue] expects 
+   more of the module of its elements 
+   than [Set] expects of [Order] *)
+
+  module IntSet1 = (* conflict solved: *)
+    load Set with {Order = Int; Queue = IntQueue}
+
+  (* case 2: [IntSet] has stronger [Order] than [Queue] *)
+
+  library Queue =
+    struct
+      type t = ind l: [`Nil|`Cons {head : Order.t; tail : l}]
+      value empty = `Nil . con
+      value append = fun ~e ~q -> (* contrived *)
+	{head = e; tail = q} .`Cons . con
+    end
+
+  spec IntSet = Set with {Order = Int; Queue = IntQueue}
+
+  library IntSet =
+    struct
+      type t = IntQueue.t
+      value empty = IntQueue.append ~e:Int.zero ~q:IntQueue.empty
+      value add = fun ~e ~s -> IntQueue.append ~e ~q:s
+      value set2queue = fun ~s -> s
+    end
+
+(* we would like to just apply [IntSet] to [Queue],
+   but there is a conflict, because [IntSet] expects 
+   more of the module of its elements 
+   than [Queue] expects of [Order] *)
+
+  module IntSet2 = (* conflict solved: *)
+    load IntSet with {{IntQueue = load Queue with {Order = Int}}}
+end
+
+Tut_ind3 =
+link
+
+spec rec Nat =
+  sig
+    type nat
+    value t2ind : ~it:nat -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:nat -> [`Zero|`Succ Nat.nat]
+    value zero : nat
+    value succ : ~it:Nat.nat -> nat
+    value is_zero : ~it:nat -> [`True|`False]
+    value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+    value two : Nat.nat
+  end
+module ind Nat =
+  struct
+    type nat = [`Zero|`Succ Nat.nat]
+    value t2ind = fun ~it -> 
+      match it with
+      [`Zero -> `Zero . con
+      |`Succ n -> (Nat.t2ind ~it:n) .`Succ . con]
+    value tde = fun ~it -> it
+    value zero = `Zero
+    value succ = fun ~it -> it .`Succ
+    value is_zero = [`Zero -> `True|`Succ -> `False]
+    value plus = fun ~m ~n -> 
+      match Nat.tde ~it:n with
+      [`Zero -> m
+      |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+    value two = 
+      let one = Nat.succ ~it:Nat.zero in
+      Nat.plus ~m:one ~n:one
+  end 
+spec Result = 
+~Nat ->
+  sig
+    value zero : Nat.nat
+    value three : Nat.nat
+  end
+Result =
+  struct
+    value zero =
+      let r = Nat.zero
+      in
+      assert Nat.is_zero ~it:r
+      in
+      assert match Nat.is_zero ~it:(Nat.succ ~it:r) with
+             [`False -> `True |`True -> `False]
+      in
+      assert match Nat.tde ~it:r with
+             [`Succ t -> `False |`Zero -> `True]
+      in
+      r
+    value three = 
+      let r =
+        let one = Nat.succ ~it:Nat.zero in
+        Nat.plus ~m:Nat.two ~n:one
+      in
+      assert match Nat.is_zero ~it:r with
+             [`False -> `True |`True -> `False]
+      in
+      r
+  end 
+
+end
+
+ Result = Tut_ind3 | Result
+end

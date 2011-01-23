@@ -1,0 +1,17 @@
+Sh_InstPpRemMod31 =  
+  {H = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {{M = :: sig
+              type t 
+              value v2 : t 
+            end 
+       struct type t = {} value v2 = let b = H.v in {} end}}
+  . 
+  :: ~H : sig type t value v : t end 
+     ~M : sig
+            type t 
+            value v2 : t 
+          end ->
+       sig value n : H.t end
+  struct value n = H.v end

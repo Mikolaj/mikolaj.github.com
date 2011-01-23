@@ -1,0 +1,297 @@
+(* Copyright (C) 2003 Mikolaj Konarski 
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: prelude.dul,v 1.34 2007-09-20 23:04:07 mikon Exp $
+ *)
+
+(* This is a standard prelude. Every main module is defined as a library, 
+   to faciliate using the code in other files by loading. *)
+
+spec Bool =
+  sig
+    value tt : [`True|`False]
+    value ff : [`True|`False]
+    value neg : ~it:[`True|`False] -> [`True|`False] 
+    value conj : ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False] 
+    value disj : ~b:[`True|`False] ~it:[`True|`False] -> [`True|`False]
+  end
+library Bool = 
+  struct
+    value tt = `True
+    value ff = `False
+    value neg = [`True -> `False
+                |`False -> `True]
+    value conj = [`True fun ~b ~it -> b
+                 |`False fun ~b ~it -> `False]
+    value disj = [`True fun ~b ~it -> `True
+                 |`False fun ~b ~it -> b]
+  end
+spec Nat =
+  sig
+    type t
+    value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+    value pred : ~n:t -> t
+    value add : ~n:t ~it:t -> t
+    value mult : ~n:t ~it:t -> t
+    value sub : ~n:t ~it:t -> t
+    value is_zero : ~it:t -> [`True|`False]
+    value leq : ~n:t ~it:t -> [`True|`False]
+    value eq : ~n:t ~it:t -> [`True|`False]
+  end
+library Nat = 
+link
+  spec NatInd =
+    sig
+      type t
+      value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+      value tde : ~it:t -> [`Zero|`Succ t]
+      value zero : t
+      value succ : ~n:t -> t
+      value pred : ~n:t -> t
+      value add : ~n:t ~it:t -> t
+    end
+  NatInd = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value t2ind = fun ~it -> it
+      value tde = fun ~it -> it . de
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+      value pred = fun ~n ->
+        match n . de with
+        [`Zero -> n
+        |`Succ nn -> nn]
+      value add = fun ~n ~it -> 
+        match n with
+        fold [`Zero -> it
+             |`Succ nn -> nn .`Succ . con]
+    end
+  spec NatMult =
+  ~NatInd ->
+    sig
+      value mult : NatInd . ~n:t ~it:t -> t
+    end
+  NatMult =
+    struct
+      value mult = NatInd . fun ~n ~it ->
+        match t2ind ~it with
+        fold [`Zero -> zero
+             |`Succ it -> add ~n ~it]
+    end
+  spec NatSub =
+  ~NatInd ->
+    sig
+      value is_zero : ~it:NatInd.t -> [`True|`False]
+      value sub : NatInd . ~n:t ~it:t -> t
+    end
+  NatSub =
+    struct
+      value is_zero = fun ~it ->
+        match NatInd.tde ~it with
+        [`Zero -> `True
+        |`Succ -> `False]
+      value sub = NatInd . fun ~n ~it ->
+        match t2ind ~it with
+        fold [`Zero -> n
+             |`Succ n -> pred ~n]
+    end
+  spec NatLeq =
+  ~NatSub ->
+    sig
+      value leq : ~n:NatInd.t ~it:NatInd.t -> [`True|`False]
+    end
+  NatLeq =
+    struct
+      value leq = fun ~n ~it ->
+        NatSub.is_zero ~it:(NatSub.sub ~n ~it)
+    end
+  NatAll =
+    :: ~NatMult ~NatLeq -> Nat
+    struct
+      type t = NatInd.t
+      value t2ind = NatInd.t2ind
+      value tde = NatInd.tde
+      value zero = NatInd.zero
+      value succ = NatInd.succ
+      value pred = NatInd.pred
+      value add = NatInd.add
+      value mult = NatMult.mult
+      value sub = NatSub.sub
+      value is_zero = NatSub.is_zero
+      value leq = NatLeq.leq
+      value eq = NatLeq . fun ~n ~it ->
+        match leq ~n ~it with
+        [`True -> leq ~n:it ~it:n
+        |`False -> `False]
+    end
+end | NatAll
+spec Char =
+~Nat ->
+  sig 
+    type t
+    value tde : ~it:t ->
+      [`HT9|`LF10|`space|`bang|`quote|`hash|`buck|`mod|`amp|`tick
+      |`left|`right|`star|`plus|`comma|`hyphen|`dot|`slash
+      |`d0|`d1|`d2|`d3|`d4|`d5|`d6|`d7|`d8|`d9
+      |`colon|`semi|`from|`equals|`to|`what
+      |`at|`A|`B|`C|`D|`E|`F|`G|`H|`I|`J|`K|`L|`M|`N|`O|`P|`Q
+      |`R|`S|`T|`U|`V|`W|`X|`Y|`Z|`square|`back|`unsquare|`hat|`floor
+      |`grave|`a|`b|`c|`d|`e|`f|`g|`h|`i|`j|`k|`l|`m|`n|`o|`p|`q
+      |`r|`s|`t|`u|`v|`w|`x|`y|`z|`brace|`pipe|`unbrace|`tilde
+      |`UNPRINTABLE]
+    value tcon : ~it:
+      [`HT9|`LF10|`space|`bang|`quote|`hash|`buck|`mod|`amp|`tick
+      |`left|`right|`star|`plus|`comma|`hyphen|`dot|`slash
+      |`d0|`d1|`d2|`d3|`d4|`d5|`d6|`d7|`d8|`d9
+      |`colon|`semi|`from|`equals|`to|`what
+      |`at|`A|`B|`C|`D|`E|`F|`G|`H|`I|`J|`K|`L|`M|`N|`O|`P|`Q
+      |`R|`S|`T|`U|`V|`W|`X|`Y|`Z|`square|`back|`unsquare|`hat|`floor
+      |`grave|`a|`b|`c|`d|`e|`f|`g|`h|`i|`j|`k|`l|`m|`n|`o|`p|`q
+      |`r|`s|`t|`u|`v|`w|`x|`y|`z|`brace|`pipe|`unbrace|`tilde
+      |`UNPRINTABLE] -> t
+    value t2nat : ~it:t -> Nat.t
+    value nat2t : ~it:Nat.t -> t
+    value eq : ~c:t ~it:t -> [`True|`False]
+    value is_upper : ~it:t -> [`True|`False]
+    value upper : ~it:t -> t
+    value lower : ~it:t -> t
+  end
+library Char =
+  :: ~Bool -> Char
+  struct
+    type t = Nat.t (* ASCII codes *)
+    value tde = fun ~it -> 
+      if Nat.eq ~n:65 ~it then `A
+      else if Nat.eq ~n:66 ~it then `B
+      else if Nat.eq ~n:67 ~it then `C
+      else `UNPRINTABLE (* TODO *)
+    value tcon = [`A -> 65|`B -> 66|`C -> 67 (*
+                 |`D -> 68|`E -> 69|`F -> 70
+		 |`G -> 71|`H -> 72|`I -> 73
+		 |`J -> 74|`K -> 75|`L -> 76
+                 |`M -> 77|`N -> 78|`O -> 79
+                 |`P -> 80|`Q -> 81|`R -> 82
+		 |`S -> 83|`T -> 84|`U -> 85
+		 |`V -> 86|`W -> 87|`X -> 88
+		 |`Y -> 89|`Z -> 90 *)
+		 |`a -> 97 |`b ->  98|`c ->  99 (*
+		 |`d -> 100|`e -> 101|`f -> 102
+		 |`g -> 103|`h -> 104|`i -> 105
+		 |`j -> 106|`k -> 107|`l -> 108
+		 |`m -> 109|`n -> 110|`o -> 111
+		 |`p -> 112|`q -> 113|`r -> 114
+		 |`s -> 115|`t -> 116|`u -> 117
+		 |`v -> 118|`w -> 119|`x -> 120
+		 |`y -> 121|`z -> 122 *)
+                 |_ -> 33 (* TODO *)]
+    value t2nat = fun ~it -> it
+    value nat2t = fun ~it -> it
+    value eq = fun ~c ~it -> Nat.eq ~n:c ~it
+    value is_upper = fun ~it -> 
+      Bool.conj 
+        ~b:(Nat.leq ~n:65 ~it)
+        ~it:(Nat.leq ~n:it ~it:90)
+    value upper = fun ~it -> Nat.sub ~n:it ~it:32
+    value lower = fun ~it -> Nat.add ~it ~n:32
+  end
+spec Elem = sig type t end
+spec List = 
+~Elem ->
+  sig
+    type t
+    value t2ind : ~it:t -> ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value ind2t : ~it:ind list: [`Nil|`Cons {head : Elem.t; tail : list}] -> t
+    value tde : ~it:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+    value nil : t
+    value cons : ~head:Elem.t ~tail:t -> t
+  end
+library List =
+  struct
+    type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+    value t2ind = fun ~it -> it
+    value ind2t = fun ~it -> it
+    value tde = fun ~it -> it . de
+    value nil = `Nil . con
+    value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+  end
+spec ListOps =
+~List ->
+  sig
+    value append : List . ~l1:t ~l2:t -> t 
+    value is_nil : ~l:List.t -> [`True|`False]
+    value endo_map : ~f: ~it:Elem.t -> Elem.t ~l:List.t -> List.t 
+  end
+library ListOps =
+  struct
+    value append = fun ~l1 ~l2 ->
+      match List.t2ind ~it:l1 with
+      fold [`Nil -> l2
+           |`Cons ht -> List.cons ~head:ht.head ~tail:ht.tail]
+    value is_nil = fun ~l -> 
+      match List.tde ~it:l with
+      [`Nil -> `True
+      |`Cons -> `False]
+    value endo_map = fun ~f ~l -> 
+      List.ind2t 
+        ~it:(match List.t2ind ~it:l with
+             map f)
+  end
+spec CharList = List with {Elem = Char}
+library CharList = load List with {Elem = Char}
+spec CharListOps = ListOps with {Elem = Char; List = CharList}
+library CharListOps = load ListOps with {Elem = Char; List = CharList}
+spec String =
+~CharList ->
+  sig
+    value eq : ~l:CharList.t ~it:CharList.t -> [`True|`False]
+    value append : CharList . ~l1:t ~l2:t -> t 
+    value prefix_by : ~head:Char.t ~tail:CharList.t -> CharList.t
+    value shout : CharList . ~it:t -> t
+    value atu : CharList.t
+    value it : CharList.t
+  end
+library String' = 
+  :: ~Bool ~CharListOps -> String
+  struct
+    value eq =
+      let non_nil_eq = fun ~it -> fun ~l -> 
+        match CharList.tde ~it:l with
+        [`Nil -> Bool.ff
+        |`Cons lht ->
+           let head_matches = Char.eq ~c:it.head ~it:lht.head
+               tail_equal = it.tail ~l:lht.tail in
+           Bool.conj ~b:head_matches ~it:tail_equal]
+      in
+      fun ~l ~it -> 
+        (match CharList.t2ind ~it with
+         fold [`Nil -> CharListOps.is_nil
+              |`Cons non_nil_eq]) ~l
+    value append = CharListOps.append
+    value prefix_by = CharList.cons
+    value shout = fun ~it -> 
+      CharListOps.endo_map ~l:it ~f:Char.upper
+    value atu = CharList.cons ~head:(Char.tcon ~it:`a)
+                  ~tail:(CharList.cons ~head:(Char.tcon ~it:`t)
+                           ~tail:(CharList.cons ~head:(Char.tcon ~it:`u)
+                                    ~tail:CharList.nil))
+    value it = CharList.cons ~head:(Char.tcon ~it:`i)
+                 ~tail:(CharList.cons ~head:(Char.tcon ~it:`t)
+                          ~tail:CharList.nil)
+   end
+library String = 
+  ({{CharListOps = load CharListOps}} | load String') :> String
+
+(* The loads below are for testing and compilation with [-c]. *)
+Bool = load Bool
+Nat = load Nat
+Char = load Char
+CharList = load CharList
+CharListOps = load CharListOps
+String = load String
+

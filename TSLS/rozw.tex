@@ -1,0 +1,292 @@
+\chapter{
+Rozwi"azania niekt"orych zada"n
+}
+
+Wszystkie te rzeczy przesz"ly przez kompilator
+(w wypadku program"ow w SML to bardzo dobry omen),
+ale nie by"ly zbyt intensywnie testowane. 
+Dzi"eki za wskazywanie b"l"ed"ow!                     
+
+\begin{verbatim}
+
+(* Exercise 2.1 *) 
+
+exception Empty
+fun tl [] = raise Empty
+  | tl (head::tail) = tail
+
+(* Exercise 2.2 *) 
+
+fun sum l = if null l then 0 else hd l + sum (tl l)
+
+(* or *)
+
+fun sum [] = 0
+  | sum (i::rest) = i + sum rest  
+
+(* Exercise 2.3 *)
+
+fun length l = if null l then 0 else 1 + length (tl l)
+
+(* or *)
+
+fun length [] = 0
+  | length (head::tail) = 1 + length tail  
+
+(* Exercise 2.4 *)
+
+fun last l = if null l then hd l else last (tl l)
+
+(* or *)
+
+fun last [] = raise Empty
+  | last [elem] = elem
+  | last (head::tail) = last tail
+
+(* Exercise 2.5 *)
+
+fun append ([], l) = l
+  | append (head::tail, l) = head :: (append (tail, l)) 
+
+(* Exercise 2.6 *)
+
+fun take (l, 0) = nil
+  | take (head::tail, n) = head :: take (tail, n-1)
+  | take (nil, n) = nil
+
+fun drop (l, 0) = l
+  | drop (head::tail, n) = drop (tail, n-1)
+  | drop (nil, n) = nil
+
+(* Check, that the required equality          *)
+(* holds even if n < 0. This is an ugly hack, *)
+(* I know, but I hate exceptions even more:P. *)
+
+(* Exercise 2.7 *)
+
+fun nth (l, n) = hd (drop (l, n-1))
+
+(* And this version is slower. Why? *)
+
+fun nth2 (l, n) = last (take (l, n))
+
+(* Exercise 2.8 *)
+
+fun flatten [] = []
+  | flatten (l::rest) = append (l, flatten rest)
+
+(* Exercise 2.9 *)
+
+(* @ is the built in, infix version of append *)     
+
+fun quicksort [] = [] : int list
+  | quicksort [x] = [x]
+  | quicksort (a::rest) = 
+    let 
+        fun split (b, []) = ([], [])
+          | split (b, x::l) = let 
+                                  val (left, right) = split (b, l)
+                              in
+                                  if x < b then (x::left, right)
+                                  else (left,x::right)
+                              end
+    in 
+        let
+            val (left, right) = split (a, rest)
+        in
+            quicksort left @ (a::quicksort right)
+        end
+    end
+
+(* Exercise 3.1 *) 
+
+fun length l = let
+                   fun len_acc (len, []) = len
+                     | len_acc (len, head::tail) = len_acc (len + 1, tail)
+               in
+                   len_acc (0, l)
+               end
+
+(* Exercise 3.2 *)
+
+fun decimal l = 
+  let fun diggy (acc, []) = acc
+        | diggy (acc, digit::rest) = diggy (10*acc + digit, rest)
+  in
+      diggy(0, l)
+  end
+
+(* Definitions of decimal without an accumulator are absolutely hopeless *)
+
+(* Exercise 3.3 *)
+
+(* reverse2 is O(n^2) *)
+
+fun reverse2 [] = []
+  | reverse2 (head::tail) = (reverse2 tail) @ [head] 
+
+(* Thanks to the use of accumulator reverse is O(n) *)
+(* and by chance there is tail recursion here *)
+
+fun reverse l = let
+                    fun rev_acc (rev, []) = rev
+                      | rev_acc (rev, head::tail) = rev_acc (head::rev, tail) 
+                in
+                    rev_acc ([], l)
+                end
+
+
+
+(* Exercise 3.4 *)
+
+(* This works. Notice reverse.               *)
+(* A similar thing could be done for append. *)
+(* Not worth the effort, is it?              *)
+
+exception Empty
+
+fun take (l, n) = 
+    let
+        fun take_acc (acc, (l, 0)) = reverse acc
+          | take_acc (acc, (hd::tl, n)) = take_acc (hd :: acc, (tl, n-1))
+          | take_acc (acc, (nil, n)) = raise Empty
+    in
+        take_acc ([], (l, n))
+    end
+
+(* Exercise 3.5 *)
+
+fun interval (from, to) = 
+    let
+        fun inter_acc (l, (n, m)) = if n > m then l 
+                                    else inter_acc (m::l, (n, m-1))
+    in
+        inter_acc ([], (from, to))
+    end
+
+(* Exercise 3.6 *)
+
+val minus_infinity = ~10000000000000000000000000000000.0
+
+fun real_max [] = minus_infinity
+  | real_max (head::tail) = 
+    let fun maxx (r, []) = r
+          | maxx (r, x::tl) = if r > x then maxx (r, tl) 
+                              else maxx (x, tl)
+    in
+        maxx (head, tail)
+    end
+
+fun real_max [] = minus_infinity
+  | real_max (x::tail) = let 
+                        val y = real_max tail
+                    in
+                        if y > x then y
+                        else x
+                    end
+
+
+
+(* Exercise 5.1 *) 
+
+fun foldr (f, x) [] = x 
+  | foldr (f, x) (a::rest) = f(a, foldr (f, x) rest)
+
+fun append (l1, l2) = foldr (op ::, l2) l1
+
+(* Exercise 5.2 *) 
+
+val length = foldr (fn (elem, rest_length) => 1 + rest_length, 0) 
+
+(* Exercise 5.3 *) 
+
+fun good_max n = foldr (max, n)
+
+(* Exercise 5.4 *) 
+
+fun map f nil = nil 
+  | map f (head::tail) = (f head)::(map f tail)
+
+fun map f = foldr (fn (a, result) => (f a):: result, nil)
+
+(* Exercise 5.5 *) 
+
+val first_cut = map hd
+
+fun first_cut nil = nil
+  | first_cut (head::tail) = (hd head)::(first_cut tail)
+
+(* Exercise 5.6 *) 
+
+fun filter p nil = nil
+  | filter p (a::rest) = if p a then a::(filter p rest)
+                         else (filter p rest)
+
+fun filter p = foldr (fn (a, filtered_tail) => 
+                      if p a then a::filtered_tail
+                      else filtered_tail, nil)                       
+(* No, this didn't turn out more readable (at least for me). *)
+
+(* Exercise 5.7 *) 
+
+fun divisible_by k l = l mod k = 0
+fun divis_list n = filter (divisible_by n)
+(* Yeees. *)
+
+(* Exercise 5.8 *) 
+
+fun foldl (f, x) nil = x
+  | foldl (f, x) (head::tail) = foldl (f, (f (x, head))) tail
+
+(* Exercise 5.9 *) 
+
+fun reversed_cons (tail, head) = head :: tail 
+fun append (l1, l2) = foldl (reversed_cons, l2) (rev l1)
+
+(* Exercise 6.1 *) 
+
+fun uncurry f = fn (a, b) => f a b
+
+fun id x = x
+fun repeat (f, 0) = id
+  | repeat (f, n) = f o (repeat (f, n - 1))
+
+(* Exercise 6.2 *) 
+
+fun pair (f, g) x = (f x, g x)
+
+(* Exercise 6.3 *) 
+ 
+datatype ('a, 'b) direct_sum = INL of 'a | INR of 'b
+val inleft = INL
+val inright = INR
+fun cases (f, g) (INL(x)) = f x
+  | cases (f, g) (INR(y)) = g y
+
+(* Exercise 6.4 *) 
+
+fun exists p [] = false 
+  | exists p (a::rest) = if p a then true 
+                         else exists p rest
+fun non p = not o p
+val forall = non o exists o non
+\end{verbatim}
+
+%exception 
+%WeDoNotKnowYetHowToDefineNaturalNumbersSoWeUseIntegersAnd_COMPLAIN
+%
+%fun take (l, n) = 
+%    if n < 0 then raise 
+%WeDoNotKnowYetHowToDefineNaturalNumbersSoWeUseIntegersAnd_COMPLAIN
+%    else let
+%             fun take' (l, 0) = nil
+%               | take' (head::tail, n) = head :: take (tail, n-1)
+%               | take' (nil, n) = raise Empty
+%         in
+%             take' (l, n)
+%         end
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

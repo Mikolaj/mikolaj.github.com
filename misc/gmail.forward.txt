@@ -1,0 +1,49 @@
+How to use gmail.com as a mail archive, read all mail 
+(including the mail addressed for gmail.com) on another machine 
+and not cycle forwards (loop aliases).
+
+Gmail does not allow filtering by Delivered-To header,
+probably to force people to switch to gmail at once.
+To overcome this, you need to set up your gmail filter
+to forward every mail without "cc:forwarded" to your main mail machine. 
+To make sure your remaining mail does not mysteriously disappear 
+or lag for a long time set up a filter also for the files 
+with "cc:forwarded" and let them be archived or starred.
+
+After setting up .forward and .procmailrc files
+in $HOME on your main mail machine all your mail
+should land both at your main machine and at gmail
+(it works under Postfix, but should also work with other mailers);
+Here is the .forward file:
+
+/home/your-user-id/your-maildir
+"|IFS=' ' && exec /usr/bin/procmail -f- || exit 75 #your-user-id"
+
+and the .procmailrc file:
+
+# Most of the lines are unneeded, probably; 
+# copied from http://www.erehwon.org/erehwon/procmailex.html
+#
+# Set path #
+PATH=/bin:/usr/bin:/usr/local/bin:/opt/local/bin/:$HOME/bin:$HOME:
+SENDMAIL=/usr/sbin/sendmail
+SHELL=/bin/sh
+# Set on when debugging #
+#VERBOSE=on
+VERBOSE=off
+# Directory for storing procmail log and rc files
+PMDIR=$HOME/.procmail
+LOGFILE=$PMDIR/log
+# Set environment variables #
+UMASK=077
+LOCKTIMEOUT=1024
+TIMEOUT=960
+SUSPEND=16
+LINEBUF=4096
+
+:0 h
+* !^Delivered-To: your.name@gmail.com
+
+    :0
+    | (formail -i "CC: forwarded") \
+    | $SENDMAIL -oi your.name@gmail.com

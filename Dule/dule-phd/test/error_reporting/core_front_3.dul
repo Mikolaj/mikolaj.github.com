@@ -1,0 +1,12 @@
+spec M = sig type t end
+
+M = 
+  struct 
+    type t = {e_t7 : {} . {};
+	      e_t8 : [] . {};
+	      e_t9 : {} . {bool: {}; int: []};
+	      e_t10 : [] . {bool: {}; int: []} . ~i:{} -> [];
+              e_t11_stupid : ([] . {bool: {}; int: []} . 
+	       ~i:{} -> []) . ind nat: [`Zero|`Succ nat]
+	     }
+  end

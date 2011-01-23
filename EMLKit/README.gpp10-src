@@ -1,0 +1,67 @@
+The README for The Graphical Pretty Printer for Proof Obligations 1.0
+Sources Release
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+
+1. The Graphical Pretty Printer for Proof Obligations 1.0 (GPP) 
+is available through anonymous ftp from zls.mimuw.edu.pl.
+The archive containing the release is called gpp10-src.tar.gz and resides
+in the /People/mikon/EMLKit directory.
+
+There is also a link to this file from EML Kit home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+
+To install the GPP first ungzip and untar the archive.
+It should contain:
+README - info about the Graphical Pretty Printer for Proof Obligations 1.0
+COPYING - text of the GNU General Public License
+README.gpp10-src - this file
+src/ - SML source code of the GPP (and Makefile)
+build/ - batch file for SML/NJ (ver. 110.0.3)
+example/ - program in Exented ML language
+
+Now, you should prepare a version 110.0.3 of the SML/NJ or check out
+if there is SML/NJ installed on your computer.
+SML/NJ have to be installed with CM, CML and eXene libraries.
+
+The SML/NJ can be obtained from its home-page:
+http://cm.bell-labs.com/cm/cs/what/smlnj/
+
+Change NJSML variable in src/Makefile to reflect name and location
+of the SML/NJ executable. 
+
+Then cd to the src directory.
+Type "make" or "make gpp", to make an SML/NJ image and script file gpp
+The image is placed in bin/ directory - auto-created one.
+File gpp is script file which can be executed.
+Change PATH environment variable to reflect new directory for searching executables
+or move gpp to one of directory included in value of PATH variable (e.g. /usr/bin/)
+
+GPP works better with proof obligations generator - 
+The EML Kit Proof Obligations Generator - see EML Kit home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+
+After building emlkit (default name of EML Kit Proof Obligations Generator's
+executable file) set new environment variable:
+	OBLIGS_GEN=/eml11ogen/src/emlkit
+
+'/eml11ogen/src/emlkit' is ONLY an example and it should be 
+a real location of emlkit.
+
+Well, now you can type gpp, and  ...read README first ;)
+
+2. The GPP is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the gpp10-src.tar.gz archive.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Warsaw, 1999.10

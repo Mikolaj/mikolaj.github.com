@@ -1,0 +1,26 @@
+spec Nat = sig type t value zero : t value succ : ~n:t -> t end
+
+Er = 
+:: ~Nat -> sig value v : {} end
+  struct 
+    value v = let r = 
+let intlist = {h = 0; 
+               t = {h = 1; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it; y = it}
+in
+  {intmap =
+     (map fun ~it -> {x = it; y = it}) ~it:intlist
+  ;boolmap = 
+     (map fun ~it -> {x = it; y = it}) ~it:boollist
+  ;intmap2 =
+     monomorphic_map ~it:intlist
+  ;boolmap2 = 
+     monomorphic_map ~it:boollist
+  }
+    in {}
+  end

@@ -1,0 +1,397 @@
+This is TeX, Version 3.14159 (Web2C 7.2) (format=latex 1999.5.13)  10 OCT 2000 09:49
+**TajnySkryptSML.tex
+(TajnySkryptSML.tex
+LaTeX2e <1998/06/01>
+Babel <v3.6j> and hyphenation patterns for american, french, german, danish, it
+alian, polish, nohyphenation, loaded.
+(/usr/share/texmf/tex/latex/base/report.cls
+Document Class: report 1998/05/05 v1.3y Standard LaTeX document class
+(/usr/share/texmf/tex/latex/base/size10.clo
+File: size10.clo 1998/05/05 v1.3y Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf/tex/generic/babel/babel.sty
+Package: babel 1998/03/24 v3.6j The Babel package
+
+(/usr/share/texmf/tex/generic/babel/polish.ldf
+File: polish.ldf 1996/12/23 v1.2d Polish support from the babel system
+
+(/usr/share/texmf/tex/generic/babel/babel.def
+File: babel.def 1998/03/24 v3.6j Babel common definitions
+\babel@savecnt=\count88
+\U@D=\dimen103
+)
+Package babel Info: Making " an active character on input line 103.
+\pl@left=\dimen104
+\pl@down=\dimen105
+\pl@right=\dimen106
+\pl@temp=\dimen107
+))
+\c@ex=\count89
+ (TajnySkryptSML.aux
+(disclaim.aux) (lab1.aux) (lab2.aux) (lab3.aux) (lab4.aux) (lab5.aux) (lab6.aux
+) (lab7.aux) (lab9.aux) (lab10.aux) (zal.aux) (rozw.aux) (jak.aux))
+\openout1 = `TajnySkryptSML.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 25.
+LaTeX Font Info:    ... okay on input line 25.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <17.28> on input line 45.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 45.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 45.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 45.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <9> on input line 45.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 45.
+ [1
+
+]
+(TajnySkryptSML.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 6.
+)
+\tf@toc=\write3
+\openout3 = `TajnySkryptSML.toc'.
+
+ [1
+
+]
+\openout2 = `disclaim.aux'.
+
+ (disclaim.tex) [2
+
+
+]
+\openout2 = `lab1.aux'.
+
+ (lab1.tex
+Rozdzia\l  1.
+
+Overfull \hbox (11.99689pt too wide) in paragraph at lines 49--49
+[]    \OT1/cmtt/m/n/10 fun fib n = if n <= 1 then 1 else (fib (n - 1)) + (fib (
+n - 2));[] 
+ []
+
+[3
+
+
+
+]) [4]
+\openout2 = `lab2.aux'.
+
+ (lab2.tex
+Rozdzia\l  2.
+
+Overfull \hbox (17.24684pt too wide) in paragraph at lines 42--42
+[]    \OT1/cmtt/m/n/10 fun interval (n, m) = if n > m then [] else n::interval 
+(n+1, m);[] 
+ []
+
+[5
+
+
+
+] [6]) [7]
+\openout2 = `lab3.aux'.
+
+ (lab3.tex
+Rozdzia\l  3.
+[8
+
+
+
+]
+Overfull \hbox (26.38693pt too wide) in paragraph at lines 53--57
+\OT1/cmr/m/n/10 zmian przez ko-lejno []\OT1/cmtt/m/n/10 fact_acc (24, 1)\OT1/cm
+r/m/n/10 , []\OT1/cmtt/m/n/10 fact_acc (12, 2)\OT1/cmr/m/n/10 , []\OT1/cmtt/m/n
+/10 fact_acc (4, 3)\OT1/cmr/m/n/10 ,
+ []
+
+[9]) [10]
+\openout2 = `lab4.aux'.
+
+ (lab4.tex
+Rozdzia\l  4.
+
+Overfull \hbox (27.74675pt too wide) in paragraph at lines 33--33
+[]    \OT1/cmtt/m/n/10 datatype friend_rec = PAT | SUSIE | ANYONE_WHO_GIVES_ME 
+of gift_rec[] 
+ []
+
+
+Overfull \hbox (6.74693pt too wide) in paragraph at lines 42--42
+[]    \OT1/cmtt/m/n/10 val bool_some_list = [SOME(true), SOME(true), NONE, SOME
+(true)][] 
+ []
+
+
+Overfull \hbox (38.24666pt too wide) in paragraph at lines 42--42
+[]      \OT1/cmtt/m/n/10 | divide (SOME(x), SOME(y)) = if y = 0.0 then NONE els
+e SOME(x / y)[] 
+ []
+
+[11
+
+
+
+]
+Overfull \hbox (1.49698pt too wide) in paragraph at lines 51--51
+[]           \OT1/cmtt/m/n/10 | (SOME(x, y)) => if y = 0.0 then NONE else SOME(
+x / y)[] 
+ []
+
+[12]) [13]
+\openout2 = `lab5.aux'.
+
+ (lab5.tex
+Rozdzia\l  5.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <24.88> on input line 3.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <20.74> on input line 3.
+
+Overfull \hbox (48.74657pt too wide) in paragraph at lines 34--34
+[]    \OT1/cmtt/m/n/10 val sum = foldr (op +, 0)    (* op, because + is an infi
+x identifier *)[] 
+ []
+
+
+Overfull \hbox (32.9967pt too wide) in paragraph at lines 42--42
+[]    \OT1/cmtt/m/n/10 val add_sizes = foldr (fn (s, rest_size) => (size s) + r
+est_size, 0)[] 
+ []
+
+
+Overfull \hbox (32.16437pt too wide) in paragraph at lines 47--52
+[]\OT1/cmtt/m/n/10 (foldr (op +, 0)) [2, 44, 5] \OT1/cmr/m/n/10 mo_zna za-pisa^
+^Sc jako: []\OT1/cmtt/m/n/10 foldr (op +, 0) [2, 44, 5]\OT1/cmr/m/n/10 . 
+ []
+
+[14
+
+
+
+]) [15]
+\openout2 = `lab6.aux'.
+
+ (lab6.tex
+Rozdzia\l  6.
+[16
+
+
+
+]
+Overfull \hbox (6.062pt too wide) in paragraph at lines 61--65
+[]\OT1/cmr/m/n/10 Zdefiniuj funk-cje od-wrotne do []\OT1/cmtt/m/n/10 curry \OT1
+/cmr/m/n/10 (b[]edzie si[]e na-zywa la []\OT1/cmtt/m/n/10 uncurry\OT1/cmr/m/n/1
+0 )
+ []
+
+[17]) [18]
+\openout2 = `lab7.aux'.
+
+ (lab7.tex
+Rozdzia\l  7.
+[19
+
+
+
+]) [20]
+Rozdzia\l  8.
+[21
+
+
+]
+\openout2 = `lab9.aux'.
+
+ (lab9.tex
+Rozdzia\l  9.
+[22
+
+
+]
+Overfull \hbox (27.74675pt too wide) in paragraph at lines 102--102
+[]       \OT1/cmtt/m/n/10 By num(t, q) we denote the number of occurrences of t
+ in seq(q).[] 
+ []
+
+
+Overfull \hbox (11.99689pt too wide) in paragraph at lines 102--102
+[]       \OT1/cmtt/m/n/10 For all q, p - queues constructed using the above ope
+rations,[] 
+ []
+
+
+Overfull \hbox (1.49698pt too wide) in paragraph at lines 102--102
+[]    \OT1/cmtt/m/n/10 structure Item = IntegerLeq (* type sharing and requirem
+ent *)[] 
+ []
+
+
+Overfull \hbox (1.49698pt too wide) in paragraph at lines 102--102
+[]                                \OT1/cmtt/m/n/10 (* about Item.leq now satisf
+ied *)[] 
+ []
+
+
+Overfull \hbox (11.99689pt too wide) in paragraph at lines 102--102
+[]    \OT1/cmtt/m/n/10 type queue = Item.elem list (* queues will be unordered 
+lists *)[] 
+ []
+
+[23]
+Overfull \hbox (11.99689pt too wide) in paragraph at lines 102--102
+[]           \OT1/cmtt/m/n/10 | MIN(n, rest) => if Item.leq (k, n) then MIN(k, 
+n::rest)[] 
+ []
+
+
+Overfull \hbox (17.0162pt too wide) in paragraph at lines 128--130
+[]\OT1/cmr/m/n/10 Gdyby w pro-gra-mie $\OML/cmm/m/it/10 IntPQasList$ \OT1/cmr/m
+/n/10 za-miast []\OT1/cmtt/m/n/10 INTEGER_LEQ \OT1/cmr/m/n/10 zde-fi-niowa^^Sc 
+nast[]epuj[]ac[]a
+ []
+
+
+Overfull \hbox (19.22371pt too wide) in paragraph at lines 154--159
+[]\OT1/cmr/m/n/10 Wida^^Sc, _ze []\OT1/cmtt/m/n/10 A \OT1/cmr/m/n/10 pa-suje do
+ []\OT1/cmtt/m/n/10 INTEGER_LEQ'\OT1/cmr/m/n/10 . Ale pro-gram $\OML/cmm/m/it/1
+0 IntPQasList$ \OT1/cmr/m/n/10 z []\OT1/cmtt/m/n/10 INTEGER_LEQ'
+ []
+
+[24]
+Overfull \hbox (35.80363pt too wide) in paragraph at lines 168--170
+\OT1/cmr/m/n/10 wed lug ich modu l^^Sow), []\OT1/cmtt/m/n/10 COMPLEX_PRIORITY_Q
+UEUE\OT1/cmr/m/n/10 , []\OT1/cmtt/m/n/10 ComplexLeq\OT1/cmr/m/n/10 , []\OT1/cmt
+t/m/n/10 ComplexPQasList\OT1/cmr/m/n/10 .
+ []
+
+) [25]
+\openout2 = `lab10.aux'.
+
+ (lab10.tex
+Rozdzia\l  10.
+[26
+
+
+
+]
+Overfull \hbox (22.4968pt too wide) in paragraph at lines 44--44
+[]\OT1/cmtt/m/n/10 structure IntPQasHeap = PQasHeap (structure TotalPreorder = 
+IntegerLeq[] 
+ []
+
+
+Overfull \hbox (1.76906pt too wide) in paragraph at lines 65--70
+\OT1/cmr/m/n/10 za-wsze utrzy-my-wane w po-staci wywa_zonej. Po-sta-raj si[]e w
+ jak najwi[]ekszym
+ []
+
+) [27]
+\openout2 = `zal.aux'.
+
+ (zal.tex
+Dodatek A.
+[28
+
+
+
+]) [29]
+\openout2 = `rozw.aux'.
+
+ (rozw.tex
+Dodatek B.
+[30
+
+
+
+]
+Overfull \hbox (1.49698pt too wide) in paragraph at lines 273--273
+[]                                  \OT1/cmtt/m/n/10 val (left, right) = split 
+(b, l)[] 
+ []
+
+[31]
+Overfull \hbox (43.49661pt too wide) in paragraph at lines 273--273
+[]                     \OT1/cmtt/m/n/10 | len_acc (len, head::tail) = len_acc (
+len + 1, tail)[] 
+ []
+
+
+Overfull \hbox (48.74657pt too wide) in paragraph at lines 273--273
+[]\OT1/cmtt/m/n/10 (* Definitions of decimal without an accumulator are absolut
+ely hopeless *)[] 
+ []
+
+
+Overfull \hbox (59.24648pt too wide) in paragraph at lines 273--273
+[]                      \OT1/cmtt/m/n/10 | rev_acc (rev, head::tail) = rev_acc 
+(head::rev, tail)[] 
+ []
+
+[32]
+Overfull \hbox (38.24666pt too wide) in paragraph at lines 273--273
+[]          \OT1/cmtt/m/n/10 | take_acc (acc, (hd::tl, n)) = take_acc (hd :: ac
+c, (tl, n-1))[] 
+ []
+
+
+Overfull \hbox (6.74693pt too wide) in paragraph at lines 273--273
+[]                                    \OT1/cmtt/m/n/10 else inter_acc (m::l, (n
+, m-1))[] 
+ []
+
+[33] [34]) [35]
+\openout2 = `jak.aux'.
+
+ (jak.tex
+Dodatek C.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 6.
+(/usr/share/texmf/tex/latex/base/omscmr.fd
+File: omscmr.fd 1998/03/27 v2.5g Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 6.
+) [36
+
+
+
+] (TajnySkryptSML.aux
+(disclaim.aux) (lab1.aux) (lab2.aux) (lab3.aux) (lab4.aux) (lab5.aux) (lab6.aux
+) (lab7.aux) (lab9.aux) (lab10.aux) (zal.aux) (rozw.aux) (jak.aux)) ) 
+Here is how much of TeX's memory you used:
+ 671 strings out of 10874
+ 6829 string characters out of 72293
+ 58576 words of memory out of 263001
+ 3604 multiletter control sequences out of 10000+0
+ 12946 words of font info for 45 fonts, out of 200000 for 1000
+ 35 hyphenation exceptions out of 1000
+ 26i,11n,21p,184b,352s stack positions out of 300i,100n,500p,30000b,4000s
+
+Output written on TajnySkryptSML.dvi (37 pages, 68608 bytes).

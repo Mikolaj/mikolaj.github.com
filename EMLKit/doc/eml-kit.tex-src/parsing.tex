@@ -1,0 +1,761 @@
+\part{Parsing}
+\label{sec:parsing}
+
+\newcommand{\letp}{{\tt let} }
+\newcommand{\inp}{{\tt in} }
+\newcommand{\pend}{{\tt end} }
+\newcommand{\axiomp}{{\tt axiom} }
+\newcommand{\wtypp}{{\tt withtype} }
+\newcommand{\EMLK}{EML~Kit }
+
+
+
+The present parsing for the \EMLK implements the complete full grammar
+of EML and its syntactic restrictions as stated in the Definition of
+Extended ML except for one rule. The rule for {\it strdec} looks like
+this:
+
+\begin{center}
+\begin{tabular}[h]{ll}
+{\it strdec} ::= & {\it dec}\\
+                 & \axiomp {\it ax}\\
+                 & \hspace{20pt} $\langle$\wtypp $typbind^\bullet \rangle$\\
+                 & ...\\
+\end{tabular}
+\end{center}
+
+\noindent in the book. Some discussions, however, led us and EML designers to
+conclusion that $\langle$\wtypp $typbind^\bullet \rangle$ was an error
+here.
+
+In addition to the grammar of the EML definition we kept some features
+of the original ML Kit grammar, especially pertinent to imperative
+features, for instance {\tt while} statements.
+
+\section{Major changes to the parsing in the ML Kit}
+\label{sec:major}
+
+Most of the changes we made were very straightforward. They consisted
+in simply implementing the tree generation for suitable rule of full
+grammar. There were however three bigger changes made to the parsing:
+\begin{itemize}
+\item introducing bullets to some rules,
+\item making the rule for {\it specexp} work,
+\item syntactic restriction of guarded {\it strexp} in a structure binding.
+\end{itemize}
+
+In the EML definition, bullets were used to indicate in some places
+that question marks are not allowed. As far as in one place bullet was
+added to nonterminal $exp$ it is more or less clear why the first
+change could not be so small.  The troubles in the second case were
+caused by deep ambiguity in the full grammar of EML as presented in
+the EML definition. The problem was that in the rule:
+
+\begin{center}
+\begin{tabular}[h]{ll}
+{\it specexp} ::= & \letp {\it strdec} \inp {\it axexp} \pend  \\
+                  & $exp^\bullet$
+\end{tabular}
+\end{center}
+
+\noindent the same program might be parsed according to both the
+first, and the second line of the production because it was possible
+in $strdec$ to have usual $dec$ so that in some cases the first line
+might reduce to the following one:\\ 
+
+\begin{center}
+ \letp {\it dec} \inp {\it axexp}  \pend
+\end{center}
+
+\noindent which is very similar to one of the rules of $exp^\bullet$.
+Such ambiguity manifested itself for instance in the following EML
+specification:
+
+\begin{verbatim}
+ signature S =
+ sig
+  axiom let val x = 5 in x > x end
+ end;
+\end{verbatim}
+
+The third major change was simpler. It consisted in introducing
+additional nonterminal for guarded {\it strexps}.
+
+Now we are going to describe the three changes in more detail.
+
+\subsection{Introducing bullets}
+\label{sec:bullets}
+
+We were considering two ways of introducing bullets:
+\begin{itemize}
+\item by an additional check after yacc parsing; in the fashion the problem
+  of infixing was solved in the ML Kit,
+\item directly in the yacc--grammar.
+\end{itemize}
+There were several pros and cons for both methods. 
+
+The additional check seemed to be simpler to implement in the sense
+that the situation of the programmer was clear. He was to make it by
+himself from the beginning to the end and he did not have to analyze
+complicated yacc parsing of the ML Kit. Such solution was not too good
+because it was clear that bullets might be implemented through yacc
+parsing, and that they were not as difficult as the infixing problem
+(infixing makes the ML grammar not context--free).
+
+The yacc parsing method seemed to be difficult because of plenty of
+rules which had to be considered during the
+implementation. Consequently the method might lead to a greater number
+of bugs in the \EMLK than the other one.
+
+We decided to adopt the latter method because it seemed to us to be
+more regular. Consequently the general structure of the ML Kit was
+left unchanged (which would not be the case in the solution of
+additional post-parse stage). The risk of introducing bugs did not
+seem very significant to us, since most of the new rules would be
+generated simply by copying parts of the existing ones.
+
+\paragraph{Changes in details.} 
+Now we jump to more detailed description of the changes we made.
+
+There are three nonterminals with bullets in the full grammar of the
+EML definition:
+\begin{itemize}
+\item[---] $exp$
+\item[---] $match$
+\item[---] $typbind$
+\end{itemize}
+
+We introduced for each of these nonterminals two new nonterminals in
+the \EMLK grammar: 
+\begin{verbatim}
+     Exp_bullet, 
+     Exp_questionmark, 
+     Match_bullet,
+     Match_questionmark
+     TypBindbullet, 
+     TypBindquestionmark
+\end{verbatim}
+respectively.  Nonterminals with bullet in their name generate parts
+of EML program that do not involve question marks, and nonterminals
+with {\tt questionmark} in their name generate parts that do have such
+sign.
+
+We eliminated the original ML Kit nonterminals {\tt TypBind}, and {\tt
+Match\_} because they were needed only in few productions, and we kept
+the nonterminal {\tt Exp\_} because of great number of places it
+occurred. Moreover when we tried to define {\tt TypBind} and {\tt
+Match\_} as a sum of {\tt questionmark} and {\tt bullet} parts we
+encountered certain troubles with shift/reduce conflicts.
+
+Now we are going to present fragments of rules for $exp$ as an
+illustrating example for changes we made. At the moment, rules look as
+follows:\\
+
+The rule below gives sum of {\tt bullets} and {\tt questionmarks} for
+{\tt Exp\_}: {\small
+\begin{verbatim}
+Exp_:     Exp_questionmark ( Exp_questionmark )
+       |  Exp_bullet ( Exp_bullet )
+\end{verbatim}}
+\noindent This kind of rule is not present in {\tt Match\_} or {\tt TypBind}.
+
+Here are rules for question marks. This example illustrates how binary
+operations are handled in the rules with {\tt questionmark}. We simply
+build expressions that have question mark in the left, the right, and
+in both branches of an expression. The presence of bulleted
+nonterminal is necessary to avoid ambiguity: {\small
+\begin{verbatim}
+Exp_questionmark: ...
+        | Exp_questionmark HANDLE Match_bullet
+                        ( HANDLEexp(PP Exp_questionmarkleft Match_bulletright, 
+                                    Exp_questionmark, Match_bullet) )
+        | Exp_bullet HANDLE Match_questionmark 
+                        ( HANDLEexp(PP Exp_bulletleft Match_questionmarkright, 
+                                    Exp_bullet, Match_questionmark) )
+        | Exp_questionmark HANDLE Match_questionmark
+                        ( HANDLEexp(PP Exp_questionmarkleft 
+                                       Match_questionmarkright, 
+                                    Exp_questionmark, Match_questionmark) )
+        | ...
+\end{verbatim}}
+  \noindent In the rule for {\tt Exp\_questionmark}, we do not have
+  cases for quantifiers, comparison ({\tt ==}) and the convergence
+  predicate because all these rules would forbid occurrence of
+  question mark which is required in the rule for {\tt
+  Exp\_questionmark}.
+
+In the case of {\tt Exp\_bullet}, we do not have to introduce so many
+rules for binary operations:
+{\small
+\begin{verbatim}
+Exp_bullet: ...
+        | Exp_bullet HANDLE Match_bullet
+              ( HANDLEexp(PP Exp_bulletleft Match_bulletright, 
+                          Exp_bullet, Match_bullet))
+        | ...
+\end{verbatim}}
+  \noindent is all we need for the {\tt handle} operation. Obviously we introduce
+  rules for quantifiers, comparison ({\tt ==}) and convergence
+  predicate: {\small
+\begin{verbatim}
+Exp_bullet: ...
+        | EXISTS Match_bullet 
+              ( EXIST_QUANTexp(PP EXISTSleft Match_bulletright, 
+                               Match_bullet) )
+        | FORALL Match_bullet 
+              ( UNIV_QUANTexp(PP FORALLleft Match_bulletright, 
+                               Match_bullet) )
+        | Exp_bullet TERMINATES 
+              ( CONVERexp(PP Exp_bulletleft TERMINATESright, 
+                          Exp_bullet ) )
+        | Exp_bullet EQUALEQUAL Exp_bullet
+              ( COMPARexp(PP Exp_bullet1left Exp_bullet2right, 
+                          Exp_bullet1, Exp_bullet2) )
+        | Exp_bullet EQUALSLASHEQUAL Exp_bullet
+              ( ifThenElse( (COMPARexp(PP Exp_bullet1left
+                                          Exp_bullet2right, 
+                                       Exp_bullet1, Exp_bullet2)),
+                            falseExp, trueExp))
+        | ...
+\end{verbatim}}
+
+  The changes described above led to another set of fresh nonterminals
+  for the yacc--grammar; the new set led to another one; and so on. A
+  closure was reached at the following set of rules for bullets:
+  {\small
+\begin{verbatim}
+        | BarMatch_optbullet            of match Option
+        | MRulebullet                   of mrule
+        | ValBindbullet                 of valbind
+        | AndValBind_optbullet          of valbind Option
+        | AndFnValBind_optbullet        of valbind Option
+        | FnValBindbullet               of valbind
+        | AndTypBind_optbullet          of typbind Option
+        | OneDec_sans_LOCALbullet       of dec  (* One DEC phrase, no LOCAL. *)
+        | OneDecbullet                  of dec
+        | OneDec_or_SEMICOLONbullet     of dec Option
+        | NonEmptyDecbullet             of dec
+        | Decbullet                     of dec  (* One DEC phrase. *)
+        | AtExpbullet                   of atexp
+        | AtExp_seq1bullet              of atexp list
+        | ExpRowbullet                  of exprow
+        | ExpRow_optbullet              of exprow Option
+        | CommaExpRow_optbullet         of exprow Option
+        | ExpComma_seq0bullet           of exp list
+        | ExpComma_seq1bullet           of exp list
+        | ExpComma_seq2bullet           of exp list
+        | ExpSemicolon_seq2bullet       of exp list
+        | Exp_bullet                    of exp
+        | Match_bullet                  of match
+        | FValBindbullet                of FValBind
+        | AndFValBind_optbullet         of FValBind Option
+        | FClausebullet                 of FClause
+        | BarFClause_optbullet          of FClause Option
+        | TypBindbullet                 of typbind
+\end{verbatim}}
+
+\noindent{and the following one for question marks:}
+
+{\small
+\begin{verbatim}
+        | Match_questionmark            of match
+        | BarMatch_optquestionmark      of match Option
+        | MRulequestionmark             of mrule
+        | Exp_questionmark              of exp
+        | AtExp_seq1questionmark        of atexp list
+        | AtExpquestionmark             of atexp
+        | ExpRowquestionmark            of exprow
+        | ExpRow_optquestionmark        of exprow Option
+        | CommaExpRow_optquestionmark   of exprow Option
+        | ExpComma_seq0questionmark     of exp list
+        | ExpComma_seq1questionmark     of exp list
+        | ExpComma_seq2questionmark     of exp list
+        | ExpSemicolon_seq2questionmark of exp list
+        | FValBindquestionmark          of FValBind
+        | AndFValBind_optquestionmark   of FValBind Option
+        | FClausequestionmark           of FClause 
+        | BarFClause_optquestionmark    of FClause Option
+        | OneDec_sans_LOCALquestionmark of dec  (* One DEC phrase, no LOCAL. *)
+        | OneDecquestionmark            of dec  (* One DEC phrase. *)
+        | OneDec_or_SEMICOLONquestionmark  of dec Option
+        | NonEmptyDecquestionmark       of dec
+        | Decquestionmark               of dec
+        | TypBindquestionmark           of typbind
+        | AndTypBind_optquestionmark    of typbind Option
+        | ValBindquestionmark           of valbind
+        | FnValBindquestionmark         of valbind
+        | AndValBind_optquestionmark    of valbind Option
+        | AndFnValBind_optquestionmark  of valbind Option
+\end{verbatim}}
+
+  \noindent Analogously we ruled out some nonterminals handled by
+  nonterminals with {\tt bullets} and {\tt questionmarks} in names. It
+  is worth remarking that introducing these nonterminals via simple
+  sum rules (like in the first example for {\tt Exp}) either caused
+  ambiguities or simply was not needed because they disappeared during
+  the process of producing nonterminals with {\tt bullets} and {\tt
+  questionmarks} in names.
+
+{\small
+\begin{verbatim}
+        | TypBind                       of typbind
+        | ValBind                       of valbind
+        | FnValBind                     of valbind
+                                                (* RHS of `val rec' binding. *)
+        | FValBind                      of FValBind
+                                                (* `fun' binding. *)
+        | Dec                           of dec
+        | MRule                         of mrule
+        | Match_                        of match
+                                                (* Exp_, Match_ rather than *)
+                                                (* Exp, Match which are the *)
+                                                (* pervasive exceptions... *)
+        | ExpRow                        of exprow
+        | AtExp                         of atexp
+        | FClause                       of FClause
+        | CommaExpRow_opt               of exprow Option
+        | AndValBind_opt                of valbind Option
+        | AndFnValBind_opt              of valbind Option
+        | AndFValBind_opt               of FValBind Option
+        | BarFClause_opt                of FClause Option
+        | AndTypBind_opt                of typbind Option
+        | BarMatch_opt                  of match Option
+        | ExpRow_opt                    of exprow Option
+        | ExpComma_seq0                 of exp list
+        | ExpComma_seq1                 of exp list
+        | ExpComma_seq2                 of exp list
+        | AtExp_seq1                    of atexp list
+        | ExpSemicolon_seq2             of exp list
+        | OneDec_or_SEMICOLON           of dec Option
+        | NonEmptyDec                   of dec
+        | OneDec                        of dec  (* One DEC phrase. *)
+\end{verbatim}}
+
+
+\subsection{Introducing \protect{\tt let} to \protect{\it specexp}}
+\label{sec:specexp}
+
+The rule for {\it specexp} is more complex to handle than other ones,
+as illustrated by the example at the beginning of the Section
+\ref{sec:major}.
+
+We are going to describe intuitively the solution we chose. We should
+have solved ambiguity arising from the rule. There were two ways to
+do this:
+\begin{itemize}
+\item to parse all the strings that look like {\it exp} as if they were
+  {\it exp}, or
+\item to parse all the {\tt lets} as if they were {\tt lets} with
+  {\it strdec}.
+\end{itemize}
+We took the first solution and decided that all the {\it specexps}
+  that looked like {\it exps} had to be treated like {\it exps}. This
+  allowed us not to change the rule for {\tt Exp\_bullet}, which
+  seemed to be complicated.  Such change would be very difficult to
+  make because it would require for instance {\tt let} in expressions
+  like:
+
+\begin{center}
+{\small
+\begin{verbatim}
+let val x = 6 in x end + 3
+\end{verbatim}}
+\end{center}
+
+\noindent to be parsed as {\it exp} and not as some kind of {\tt let}~{\it
+  strdec}~..., what would take place without the expected tedious
+  changes.
+
+Our decision led to three new nonterminals:
+{\small
+\begin{verbatim}
+        | StrDec_SpecExp                of strdec
+        | OneStrDec_SpecExp             of strdec
+        | NonEmptyStrDec_SpecExp        of strdec
+\end{verbatim}}
+
+  \noindent They are used to keep the track of {\it strdecs} that are
+  not {\it decs}. The implementation is similar as in the case of
+  nonterminals used to handle question marks: {\small
+\begin{verbatim}
+NonEmptyStrDec_SpecExp:
+          NonEmptyStrDec_SpecExp OneStrDec_or_SEMICOLON
+                        ( case OneStrDec_or_SEMICOLON
+                            of Some strdec =>
+                                 composeStrDec(PP NonEmptyStrDec_SpecExpleft
+                                                  OneStrDec_or_SEMICOLONright,
+                                 NonEmptyStrDec_SpecExp, strdec)
+                             | None =>
+                                 NonEmptyStrDec_SpecExp )
+
+        | OneStrDec_SpecExp
+                        ( OneStrDec_SpecExp)
+
+        | NonEmptyDecbullet OneStrDec_SpecExp
+                        ( composeStrDec(
+                                   PP NonEmptyDecbulletleft
+                                      OneStrDec_SpecExpright,
+                                   Dec2StrDec( PP NonEmptyDecbulletleft
+                                                  NonEmptyDecbulletright,
+                                               NonEmptyDecbullet ), 
+                                   OneStrDec_SpecExp) )
+\end{verbatim}}
+
+
+\subsection{Guarded {\it strexps}}
+\label{sec:guarded}
+
+We introduced one new nonterminal {\tt StrExp\_guarded}. According to
+the last syntactic restriction from p. 17 of the EML definition we
+introduced the following generation rules for the new nonterminal:
+{\small
+\begin{verbatim}
+ StrExp_guarded:
+          LongIdent
+                        ( LONGSTRIDstrexp(PP LongIdentleft LongIdentright,
+                                          mk_LongStrId LongIdent
+                                         )
+                        )
+        | Ident LPAREN StrExp RPAREN
+                        ( APPstrexp(PP Identleft RPARENright,
+                                    mk_FunId Ident, StrExp
+                                   )
+                        )
+        | LET StrDec IN StrExp_guarded END
+                        ( LETstrexp(PP LETleft ENDright, StrDec, StrExp) )
+\end{verbatim}}
+
+Of course, we had to introduce a suitable rule for the single
+structure binding generation: {\small
+\begin{verbatim}
+SglStrBind: ...
+    | Ident EQUALS StrExp_guarded
+            ( UNGUARDsglstrbind(PP Identleft StrExp_guardedright,
+                                mk_StrId Ident, StrExp_guarded))
+\end{verbatim}}
+
+\section{Minor changes to the parsing in the ML Kit}
+\label{sec:minor}
+
+Now we are going to describe minor changes we made to the ML Kit. 
+
+
+\subsection{Changes in the lexing}
+\label{sec:lex}
+
+The file {\tt Topdec.lex} was left untouched. We added some new cases
+to the {\tt keyword} function in the file {\tt LexUtils.sml}:
+{\small
+\begin{verbatim}
+   fun keyword tok = (shifting("KEY(" ^ text ^ ")"); tok(p1, p2))
+      in
+        case text of ...
+      | "axiom"     => keyword AXIOM
+      | "exists" => keyword EXISTS
+      | "forall" => keyword FORALL
+      | "implies"   => keyword IMPLIES
+      | "proper" => keyword PROPER
+      | "raises" => keyword RAISES
+      | "terminates" => keyword TERMINATES
+
+      | "=="    => keyword EQUALEQUAL
+      | "=/="   => keyword EQUALSLASHEQUAL
+      | "?" => keyword QUESTIONMARK
+\end{verbatim}}
+\noindent These are all the new EML keywords\footnote{The keyword {\tt
+  implies} was added by Robert Maron on the early stages of the work
+on the EML Kit.}.
+
+\subsection{Changes in yacc--parsing}
+\label{sec:yacc}
+
+
+\subsubsection{The treatment of new reserved words}
+
+We added new reserved words to the grammar
+\begin{itemize}
+\item as terminals:
+{\small
+\begin{verbatim}
+%term ...
+   | AXIOM
+   | IMPLIES
+   | EXISTS | FORALL | PROPER | RAISES | TERMINATES
+   | QUESTIONMARK | EQUALEQUAL | EQUALSLASHEQUAL
+\end{verbatim}}
+\item and as keywords:
+{\small
+\begin{verbatim}
+%keyword EQTYPE FUNCTOR INCLUDE SHARING SIG SIGNATURE STRUCT ...
+      AXIOM
+      IMPLIES
+      EXISTS FORALL PROPER RAISES TERMINATES QUESTIONMARK
+      EQUALEQUAL EQUALSLASHEQUAL 
+\end{verbatim}}
+\end{itemize}
+
+\noindent The associativity declaration for new reserved words is: {\small
+\begin{verbatim}
+%right   IMPLIES
+%right EXISTS 
+%right FORALL (* quantifiers seem to behave like IMPLIES *)
+%left PROPER
+%left RAISES 
+%left TERMINATES
+%right EQUALEQUAL
+%right EQUALSLASHEQUAL
+\end{verbatim}}
+
+
+\subsubsection{The treatment of nonterminals}
+
+We added plenty of new nonterminals. In general we added new
+nonterminals where the grammar did (for instance for {\it psigexp} is
+{\tt PSigExp} or {\it specexp} is {\tt SpecExp}), and where it was
+necessary from the point of view of yacc (for instance {\tt
+  AndAxDesc\_opt}). Here is the list of the nonterminals we added
+following the grammar (p.~119 of the EML definition; we omit
+the nonterminals introduced due to bullets):
+{\small
+\begin{verbatim}
+   | AxExp           of axexp
+   | Ax              of ax
+   | SglStrBind      of sglstrbind
+   | PSigExp         of psigexp
+   | AxDesc          of axdesc
+   | SpecExp         of specexp
+\end{verbatim}}
+
+\noindent and here is the list of the nonterminals we added due to yacc
+requirements: 
+{\small
+\begin{verbatim}
+   | AndAxDesc_opt      of axdesc Option
+   | AndAx_opt          of ax Option
+\end{verbatim}}
+
+  The latter list is so modest because most of the new nonterminals
+  added due to yacc requirements are either with {\tt questionmarks}
+  or {\tt bullets}.
+
+
+\paragraph{How nonterminals of the EML definition grammar are handled by
+  the \EMLK parsing.}
+
+We are going to present a~handful of tables examining one by one the
+way rules from pp.~119--124 of EML definition are handled in the
+EML~Kit. The tables are organized in the same fashion the tables of
+the
+\EMLK grammar are.
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for expressions and matches]%
+{\bf  Nonterminals for expressions and matches}\\
+\sl nonterminal& \sl way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl way of handling\\[5pt]
+\endhead
+\endfoot
+{\it atexp} & handled by {\tt AtExpbullet} and {\tt
+  AtExpquestionmark}\\ 
+{\it exprow} & handled by {\tt ExpRowbullet} and {\tt
+  ExpRowquestionmark}\\ 
+{\it appexp} & handled by {\tt  AtExp\_seq1bullet} and {\tt
+  AtExp\_seq1questionmark} and then by infixing\\
+{\it infexp} & it is parsed as {\it appexp} and then resolved by
+infixing\\
+{\it exp} & handled by {\tt Exp\_bullet} and {\tt Exp\_questionmark},
+there is also production for {\tt Exp\_} too\\
+{\it match} & {\tt Match\_bullet} and {\tt Match\_questionmark}\\
+{\it mrule} & {\tt MRule\_bullet} and {\tt MRulequestionmark}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for declarations and bindings]%
+{\bf  Nonterminals for declarations and bindings}\\
+\sl nonterminal& \sl  way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl  way of handling\\[5pt]
+\endhead
+\endfoot
+{\it dec} & {\tt Decbullet} and {\tt Decquestionmark}\footnote{The way
+  it is handled is more complicated; this includes non empty {\it decs}
+  and so on.}\\
+{\it valbind} & {\tt ValBindbullet} and {\tt ValBindquestionmark}\\
+{\it fvalbind} & {\tt FValBindbullet} and {\tt FValBindquestionmark}\\
+{\it funcbind} & {\tt FClausebullet} and {\tt FClausequestionmark}\\
+{\it typbind} & {\tt TypBindbullet} and {\tt TypBindquestionmark}\\
+{\it datbind} & {\tt DatBind}\\
+{\it conbind} & {\tt ConBind}\\
+{\it exbind} & {\tt ExBind}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for patterns]%
+{\bf  Nonterminals for patterns}\\
+\sl nonterminal& \sl  way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl way of handling\\[5pt]
+\endhead
+\endfoot
+{\it atpat} & {\tt AtPat}\\
+{\it patrow} & {\tt PatRow}\\
+{\it apppat} & analogously to {\it appexp} handled by {\tt
+  AtPat\_seq2} and the infixing stage\\
+{\it infpat} & it is parsed as {\it apppat} and then resolved by
+infixing\\
+{\it pat} & {\tt Pat}\\
+{\it fpat} & {\tt AtPat\_seq1}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for type expressions]%
+{\bf  Nonterminals for type expressions}\\
+\sl nonterminal& \sl way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl  way of handling\\[5pt]
+\endhead
+\endfoot
+{\it ty} & {\tt Ty}\\
+{\it tyrow} & {\tt TyRow}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for structure and signature expressions]%
+{\bf  Nonterminals for structure and signature expressions}\\
+\sl nonterminal& \sl way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl way of handling\\[5pt]
+\endhead
+\endfoot
+{\it strexp} & {\tt StrExp}\\ 
+{\it strdec} & {\tt StrDec}\footnote{The way
+  it is handled is more complicated; this includes non empty {\it strdecs}
+  and so on.} \\
+{\it ax} & {\tt Ax}\\
+{\it axexp} & {\tt AxExp}\\
+{\it strbind} & {\tt StrBind}\\
+{\it sglstrbind} & {\tt  SglStrBind}\\
+{\it sigexp} & {\tt SigExp}\\
+{\it psigexp} & {\tt PSigExp}\\
+{\it sigdec} & {\tt SigDec\_sans\_SEMICOLON}\\
+{\it sigbind} & {\tt SigBind}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for specifications]%
+{\bf  Nonterminals for specifications}\\
+\sl nonterminal& \sl way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl way of handling\\[5pt]
+\endhead
+\endfoot
+{\it spec} & {\tt Spec}\\
+{\it valdesc} & {\tt ValDesc}\\
+{\it typdesc} & {\tt TypDesc}\\
+{\it datdesc} & {\tt DatDesc}\\
+{\it condesc} & {\tt ConDesc}\\
+{\it exdesc} & {\tt ExDesc}\\
+{\it specexp} & {\tt SpecExp} --- discussed in Section
+\ref{sec:specexp}\\
+{\it strdesc} & {\tt StrDesc}\\
+{\it shareq} & {\tt  SharEq}\\
+\end{longtable}
+
+\begin{longtable}{lp{80mm}}
+\caption[Nonterminals for functors and top--level declarations]%
+{\bf  Nonterminals for functors and top--level declarations}\\
+\sl nonterminal& \sl way of handling\\[5pt]
+\endfirsthead
+\sl nonterminal& \sl way of handling\\[5pt]
+\endhead
+\endfoot
+{\it fundec} & {\tt FunDec\_sans\_SEMICOLON}\\
+{\it funbind} & {\tt FunBind}\\
+{\it topdec} & {\tt TopDec}\\
+{\it program} & it is handled by the {\tt \%eop     SEMICOLON EOF}
+declaration in the header of {\tt Topdec.grm} file\\
+{\it fullprogram} & in the light of the situation in {\it program}, it
+is not necessary
+\end{longtable}
+
+We eliminated some nonterminals too for instance {\tt
+  ColonSigExp\_opt} because {\tt ColonSigExp} is no longer optional.
+
+We had to add some new functions to {\tt GrammarUtils.sml} file to
+help to build abstract syntax tree. These functions are:
+\begin{longtable}{lp{80mm}}
+\caption[Functions that help to build abstract syntax tree]{\bf
+  Functions that help to build abstract syntax tree}\\ 
+\sl function& \sl What the function does.\\[5pt]  
+\endfirsthead
+\sl function& What the function does.\\[5pt]
+\endhead
+\endfoot
+{\tt mk\_PSigId} &  creates a~principal signature
+expression out of an identifier\\ 
+{\tt specAsSig} & creates  a~principal signature
+expression out of specification\\ 
+{\tt Dec2StrDec} & translates ordinary declaration to a structure
+declaration --- it is used in parsing {\it specexps}\\
+{\tt functSigExp} & it had already existed and was changed to handle
+rather principal {\it sigexps}\\
+{\tt raisesExp} & creates {\tt HANDLEexp} suitable for expression with
+{\tt raises} 
+\\
+{\tt properExp} & creates {\tt HANDLEexp} suitable for expression with
+{\tt proper}\\
+\end{longtable}
+
+\noindent It is worth mentioning that the {\tt lookup\_tycon} function has
+been enriched with cases handling the question mark binding.
+
+We spare the Reader further boring details of the implementation. Of
+course all the details are available directly from the authors.
+
+\subsection{Changes in the infixing}
+\label{sec:infix}
+
+Now we are going to describe things connected with the changes in the
+infixing. The purpose of most of the changes was to introduce new
+resolving functions or to introduce new patterns to existing functions
+for new kinds of nodes of abstract syntax tree. Here is the list of
+--- hopefully self-explanatory --- names of added resolving
+functions\footnote{\noindent Functions {\tt resolveSigdec} and {\tt
+resolveSigexp} are due to Robert Maron.}: {\small
+\begin{verbatim}
+     resolveSigdec
+     resolveAX
+     resolveSigexp
+     resolveStrDesc
+     resolveAxDesc
+     resolveSpecExp
+     resolveAxExp
+     resolveFunbind
+     resolveStrbind
+\end{verbatim}}
+
+We added the following new patterns to the existing functions:
+\begin{itemize}
+\item {\tt AXIOMstrdec} to {\tt resolveStrDec} (new node),
+\item {\tt AXIOMspec} and {\tt STRUCTUREspec} to {\tt resolveSpec}
+  (new node {\tt AXIOMspec}, and structures may include expressions in
+  axioms now),
+\item {\tt EQTYPEdec} in {\tt resolveDec} (new node),
+\item {\tt COMPARexp}, {\tt EXIST\_QUANTexp}, {\tt UNIV\_QUANTexp} and
+  {\tt CONVERexp} to {\tt resolveExp} (new nodes),
+\item {\tt UNDEFatexp} to {\tt resolveAtExp} (new node).
+\end{itemize}
+
+\subsection{Changes to interfaces of structures involved in parsing}
+\label{sec:inter}
+
+It came out that some sharing equations for {\it exps} are needed in
+the interfaces. They are introduced in the {\tt GrammarUtils.sml} and
+the {\tt Parse.sml} files. In both cases, the added sharing equation
+is\footnote{These changes are due to Mikolaj Konarski.}:
+
+\begin{verbatim}
+and type TopdecGrammar.exp = DecGrammar.exp
+\end{verbatim}
+

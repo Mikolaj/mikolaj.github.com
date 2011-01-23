@@ -1,0 +1,30 @@
+Sh_InstPpRemMod2_1 =  
+  {M = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {M = :: ~M : sig type t value v : t end -> 
+            sig
+              type t 
+              value v2 : M.t (* even worse with [t] *)
+            end 
+       struct type t = M.t value v2 = M.v end}
+Sh_InstPpRemMod2_2 = 
+  Sh_InstPpRemMod2_1
+  . 
+  :: ~M : ~M : sig type t value v : t end -> 
+          sig
+            type t 
+            value v2 : M.t (* ! *)
+          end ->
+       sig value n : M.t end
+  struct value n = M.v2 end
+
+Sh_enough_for_error =  
+  :: ~M : ~M : sig type t value v : t end -> 
+          sig
+            type t 
+            value v2 : t
+          end ->
+       sig end
+  struct end
+

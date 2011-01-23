@@ -1,0 +1,248 @@
+This is TeX, Version 3.14159 (C version 6.1) (format=latex 97.9.1)  11 SEP 1997 02:06
+**\nonstopmode\input{eml-type.tex}
+(eml-type.tex (/usr/lib/texmf/tex/latex/base/article.cls
+Document Class: article 1996/10/31 v1.3u Standard LaTeX document class
+(/usr/lib/texmf/tex/latex/base/size12.clo
+File: size12.clo 1996/10/31 v1.3u Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/lib/texmf/tex/generic/babel/babel.sty
+Package: babel 1997/01/23 v3.6h The Babel package
+
+(/usr/lib/texmf/tex/generic/babel/polish.ldf
+File: polish.ldf 1996/12/23 v1.2d Polish support from the babel system
+
+(/usr/lib/texmf/tex/generic/babel/babel.def
+File: babel.def 1997/01/23 v3.6h Babel common definitions
+\babel@savecnt=\count87
+\U@D=\dimen103
+)
+Package babel Info: Making " an active character on input line 103.
+\pl@left=\dimen104
+\pl@down=\dimen105
+\pl@right=\dimen106
+\pl@temp=\dimen107
+))
+(/usr/lib/texmf/tex/latex/amslatex/amsthm.sty
+Package: amsthm 1996/10/24 v1.2d
+
+(/usr/lib/texmf/tex/latex/amslatex/amsgen.sty
+File: amsgen 1996/10/29 v1.2b
+\@emptytoks=\toks14
+\ex@=\dimen108
+)
+\thm@style=\toks15
+\thm@bodyfont=\toks16
+\thm@headfont=\toks17
+\thm@notefont=\toks18
+\thm@headpunct=\toks19
+\thm@preskip=\skip43
+\thm@postskip=\skip44
+) (mac.tex) (emlmacros.tex)
+(eml-type.aux)
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+ (pl-mac.tex)
+\c@thm=\count88
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <14.4> on input line 53.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 53.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 66.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 66.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 66.
+ [1
+
+] (eml-type.toc [2])
+\tf@toc=\write3
+ [3]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <17.28> on input line 87.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <24.88> on input line 87.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <20.74> on input line 87.
+ (intro.tex [4] [5]
+[6]
+Overfull \hbox (0.37096pt too wide) in paragraph at lines 173--180
+[]\OT1/cmr/m/n/12 Wersja 1.0 stwo-rzona przez Mar-cina Jur-dzi^^Snskiego, Miko 
+laja Ko-nar-skiego,
+ []
+
+[7]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 214.
+ [8] [9] [10]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 392.
+
+ (/usr/lib/texmf/tex/latex/base/omscmr.fd
+File: omscmr.fd 1997/01/14 v2.5a Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 392.
+ [11] [12] [13])
+[14] (axioms.tex [15] [16] [17] [18] [19] [20] [21] [22]) [23] (traces.tex
+[24] [25] [26] [27]
+LaTeX Font Info:    Font shape `OMS/cmr/m/it' in size <12> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 243.
+ [28] [29] [30]) [31] (actual.tex [32]
+Overfull \hbox (18.15683pt too wide) in paragraph at lines 117--117
+[]\OT1/cmtt/m/n/10.95 fun elab_spec (B: Env.Basis, spec: IG.spec, A: Env.Assemb
+ly, p : pass):[] 
+ []
+
+[33]
+Overfull \hbox (52.64896pt too wide) in paragraph at lines 117--117
+[]        \OT1/cmtt/m/n/10.95 (Stat.Id, Env.emptyA, Env.emptyE, OG.AXIOMspec(ok
+Conv i, out_axdesc))[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 142--142
+[]  \OT1/cmtt/m/n/10.95 POST_ELAB_GRAMMAR_INFO of {preElabGrammarInfo: PreElabG
+rammarInfo,[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 142--142
+[]                             \OT1/cmtt/m/n/10.95 overloadingInfo: Overloading
+Info Option,[] 
+ []
+
+[34]
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 195--195
+[]\OT1/cmtt/m/n/10.95 fun addBoundTrace (bound : Trace.BoundTrace) (i : PostEla
+bGrammarInfo) =[] 
+ []
+
+[35]
+Overfull \hbox (58.39764pt too wide) in paragraph at lines 256--256
+[]\OT1/cmtt/m/n/10.95 fun elab_sigexp' (B: Env.Basis, sigexp: IG.sigexp, A: Env
+.Assembly, p : pass):[] 
+ []
+
+
+Overfull \hbox (29.6542pt too wide) in paragraph at lines 256--256
+[]                            \OT1/cmtt/m/n/10.95 | (SECOND_PASS(rea1)) => M.on
+StrName rea1 m))[] 
+ []
+
+
+Overfull \hbox (0.91077pt too wide) in paragraph at lines 256--256
+[]                \OT1/cmtt/m/n/10.95 val (S, A', rea) = Env.Sig_instance_for_t
+races sigma[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 256--256
+[]                               \OT1/cmtt/m/n/10.95 | (SECOND_PASS(rea1)) => r
+ea1 oo rea))[] 
+ []
+
+[36] [37]
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 358--358
+[]  \OT1/cmtt/m/n/10.95 | onScheme (S, TYVARS(_))   = Crash.impossible "CoreTra
+ce.onScheme"[] 
+ []
+
+
+Overfull \hbox (41.15158pt too wide) in paragraph at lines 358--358
+[]  \OT1/cmtt/m/n/10.95 | onSim (S, CONTEXTxTYPE(C, tau)) = CONTEXTxTYPE(Enviro
+nments.onC (S, C),[] 
+ []
+
+
+Overfull \hbox (46.90027pt too wide) in paragraph at lines 358--358
+[]                                                   \OT1/cmtt/m/n/10.95 Enviro
+nments.on (S, tau))[] 
+ []
+
+
+Overfull \hbox (18.15683pt too wide) in paragraph at lines 358--358
+[]  \OT1/cmtt/m/n/10.95 | onSim (S, CONTEXTxENV(C, E)) = CONTEXTxENV(Environmen
+ts.onC (S, C),[] 
+ []
+
+
+Overfull \hbox (41.15158pt too wide) in paragraph at lines 358--358
+[]                                                   \OT1/cmtt/m/n/10.95 Enviro
+nments.onE (S, E))[] 
+ []
+
+
+Overfull \hbox (69.89502pt too wide) in paragraph at lines 358--358
+[]  \OT1/cmtt/m/n/10.95 | onSim (S, CONTEXTxTYNAME(C, t)) = CONTEXTxTYNAME(Envi
+ronments.onC (S, C), t)[] 
+ []
+
+
+Overfull \hbox (6.65945pt too wide) in paragraph at lines 358--358
+[]                                        \OT1/cmtt/m/n/10.95 @ (Environments.t
+yvarsTy tau)[] 
+ []
+
+
+Overfull \hbox (75.6437pt too wide) in paragraph at lines 358--358
+[]    \OT1/cmtt/m/n/10.95 val core_trace' as (TRACE(scheme_opt, sim_opt)) = onC
+oreTrace (S, core_trace)[] 
+ []
+
+
+Overfull \hbox (23.90552pt too wide) in paragraph at lines 358--358
+[]          \OT1/cmtt/m/n/10.95 let val tvs_to_bind = minus (free_tvs, Environm
+ents.tyvarsC C)[] 
+ []
+
+[38]) [39] (preface.tex
+Underfull \vbox (badness 1558) has occurred while \output is active []
+
+ [40])
+[41] (getting.tex [42]
+Overfull \hbox (16.03345pt too wide) detected at line 148
+[]
+ []
+
+[43] [44]
+Overfull \hbox (31.69234pt too wide) detected at line 184
+[]
+ []
+
+[45
+
+]) (bib.tex [46
+
+]) [47] (eml-type.aux) ) 
+Here is how much of TeX's memory you used:
+ 1638 strings out of 10886
+ 14404 string characters out of 72151
+ 70076 words of memory out of 262141
+ 4503 multiletter control sequences out of 9500
+ 16368 words of font info for 58 fonts, out of 150000 for 255
+ 34 hyphenation exceptions out of 607
+ 25i,11n,21p,220b,386s stack positions out of 300i,40n,60p,3000b,4000s
+
+Output written on eml-type.dvi (47 pages, 164296 bytes).

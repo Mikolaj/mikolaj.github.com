@@ -1,0 +1,45 @@
+\select@language {english}
+\contentsline {part}{\uppercase {i}\hspace {1em}Introduction}{3}
+\contentsline {section}{\numberline {1}Overview of the field}{3}
+\contentsline {subsection}{\numberline {1.1}Standard ML}{3}
+\contentsline {subsection}{\numberline {1.2}Extended ML}{5}
+\contentsline {subsection}{\numberline {1.3}Natural Semantics}{5}
+\contentsline {subsection}{\numberline {1.4}The EML Kit}{5}
+\contentsline {subsection}{\numberline {1.5}Conclusions and Dependencies Diagram}{6}
+\contentsline {section}{\numberline {2}The Concept of Static Analysis}{7}
+\contentsline {subsection}{\numberline {2.1}}{7}
+\contentsline {subsection}{\numberline {2.2}Basic Definitions}{7}
+\contentsline {subsubsection}{\numberline {2.2.1}Semantic Objects}{7}
+\contentsline {subsubsection}{\numberline {2.2.2}Judgments}{7}
+\contentsline {subsubsection}{\numberline {2.2.3}Principal Signatures}{8}
+\contentsline {subsection}{\numberline {2.3}The Extended ML Case}{8}
+\contentsline {subsubsection}{\numberline {2.3.1}Indeterminism}{8}
+\contentsline {subsubsection}{\numberline {2.3.2}Imposing}{8}
+\contentsline {subsection}{\numberline {2.4}}{9}
+\contentsline {part}{\uppercase {ii}\hspace {1em}Theory}{10}
+\contentsline {section}{\numberline {3}Axiom Type-Checking}{10}
+\contentsline {subsection}{\numberline {3.1}Axioms in Signatures}{10}
+\contentsline {subsection}{\numberline {3.2}Modules Elaboration in QUASI-EML}{11}
+\contentsline {subsection}{\numberline {3.3}A Naive Approach to the EML Rule 65}{12}
+\contentsline {subsection}{\numberline {3.4}Comforting Lemma}{12}
+\contentsline {subsection}{\numberline {3.5}The Mature Approach to the EML Rule 65}{13}
+\contentsline {subsection}{\numberline {3.6}Validating Axioms}{13}
+\contentsline {section}{\numberline {4}Interlude}{14}
+\contentsline {subsection}{\numberline {4.1}Static Semantics of Signatures}{15}
+\contentsline {subsection}{\numberline {4.2}Elaborating Signatures}{15}
+\contentsline {section}{\numberline {5}In the Search for the Basis $B_e$}{16}
+\contentsline {subsection}{\numberline {5.1}The Modest Basis}{16}
+\contentsline {subsection}{\numberline {5.2}The Ignorant Basis}{16}
+\contentsline {subsection}{\numberline {5.3}The Omniscient Basis}{17}
+\contentsline {subsection}{\numberline {5.4}The Observation}{17}
+\contentsline {section}{\numberline {6}Trace Collection}{18}
+\contentsline {subsection}{\numberline {6.1}Traces}{18}
+\contentsline {subsection}{\numberline {6.2}Substitutions and trace collection}{19}
+\contentsline {subsection}{\numberline {6.3}Trace Schemes}{19}
+\contentsline {part}{\uppercase {iii}\hspace {1em}Implementation}{20}
+\contentsline {section}{\numberline {7}The Actual Implementation}{20}
+\contentsline {subsection}{\numberline {7.1}Basic Conventions}{20}
+\contentsline {subsection}{\numberline {7.2}Axioms}{20}
+\contentsline {subsection}{\numberline {7.3}Traces}{21}
+\contentsline {section}{\numberline {8}An Anegdote}{21}
+\contentsline {section}{References}{23}

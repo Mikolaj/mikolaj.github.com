@@ -1,0 +1,9 @@
+spec T = sig end  
+
+library ErrInst =
+{Specialized = 
+       :: ~Arg : sig end -> T
+       struct end (*; Arg = struct end *)} |
+  :: ~Specialized : T -> 
+       ~Arg : sig type t end -> sig end  
+  struct end

@@ -1,0 +1,123 @@
+\chapter{
+Funkcje wy"rszych rz"ed"ow
+}
+
+Oto definicja funkcji \|sum|:
+\begin{verbatim}
+    fun sum [] = 0
+      | sum (a::rest) = a + sum rest  
+\end{verbatim}
+Oto definicja funkcji \|prod|:
+\begin{verbatim}
+    fun prod [] = 1
+      | prod (a::rest) = a * prod rest    
+\end{verbatim}
+Te funkcje s"a podejrzanie podobne.
+
+R"o"rni"a si"e tylko nazw"a i tym, "re w deficji \|sum| 
+w pierwszym r"ownaniu wyst"epuje \|0| a w drugim \|+|,
+podczas gdy w definicji \|prod|, w tych samym miejscu 
+w pierwszym r"ownaniu jest \|1| a w drugim \|*|.
+Chcia"loby si"e napisa"c funkcj"e \|foldr| tak"a, "reby
+$\f{sum} = \f{foldr} (+, 0)$ i $\f{prod} = \f{foldr} (*, 1)$.
+Nic prostszego:
+\begin{verbatim}
+    fun foldr (f, x) [] = x 
+      | foldr (f, x) (a::rest) = f(a, foldr (f, x) rest)
+\end{verbatim}
+i tak powsta"la pierwsza funkcja wy"rszego rz"edu \|;-)|.
+
+Teraz mo"rna napisa"c:
+\begin{verbatim}
+    val sum = foldr (op +, 0)    (* op, because + is an infix identifier *)
+    val prod = foldr (op *, 1)
+\end{verbatim}
+Zauwa"rmy, "re \|foldr| tak jak go zapisali"smy jest polimorficzny:
+\begin{verbatim}
+    val sum_reals = foldr (op +, 0.0)
+    fun and_pair (b, c) = b andalso c
+    val and_list = foldr (and_pair, true)
+    val list_identity = foldr (op ::, nil)
+    val add_sizes = foldr (fn (s, rest_size) => (size s) + rest_size, 0)
+\end{verbatim}
+(\|fn x => E|, gdzie \|E| to jakie"s wyra"renie (by"c mo"re zawieraj"ace \|x|), 
+oznacza funkcj"e kt"ora \|x| przyporz"adkowuje \|E|,
+jest to tak zwana anonimowa funkcja zapisana w tak zwanej lambda notacji).
+
+Dla wygody przyj"eto, "re wyra"renie w rodzaju \|(f a) b| (aplikacja funkcji
+ \|(f a)| do argumentu \|b|)
+mo"rna zapisywa"c bez nawias"ow: \|f a b|.
+Przyk"lad: \|(foldr (op +, 0)) [2, 44, 5]|
+mo"rna zapisa"c jako: \|foldr (op +, 0) [2, 44, 5]|.
+
+Na zako"nczenie obrazowe podsumowanie dzia"lania \|foldr|:
+$$\f{foldr} (f, x) [a_1, a_2, a_3, a_4] = f(a_1, f(a_2, f(a_3, f(a_4, x))))$$
+lub w nieco czytelniejszym, infiksowym zapisie:
+$$\f{foldr} (+, x) [a_1, a_2, a_3, a_4] = a_1 + (a_2 + (a_3 + (a_4 + x)))$$
+
+
+\section*{Zadania}
+\begin{exercises}
+
+\item%[Zadanie 5.1]
+Przy pomocy \|foldr| napisz \|append|.
+
+\item%[Zadanie 5.2]
+Przy pomocy \|foldr| napisz \|length|.
+
+\item%[Zadanie 5.3]
+Przy pomocy \|foldr| napisz funkcj"e \|good_max|, kt"ora dostawszy
+\|n : int| oraz \|l : int list| daje najwi"eksz"a liczb"e
+z listy \|l| wi"eksz"a od \|n|,
+lub \|n| je"sli w \|l| nie ma "radnej liczby wi"ekszej od \|n|.
+
+\item%[Zadanie 5.4]
+Napisz funkcj"e \|map|, kt"ora dostaje funkcj"e \|f| i list"e \|l|,
+a daje list"e wynik"ow aplikacji funkcji \|f| do kolejnych element"ow  \|l|.
+Pisz"ac prosto:
+$$\f{map}\ f\ [a_1, a_2, a_3, a_4] = [f\ a_1, f\ a_2, f\ a_3, f\ a_4].$$
+Ten sam \|map| zapisz przy pomocy \|foldr|.
+
+\item%[Zadanie 5.5]
+Przy pomocy \|map| napisz funkcj"e \|first_cut|, kt"ora dostaje
+list"e list a daje list"e pierwszych element"ow tych list.
+Napisz \|first_cut| nie u"rywaj"ac \|map|. 
+Czy ta wersja nie przypomina Ci definicji \|map|?
+
+\item%[Zadanie 5.6]
+Napisz funkcj"e \|filter|, kt"ora dostaje predykat \|p : 'a -> bool|
+i~list"e \|l : 'a list| i~daje list"e sk"ladaj"ac"a si"e z~tych element"ow
+\|l|, kt"ore spe"lniaj"a \|p|.
+
+Napisz \|filter| korzystaj"ac z \|foldr|.
+Czy ta definicja jest bardziej czytelna?
+
+\item%[Zadanie 5.7]
+Przy pomocy \|filter| napisz \|divis_list|, kt"ora wy"lawia
+z listy te liczby kt"ore s"a podzielne przez zadan"a liczb"e.
+Prawda, "re "ladnie?
+
+\item%[Zadanie 5.8]
+Napisz \|foldl|, czyli funkcj"e kt"ora zachowuje si"e w ten spos"ob
+$$\f{foldl} (f, x) [a_1, a_2, a_3, a_4] = f(f(f(f(x, a_1), a_2), a_3), a_4)$$
+lub w infiksowym zapisie:
+$$\f{foldl} (+, x) [a_1, a_2, a_3, a_4] = ((((x + a_1) + a_2) + a_3) + a_4)$$
+
+\item%[Zadanie 5.9]
+U"rywaj"ac mi"edzy innymi \|foldl| napisz \|append|.
+Zwyk"ly \|append|. 
+ 
+\item%[Zadanie 5.10]
+U"rywaj"ac mi"edzy innymi \|foldl| napisz \|foldr|.
+Korzystaj z do"swiadcze"n z poprzedniego zadania.
+
+\item%[Zadanie 5.11]
+Napisz odpowiedniki \|foldr|, \|map| i \|filter| dla drzew.
+
+\end{exercises}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

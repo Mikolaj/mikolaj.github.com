@@ -1,0 +1,148 @@
+\chapter{
+Funkcje jeszcze wy"rszych rz"ed"ow 
+}
+
+Funkcje wy"rszych rz"ed"ow spotyka si"e wsz"edzie. We"zmy cho"cby
+aplikacj"e funkcji do argumentu. To"c to tw"or wy"rszego rz"edu! Mo"remy go nazwa"c: 
+\begin{verbatim}
+    fun apply (f, a) = f a
+\end{verbatim}
+i od tej pory zawsze pisa"c \|apply (g, b)| tam gdzie dot"ad pisali"smy \|g b  :-]|.
+
+Operacja sk"ladania dw"och funkcji jest oczywi"scie funkcj"a wy"rszego rz"edu. 
+Pewna jej wersja jest nazwana i zdefiniowana w standardowej bazie SML-a:
+\begin{verbatim}
+    infix 3 o
+    fun (f o g) x = f (g x)
+\end{verbatim}
+i czasem si"e przydaje, np.:
+\begin{verbatim}
+    val treesort = bst2list o list2bst
+\end{verbatim}
+Nawet pospolite operacje arytmetyczne mo"rna zapisa"c jako funkcje wy"rszego rz"edu:
+\begin{verbatim}
+    fun divide_by x y = y / x;
+    divide_by 2.0 4.0;
+    val divide_by_two = divide_by 2.0;
+    divide_by_two 10000000.0;
+    divide_by_two 342423423452345.0;
+    map (divide_by 3.0) [333.0, 12.0, 55.0, 5.0];
+\end{verbatim}
+
+Definiuj"ac \|divide_by| na podstawie funkcji ~\|/|~ dokonali"smy pewnych
+my\-"slo\-wych operacji wy"rszego rz"edu (jak"reby inaczej). 
+Te operacje mo"rna zapisa"c w SML-u:
+\begin{verbatim}
+    fun curry f a b = f (a, b)
+    fun C f x y = f y x
+\end{verbatim}
+Definicj"e \|divide_by| mo"rna teraz przedstawi"c tak:
+\begin{verbatim}
+    val divide_by = C (curry (op /))
+\end{verbatim}
+
+Tak na marginesie: dla dowolnego \|f : 'a * 'b -> 'c| istnieje dok"ladnie
+jedna funkcja \|g : 'a -> 'b -> 'c| taka, "re dla ka"rdego \|(x, y) : 'a * 'b|
+\|f (x, y)| $=$ \|g x y|. Tym \|g| jest \|curry f|. Sk"ad wynika na przyk"lad, "re ka"rd"a 
+operacj"e arytmetyczn"a mo"rna przerobi"c na funkcj"e wy"rszego rz"edu tylko na dwa sposoby.
+
+Jeszcze jedno --- przy pomocy lambda notacji
+funkcje wy"rszych rz"ed"ow zapisuje si"e zagnie"rd"raj"ac \|fn|, np.:
+\begin{verbatim}
+    fun curry f = fn a => fn b => f (a, b)
+    val C = fn f => fn x => fn y => f y x
+\end{verbatim}
+
+
+\section*{Zadania}
+\begin{exercises}
+
+\item%[Zadanie 6.1]
+Zdefiniuj funkcje odwrotne do \|curry| (b"edzie si"e nazywa"la \|uncurry|)
+i \|C| (nazw"e wymy"sl sama (sam)).
+Napisz funkcj"e \|repeat|, kt"ora dostawszy pare \|(f, n)| daje
+funkcj"e r"own"a z"lo"reniu \|n| funkcji \|f|. Czyli:
+$$ \f{repeat}(f,n) = f^n $$
+
+\item%[Zadanie 6.2]
+Dla dowolnych dw"och typ"ow \|'a| i \|'b| istnieje typ \|'a * 'b|, ich produkt.
+W naturalny spos"ob zwi"azane s"a z tym typem pewne funkcje ---
+projekcje:
+\begin{verbatim}
+    fun pi1 (x, y) = x
+    fun pi2 (x, y) = y
+\end{verbatim}
+i funkcja \|pair| typu \|('c -> 'a) * ('c -> 'b) -> ('c -> 'a * 'b)|,
+kt"ora dostawszy funkcje \|f :'c -> 'a| oraz \|g : 'c -> 'b| daje funkcj"e\\
+ \|h : 'c -> 'a * 'b|, o tej w"lasno"sci, "re
+\|pi1 o h = f| i \|pi2 o h = g|. 
+(Taka funkcja \|h| jest dla ka"rdego \|(f, g)| tylko jedna.)
+
+Napisz funkcj"e \|pair|.
+
+\item%[Zadanie 6.3]
+Zdefiniuj typ \|('a, 'b) direct_sum|, kt"ory jest sum"a roz"l"aczn"a ty"ow \|'a| i \|'b|.
+Ten typ b"edzie w pewnym sensie dualny do typu \|'a * 'b|.
+Zdefiniuj w"lo"renia (injekcje):
+\begin{verbatim}
+    inleft  : 'a -> ('a, 'b) direct_sum 
+    inright : 'b -> ('a, 'b) direct_sum
+\end{verbatim} 
+i funkcj"e \|cases| analogiczn"a (tak naprawd"e dualn"a) do funkcji \|pair| dla produktu.
+
+Wskaz"owka 1:
+Funkcja \|cases| jest typu\\
+ \|('a -> 'c) * ('b -> 'c) -> ('a, 'b) direct_sum -> 'c|.
+
+Wskaz"owka 2:
+Funkcja \|cases| dostawszy funkcje \| f : 'a -> 'c | oraz\\
+\| g : 'b -> 'c |
+daje funkcj"e \| h : ('a, 'b) direct_sum -> 'c |, o tej w"lasno"sci, "re
+\| h o inleft = f | i \| h o inright = g |. 
+(Taka funkcja \|h| jest dla ka"rdego \|(f, g)| tylko jedna.)
+
+\pagebreak
+
+\item%[Zadanie 6.4]
+Napisz funkcj"e 
+\begin{verbatim}
+    exists : ('a -> bool) -> 'a list -> bool
+\end{verbatim} 
+kt"ora bierze predykat
+\|p : ('a -> bool)| i daje funkcj"e, kt"ora bierze list"e \|l| i oddaje \|true|
+gdy kt"ory"s z element"ow listy spe"lnia predykat \|p|, \|false| w przeciwnym przypadku.
+Napisz funkcj"e 
+\begin{verbatim}
+    non : ('a -> bool) -> ('a -> bool)
+\end{verbatim} 
+kt"ora neguje predykat.
+Napisz funcj"e \|forall|, kt"ora tym si"e r"o"rni od \|exists|, "re w odpowiednim
+miejscu nie kt"ory"s, ale wszystkie elementy listy musz"a spe"lnia"c predykat.
+Nim zaczniesz pisa"c \|forall| podobnie jak \|exists|, 
+pomy"sl czy nie mo"rnaby go napisa"c "smieszniej 
+(nie, nie chodzi mi o to "reby u"ryc \|foldr|).
+
+Spoiler:
+W definicji \|forall| korzystaj wy"lacznie z \|exists|, \|non|, i \|o|.
+
+\item%[Zadanie 6.5]
+%\frenchspacing
+Zapisz insertionsort lub inny algorytm sortowania 
+(mo"ze mergesort, je"sli jeszcze go nie napisa"le"s lub nie napisa"la"s) w takiej
+postaci, aby jako pierwszy argument bra"l funkcj"e \|le : 't * 't -> bool| wyznaczj"ac"a
+pewien porz"adek i sortowa"l list"e \|l : 't list| wed"lug tego porz"adku.
+Napisz \|le_int| i \|le_string|. 
+Wypr"obuj \|insertionsort le_int|.
+Napisz te"r jaki"s 
+\begin{verbatim}
+    le_int_to_int : (int -> int) * (int -> int) -> bool
+\end{verbatim}
+Wypr"obuj \|insertionsort le_int_to_int|.
+
+\end{exercises}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

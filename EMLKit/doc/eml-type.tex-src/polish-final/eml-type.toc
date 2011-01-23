@@ -1,0 +1,58 @@
+\select@language {polish}
+\contentsline {part}{\uppercase {i}\hspace {1em}Wst"ep}{4}
+\contentsline {section}{\numberline {1}Rzut oka na dziedzin"e}{4}
+\contentsline {subsection}{\numberline {1.1}Standard ML}{4}
+\contentsline {subsection}{\numberline {1.2}Extended ML}{5}
+\contentsline {subsection}{\numberline {1.3}Semantyka naturalna}{6}
+\contentsline {subsection}{\numberline {1.4}EML Kit}{7}
+\contentsline {subsection}{\numberline {1.5}Podsumowanie i diagram zale"rno"sci}{8}
+\contentsline {section}{\numberline {2}Analiza statyczna}{9}
+\contentsline {subsection}{\numberline {2.1}Obja"snienie terminu}{9}
+\contentsline {subsection}{\numberline {2.2}Podstawowe poj"ecia}{10}
+\contentsline {subsubsection}{\numberline {2.2.1}Obiekt semantyczny}{10}
+\contentsline {subsubsection}{\numberline {2.2.2}Os"ad}{11}
+\contentsline {subsubsection}{\numberline {2.2.3}Obiekt g"l"owny}{11}
+\contentsline {subsection}{\numberline {2.3}Ciekawsze zjawiska}{12}
+\contentsline {subsubsection}{\numberline {2.3.1}Niedeterminizm}{12}
+\contentsline {subsubsection}{\numberline {2.3.2}Wymuszanie}{12}
+\contentsline {subsection}{\numberline {2.4}Analiza statyczna w Extended ML}{13}
+\contentsline {part}{\uppercase {ii}\hspace {1em}Teoria}{15}
+\contentsline {section}{\numberline {3}Jak bada"c poprawno"s"c aks\discretionary {-}{}{}jo\discretionary {-}{}{}ma\discretionary {-}{}{}t"ow}{15}
+\contentsline {subsection}{\numberline {3.1}Szkic algorytmu}{15}
+\contentsline {subsubsection}{\numberline {3.1.1}Sygnatury z aksjomatami}{15}
+\contentsline {subsubsection}{\numberline {3.1.2}Analiza statyczna modu"l"ow w QUASI-EML}{16}
+\contentsline {subsubsection}{\numberline {3.1.3}Naiwna pr"oba rozwi"azania problemu}{17}
+\contentsline {subsubsection}{\numberline {3.1.4}Pocieszaj"acy lemat}{18}
+\contentsline {subsubsection}{\numberline {3.1.5}Poprawne rozwi"azanie}{18}
+\contentsline {subsubsection}{\numberline {3.1.6}Badanie dopuszczalno"sci aksjomat"ow}{19}
+\contentsline {subsection}{\numberline {3.2}Interludium}{20}
+\contentsline {subsubsection}{\numberline {3.2.1}Semantyka statyczna sygnatur}{20}
+\contentsline {subsubsection}{\numberline {3.2.2}Elaboracja sygnatur}{21}
+\contentsline {subsection}{\numberline {3.3}W poszukiwaniu bazy $B_e$}{22}
+\contentsline {subsubsection}{\numberline {3.3.1}Baza pocz"atkowa}{22}
+\contentsline {subsubsection}{\numberline {3.3.2}Baza bie"r"aca}{22}
+\contentsline {subsubsection}{\numberline {3.3.3}Baza ko"ncowa}{23}
+\contentsline {subsubsection}{\numberline {3.3.4}Spostrze"renie}{23}
+\contentsline {section}{\numberline {4}Jak gromadzi"c "slady}{24}
+\contentsline {subsection}{\numberline {4.1}Preludium}{24}
+\contentsline {subsubsection}{\numberline {4.1.1}Semantyka statyczna wyra"re"n}{24}
+\contentsline {subsubsection}{\numberline {4.1.2}Elaboracja wyra"re"n}{24}
+\contentsline {subsection}{\numberline {4.2}"Slady}{25}
+\contentsline {subsubsection}{\numberline {4.2.1}"Slad elaboracji}{26}
+\contentsline {subsubsection}{\numberline {4.2.2}"Slad jako obiekt semantyczny}{26}
+\contentsline {subsection}{\numberline {4.3}Zbieranie "slad"ow}{27}
+\contentsline {subsubsection}{\numberline {4.3.1}Lokalna i globalna g"l"owno"s"c}{27}
+\contentsline {subsubsection}{\numberline {4.3.2}Konkretyzacja "sladu}{29}
+\contentsline {part}{\uppercase {iii}\hspace {1em}Implementacja}{32}
+\contentsline {section}{\numberline {5}Aksjomaty w sygnaturach}{32}
+\contentsline {section}{\numberline {6}"Slady j"ezyka Modu"l"ow}{34}
+\contentsline {section}{\numberline {7}"Slady j"ezyka J"adra}{37}
+\contentsline {section}{\numberline {8}Anegdota}{39}
+\contentsline {part}{\uppercase {iv}\hspace {1em}Podsumowanie}{40}
+\contentsline {part}{Dodatki}{42}
+\contentsline {section}{\numberline {A}System EML Kit}{42}
+\contentsline {paragraph}{EML Kit jest dost"epny w sieci Internet.}{42}
+\contentsline {paragraph}{EML Kit ma nast"epuj"acy copyright:}{42}
+\contentsline {paragraph}{Autorzy systemu EML Kit s"a wdzi"eczni za wszelk"a pomoc.}{43}
+\contentsline {section}{\numberline {B}Obiekty semantyczne}{43}
+\contentsline {section}{Bibliografia}{46}

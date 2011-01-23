@@ -1,0 +1,14 @@
+\select@language {polish}
+\contentsline {chapter}{\numberline {1} Wyra"renia }{3}
+\contentsline {chapter}{\numberline {2} Listy \& stuff }{5}
+\contentsline {chapter}{\numberline {3} Rekursja ogonowa, akumulatory i r"o"rne takie }{8}
+\contentsline {chapter}{\numberline {4} Definiowanie typ"ow }{11}
+\contentsline {chapter}{\numberline {5} Funkcje wy"rszych rz"ed"ow }{14}
+\contentsline {chapter}{\numberline {6} Funkcje jeszcze wy"rszych rz"ed"ow }{16}
+\contentsline {chapter}{\numberline {7} Operacje na tekstach}{19}
+\contentsline {chapter}{\numberline {8} Leniwo"s"c}{21}
+\contentsline {chapter}{\numberline {9} Modu"ly: struktury i sygnatury }{22}
+\contentsline {chapter}{\numberline {10} Modu"ly: funktory }{26}
+\contentsline {chapter}{\numberline {A} Jak zaliczy"c laboratorium}{28}
+\contentsline {chapter}{\numberline {B} Rozwi"azania niekt"orych zada"n }{30}
+\contentsline {chapter}{\numberline {C} Jak pracowa"c z kompilatorem SML-a}{36}

@@ -1,0 +1,20 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    privar x : int ;
+    privar y : int 
+
+if input > 0 ->
+
+    x :vir= input ;
+    y :vir= 2 * 3 * 4 * 5 * 6 * 7 ;
+    do x > y -> x := x - y
+    [] y > x -> y := y - x
+    od ;
+
+    output :vir= x
+
+fi
+
+end

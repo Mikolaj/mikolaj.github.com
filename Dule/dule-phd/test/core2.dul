@@ -1,0 +1,390 @@
+(* Copyright (C) 2003--2006 Mikolaj Konarski, Lukasz Kozuchowski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: core2.dul,v 1.6 2006-11-09 00:21:58 mikon Exp $
+ *) 
+
+{t69 = 
+let f = fun ~a -> fun ~b1 ~b2 -> fun ~c -> a in
+((f ~a:{}) ~b2:2 ~b1:1) ~c:3
+; t70 = 
+let ff = 
+  let f = fun ~a ~b1 ~b2 ~d -> a in
+  f(~d:3 ~b1:1)
+in 
+assert Nat.eq ~it:(ff ~a:8 ~b2:{}) ~n:8 
+in
+ff
+; t71 = 
+let ff=
+  let f = fun ~a ~b1 ~b2 ~d -> a in
+  fun ~a ~b2 -> f ~a ~b2 ~b1:1 ~d:3
+in
+assert Nat.eq ~it:(ff ~a:9 ~b2:0) ~n:9 
+in 
+ff    
+; t72 = 
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let fb1 = f(~b1:1) in
+let r = fb1 (~a:{}) (~d:3) ~b2:2 in
+r . : {}
+; t73 = 
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let r = f(~a:{} ~d:3 ~b2:2 ~b1:1) in
+r . : (-> {})
+; t74 = 
+let f = fun ~a ~b1 ~b2 ~d -> a in
+let r = f(~a:{} ~d:3 ~b2:2 ~b1:1) ~ in
+r . : {}
+; t80 = 
+let r =
+  (map fun ~it ~x -> Nat.add ~it:(Nat.mult ~it ~n:2) ~n:x)
+  ~it:{h = 1; t = {h = 2; t = {h = 3; 
+			       t = `N . con} .`C . con} .`C . con} .`C . con
+  ~x:1
+in
+let b = 
+    match r.de with
+    [`C r2 -> match r2.t.de with
+               [`C t2 -> Nat.eq ~it:t2.h ~n:5
+               | _ -> `False]
+    | _ -> `False]
+in
+assert b  
+in
+r
+; t800 = 
+let r =
+   ((map fun ~it ~x -> Nat.add ~it:(Nat.mult ~it ~n:2) ~n:x)
+  ~it:{h = 1; t = {h = 2; t = {h = 3; 
+			       t = `N . con} .`C . con} .`C . con} .`C . con
+  ~x:1) . : ind l: [`N|`C {h : ind nat: [`Zero|`Succ nat]; t : l}]
+in
+let b =
+    match r.de with
+    [`C r2 -> match r2.t.de with
+              [`C t2 -> Nat.eq ~it:t2.h ~n:5
+              | _ -> `False]
+    | _ -> `False]
+in
+assert b 
+in
+r
+; t81 = 
+let r =
+  (map fun ~it ~x -> Nat.eq ~it ~n:x)
+  ~it:{h = 1; t = {h = 2; t = {h = 3; 
+			       t = `N . con} .`C . con} .`C . con} .`C . con
+  ~x:2
+in
+let b =    
+    match r.de with
+    [`C r2 -> match r2.t.de with
+              [`C t2 -> t2.h
+              | _ -> `False]
+    | _ -> `False]
+in
+assert b
+in
+r
+; t810 = 
+let r =
+  ((map fun ~it ~x -> Nat.eq ~it ~n:x)
+  ~it:{h = 1; t = {h = 2; t = {h = 3;   
+			       t = `N . con} .`C . con} .`C . con} .`C . con
+  ~x:2) . : ind l: [`N|`C {h : [`True|`False]; t : l}]
+in
+let b =
+    match r.de with
+    [`C r2 -> Bool.neg ~it:r2.h
+    | _ -> `False]
+in
+assert b 
+in
+r
+; t82 =
+let b =
+    {it = `S; e = {}} . match it with [`S -> `True|`K -> `False]
+in
+assert b 
+in
+b
+; t83 =
+let b =
+    {it = `S; e = {}} .
+          ((: {it : [`S|`K]; e : {}}) 
+              . match it with [`S -> `True|`K -> `False])
+in
+assert b
+in
+b
+; t84 = 
+let b =
+    {a = {it = `S; e = {}}; b = {}} .
+          (a . match it with [`S -> `True|`K -> `False])
+in
+assert b 
+in
+b
+; t85 =
+let b =
+     {a = {it = `S; e = {}}; b = {}} .
+          {r = a . match it with [`S -> `True|`K -> `False]}
+in
+assert b.r 
+in
+b
+; t90 =
+let v = 
+    (map fun ~it:(it:[`A {}]) -> {} .`B) ~it:{} .`A
+in
+let b =
+  match v with
+  [`B {} -> `True
+  | _ -> `False]
+in
+assert b 
+in
+v
+; t91 = 
+let v = 
+    ((map fun ~it:(it:[`A]) -> `B) ~it:`A) 
+   . : [`A {}]
+in
+let b =
+    match v with
+    [`A {} -> `True
+    | _ -> `False]
+in
+assert b 
+in
+v
+; t92 = 
+let v =
+    ((map fun ~it:(it:[`A]) -> `B) ~it:`A) 
+   . : [`B {}]
+in
+let b =
+     match v with
+     [`B {} -> `True
+     |  _ -> `False]
+in
+assert b 
+in
+v
+; t93 = 
+let b =
+    Bool.neg ~it:Bool.tt
+in
+assert Bool.neg ~it:b 
+in
+b
+; t94 =
+let b =
+    Bool.(neg ~it:tt)
+in
+assert Bool.neg ~it:b 
+in
+b
+; t95 =
+let r = 
+let intlist = {h = 0; 
+               t = {h = 1; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_delta = 
+      fun ~it -> {x = it; y = it}
+in
+  {intmap =
+     match intlist with
+     map monomorphic_delta
+  ;boolmap = 
+     match boollist with
+     map monomorphic_delta
+  }
+
+in let bm = r . boolmap . : ind c: [`Nil|`Cons {h : {x : [`True|`False];
+				 y : [`True|`False]}; t : c}]
+in
+let b =
+    match bm.de with
+    [`Cons bm2 -> Bool.conj ~it:bm2.h.x ~b:bm2.h.y
+    | _ -> `False]
+in
+assert b 
+in
+r
+; t98 =
+let intlist = {}
+    boolist = `True
+    polymap = fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap2 =
+     (map polymap) ~it:intlist
+  ;boolmap2 = 
+     (map polymap) ~it:boolist
+  }
+in
+assert Bool.conj ~it:r.boolmap2.x ~b:r.boolmap2.y 
+in
+r
+; t99 =
+let intlist = `A . con
+    boolist = `True
+    polymap = fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap2 =
+     (map polymap) ~it:intlist
+  ;boolmap2 = 
+     (map polymap) ~it:boolist
+  }
+in
+let b =
+  match r.intmap2.x.de with
+  [`A -> `True
+  |  _ -> `False]
+in
+assert b 
+in
+r  
+; t100 =
+let intlist = {a = {}}
+    boolist = `True
+    polymap = fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap2 =
+     (map polymap) ~it:intlist
+  ;boolmap2 = 
+     (map polymap) ~it:boolist
+  }
+in
+assert Bool.conj ~it:r.boolmap2.x ~b:r.boolmap2.y 
+in
+r
+; t101 =
+let intlist = `True
+    boolist = {a = {}}
+    polymap = fun ~it -> {x = it; y = it}
+in
+let r =
+  {intmap2 =
+     (map polymap) ~it:intlist
+  ;boolmap2 = 
+     (map polymap) ~it:boolist
+  }
+in
+assert Bool.conj ~it:r.intmap2.x ~b:r.intmap2.y 
+in
+r
+; t102 =
+let intlist = {h = `Zero . con;
+               t = {h = `Zero . con;
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True;
+                t = {h = `False;
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it; y = it}
+in
+let r = 
+  {intmap =
+     (map fun ~it -> {x = it; y = it}) ~it:intlist
+  ;boolmap = 
+     (map fun ~it -> {x = it; y = it}) ~it:boollist
+  ;intmap2 =
+     monomorphic_map ~it:intlist
+(*
+  ;boolmap2 = 
+     monomorphic_map ~it:boollist
+*)
+  }
+in
+let b =
+  match r.intmap.de with
+  [`Cons im -> match r.intmap2.de with
+               [`Cons im2 -> Nat.eq ~it: im.h.x ~n:im2.h.y
+               | _ -> `False]
+  | _ -> `False]
+in
+assert b 
+in
+r
+; t103 =
+let intlist = {h = `Zero . con; 
+               t = {h = `Zero . con; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = {a = {}}; 
+                t = {h = {a = {}}; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it}
+in
+let r =
+  {intmap =
+     (map fun ~it -> {x = it}) ~it:intlist
+  ;boolmap = 
+     (map fun ~it -> {x = it}) ~it:boollist
+  ;intmap2 =
+     monomorphic_map ~it:intlist
+(*
+  ;boolmap2 = 
+     monomorphic_map ~it:boollist
+*)
+  }
+in
+let b =
+  match r.intmap.de with
+  [`Cons im -> match r.intmap2.de with
+               [`Cons im2 -> Nat.eq ~it: im.h.x ~n:im2.h.x
+               |  _ -> `False]
+  | _ -> `False]
+in
+assert b 
+in  
+r
+; t171 =
+let f =
+fun ~b -> if b then Char.upper ~it:(Char.tcon ~it:`c) else Char.tcon ~it:`a
+in
+assert Nat.eq ~n:(f ~b:`True) ~it:67 (* 67 is ASCII for 'C' *)
+in
+f
+; t129 =
+let id =
+map it -> map -> map -> map it -> map -> map -> map it
+in
+assert match id ~it:`A with
+       [`A -> `True | _ -> `False]
+in
+id
+; t1321 =
+let r =
+match {n = 3; c = Char.tcon ~it:`A; 
+       r = {rc = Char.tcon ~it:`b; rb = `False}} with
+map Char.is_upper
+in
+assert Bool.neg ~it:r.r.rc 
+in
+r
+; t1325 =
+let r =
+(match {n = 3; c = Char.tcon ~it:`A; 
+       r = {rc = Char.tcon ~it:`b; rb = `False}} with
+map Char.is_upper) .
+: {n : ind t: [`Zero|`Succ t];
+   c : [`True|`False];
+   r : {rc : [`True|`False]; rb : [`True|`False]}}   
+in
+assert Nat.eq ~it:r.n ~n:3 
+in
+r
+; t200 = let x = 1 in let y = 2 z = 3 a = let b = 5 in x c = 4 in 5
+}

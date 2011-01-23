@@ -1,0 +1,4 @@
+M = :: sig value v : {} end
+  struct 
+    value v = assert `False in {}
+  end

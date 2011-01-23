@@ -1,0 +1,422 @@
+\section{\sectrace}
+\label{sec:trace}
+
+Skomplikowanie operacji zbierania "slad"ow wynika z faktu, 
+"re drzewa wywodu, odpowiadaj"ace poszczeg"olnym stadiom 
+elaboracji wyra"renia, nie s"a poddrzewami ostatecznego, 
+poprawnego drzewa wywodu tego wy\-ra\-"re\-nia.
+Przed przy\-st"a\-pie\-niem do rozwa"ra"n na temat "slad"ow
+spr"obuj"e wyja"sni"c to zjawisko.
+
+\subsection{\secpreludium}
+\label{sec:preludium}
+
+Przedstawiane w tym rozdziale przyk"lady pochodz"a z cz"e"sci wsp"olnej EML i SML.
+Elaboracj"a konstrukcji specyfikacyjnych J"adra EML rz"adz"a podobne do opisanych poni"rej zasady.
+
+\subsubsection{\secstatexp}
+\label{sec:statexp}
+
+Podobnie jak w Semantyce Statycznej Modu"l"ow (por"ownaj rozdzia"l~\ref{sec:static}),
+w Semantyce Statycznej J"adra du"r"a rol"e gra niedeterminizm.
+W wielu w"ez"lach wywod"ow, typy przypisywane zmiennym s"a "`niedeterministycznie zgadywane'',
+tak aby mog"ly by"c zastosowane regu"ly, zak"ladaj"ace r"owno"s"c nie\-kt"o\-rych typ"ow
+pojawiaj"acych si"e w przes"lankach. Niedeterminizm wys\-t"e\-pu\-je na przyk"lad w regule~35 (uproszczonej):
+$$
+\frac{}
+     {\C\ts\var\ra (\{\var\mapsto\tau\},\tau)}
+\eqno(35)
+$$
+Formalnemu argumentowi funkcji mo"re tu zosta"c przypisany dowolny typ.
+Za"s w regule~2 (nieco uproszczonej):
+$$
+\frac{\C(\longvar)\succ\tau}
+     {\C\ts\longvar\ra\tau}
+\eqno(2)
+$$
+typ zmiennej mo"re by"c dowolnie wybrany spo"sr"od instancji
+typu tej zmiennej przechowywanego w "srodowisku.
+
+\subsubsection{\secelabexp}
+\label{sec:elabexp}
+
+Lekarstwem na niemo"rliwy do bezpo"sredniego zaimplementowania niedeterminizm
+jest algorytm Damasa i Milnera~\cite{DM82}.
+
+Elaboruj"ac wyra"renie przy pomocy tego algorytmu,
+wywodzi si"e typy g"l"owne podwyra"re"n,
+konkretyzuj"ac w razie potrzeby konteksty, w kt"orych odbywa si"e elaboracja.
+Zamiast "`zgadywa"c'' typy, zak"lada si"e "re s"a one 
+najbardziej og"olne, czyli "re s"a "swie"rymi zmiennymi typowymi.
+W wypadku regu"l, zak"ladaj"acych r"owno"s"c pewnych typ"ow w przes"lankach, 
+przeprowadza si"e unifikacj"e.
+Aplikacja podstawie"n wynik"lych z unifikacji reprezentuje
+precyzowanie wiedzy na temat tego, jakie typy powinny by"ly by"c
+"`zgadni"ete'' w poprzednich stadiach elaboracji.
+
+W regule typowania aplikacji (nieco uproszczonej):
+$$
+\frac{\C\ts\exp\ra\tau'\rightarrow\tau,\trace\qquad\C\ts\atexp\ra\tau',\trace'}
+     {\C\ts\appexp\ra\tau,\append{\trace}{\trace'}}
+\eqno(10)
+$$
+wida"c wymaganie r"owno"sci typu $\tau'$ w obu przes"lankach.
+A oto fragment systemu EML Kit odpowiadaj"acy tej regule.
+\|S1|, \|S2| i \|S3| s"a tu podstawieniami, \|oo| ich z"lo"reniem,
+a \|onC| i \|on| aplikacj"a podstawienia odpowiednio do kontekstu i typu:
+{\small
+\begin{verbatim}
+fun elab_exp (C : Environments.Context, exp : IG.exp) : 
+    (Substitution * StatObject.Type * OG.exp) =
+    case exp of
+    ...
+    (* Application expression *)                      (* rule 10 *)
+    | IG.APPexp(i, exp, atexp) => 
+        let
+            val (S1, tau1, out_exp)   = elab_exp(C, exp)
+            val (S2, tau2, out_atexp) = elab_atexp(S1 onC C, atexp)
+            val new   = freshType()
+            val arrow = StatObject.mkTypeArrow(tau2,new) 
+            val (S3, i') = Unify(arrow, S2 on tau1, i)
+        in
+            (S3 oo S2 oo S1, S3 on new, 
+             OG.APPexp(i', out_exp, out_atexp))
+        end
+\end{verbatim}
+}
+Wida"c, jak zamiast "`niedeterministycznego zgadywania'' 
+u"rywa si"e tu "swie"rego typu (\|freshType|).
+Mo"rna zauwa"ry"c unifikacj"e (\|Unify|) i aplikacje podstawie"n.
+Wyra"zna jest te"r rola umowy, "re ka"rda elaboracja podwyra"renia
+daje w wyniku w szczeg"olno"sci wytworzone przez siebie podstawienie.
+
+\subsection{\sectraces}
+\label{sec:traces}
+
+"Slady s"lu"r"a akumulowaniu obiekt"ow semantycznych pojawiaj"acych si"e podczas analizy statycznej. 
+Do informacji przechowywanej w "sladach odwo"luje si"e nast"epnie Semantyka Weryfikacyjna EML.
+"Slady graj"a r"ownie"r pewn"a aktywn"a rol"e w Semantyce Statycznej EML,
+chocia"r post"epuj"ac z wystarczaj"ac"a ostro"rno"sci"a mo"rna,
+jak pokaza"lem w rozdziale~\ref{sec:search}, poprawnie elaborowa"c programy bez ich u"rycia.
+
+\subsubsection{\sectraceclos}
+\label{sec:traceclos}
+
+W rozdziale~\ref{sec:judgments} "slady zosta"ly przedstawione, na potrzeby 
+rozwa"ra"n o analizie statycznej, jako drzewa wywodu os"ad"ow semantyki statycznej. 
+Jest to o tyle usprawiedliwione, i"r ze "sladu mo"rna zrekonstruowa"c
+reprezentowany przez niego wyw"od, 
+cho"c jak wspomina"lem w rozdziale~\ref{sec:inter}, nie jest to proste.
+
+Od tej pory, przez "slad analizy statycznej programu $P$ w kontek"scie $C$, b"ed"e
+rozumia"l g"l"owny "slad, jaki wed"lug Semantyki Statycznej EML 
+(patrz rozdzia"l~\ref{sec:tracedef}) daje si"e wywie"s"c dla $P$ w $C$.
+Natomiast przez "slad elaboracji programu $P$ w kontek"scie $C$, b"ed"e
+rozumia"l "slad analizy statycznej $P$ w~$\rea(C)$, gdzie $\rea$ jest
+podstawieniem wynik"lym z elaboracji $P$ w $C$.
+
+Na przyk"lad, podczas elaboracji programu:
+\begin{verbatim}
+fun f x = (x 5) < 25
+\end{verbatim}
+wyra"renie $P$, wyst"epuj"ace po prawej stronie znaku r"owno"sci, 
+elaborowane jest w pewnym kontek"scie $C$. W tym kontek"scie zmiennej \|x| przypisany jest typ, 
+b"ed"acy zmienn"a typow"a, nazwijmy j"a $\alpha$.
+Wida"c, "re nie istnieje "slad analizy statycznej $P$ w kontek"scie $C$,
+poniewa"r typ przypisany w $C$ zmiennej \|x| nie jest typem funkcyjnym,
+a wi"ec nie da si"e wywie"s"c typu dla aplikacji \|(x 5)|.
+Natomiast "slad elaboracji $P$ w kontek"scie $C$ istnieje,
+gdy"r r"owny jest on "sladowi analizy statycznej $P$ w kontek"scie~$\rea(C)$,
+gdzie podstawienie $\rea$, wynikaj"ace z elaboracji $P$, 
+przypisuje zmiennej $\alpha$ typ $\INT\rightarrow\INT$.
+
+\subsubsection{\sectracedef}
+\label{sec:tracedef}
+
+"Slady posiadaj"a pewn"a dodatkow"a struktur"e, wynikaj"ac"a z mo"rliwo"sci ich domykania.
+Operator ${\rm Clos}$ jest u"rywany w kilku miejscach Semantyki Statycznej J"adra EML
+(regu"ly 11.1, 11.2, 11.3 i 17), aby domyka"c "slad wzgl"edem kontekstu:
+$$\cl{C}{\trace}=\forall\alphak.\trace$$
+gdzie $\forall$ to kwantyfikator wi"a"r"acy zmienne typowe, 
+za"s $\alphak$ to zmienne typowe wolne w $\trace$, a nie wyst"epuj"ace wolno w $C$.
+W "sladach Semantyki Statycznej Modu"l"ow EML mo"rna natomiast wi"aza"c 
+nazwy struktur lub nazwy typ"ow.
+
+A oto pe"lna definicja "slad"ow J"adra EML:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\mbox{\SimTrace} \uplus\TraceScheme}\\
+\SimTrace = \Type\uplus\Env\uplus(\Context\times\Type)\uplus(\Context\times\Env)\uplus\phantom{\Env}\\
+\qquad (\Context\times\TyNames)\uplus\TyEnv\uplus(\VarEnv\times\TyRea)\\
+\TraceScheme = \uplus_{k\geq 0} \TraceScheme^{(k)}\\
+\TraceScheme^{(k)}=\mbox{TyVar}^k\times\Trace
+\end{array}
+\end{displaymath} 
+gdzie $\Tree{A}$ jest dziedzin"a sko"nczonych binarnych drzew element"ow z $A$
+(st"ad te"r pochodzi spotykany dalej operator sk"ladania "slad"ow,
+pojawiaj"acy si"e we frazach w rodzaju $\append{\trace}{\trace'}$).
+Pozosta"le nazwy oznaczaj"a albo dziedziny obiekt"ow Semantyki Statycznej EML,
+albo zbiory "slad"ow szcze\-g"ol\-nej postaci, jak np.\ $\TraceScheme$,
+kt"ory zawiera "slady b"ed"ace domkni"eciami innych "slad"ow.
+
+Prezentacja "slad"ow Modu"l"ow EML w definicji Extended~ML~\cite{bib:KST94} 
+nie jest w pe"lni satysfakcjonuj"aca,
+g"l"ownie z punktu widzenia osoby zajmuj"acej si"e implementacj"a.
+W nowej wersji definicji Extended ML~\cite{KST97} autorzy
+% w swojej "ryczliwo"sci 
+zdefiniowali "slady zgodnie z moj"a propozycj"a zawart"a w~\cite{JKS96}:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\Trace_{\rm COR}\uplus\SimTrace\uplus\BoundTrace}\\
+\BoundTrace=\NameSets\times\Trace\\
+\SimTrace = \StrNames\uplus\Rea\uplus\VarEnv\uplus\TyEnv\uplus\Env\\
+\end{array}
+\end{displaymath}
+gdzie $\Trace_{\rm COR}$ to "slady J"adra EML, opisane powy"rej.
+Zgodnie z t"a definicj"a przeprowadzi"lem implementacj"e zbierania "slad"ow
+i ta definicja pos"lu"ry mi za podstaw"e rozwa"ra"n
+o "sladach, metodzie uzyskiwania "slad"ow elaboracji program"ow i poprawno"sci tej metody.
+
+\subsection{\secgather}
+\label{sec:gather}
+
+\subsubsection{\secsubstitutions}
+\label{sec:substitutions}
+
+Zbieranie "slad"ow prostych jest trywialne.
+Nieco k"lopot"ow nastr"eczaj"a natomiast "slady,
+kt"ore uzyskuje si"e przez domkni"ecie innych "slad"ow.
+Przyk"ladem mo"re by"c regu"la 17 (tutaj nieco uproszczona):
+$$
+\frac{
+\C\ts\valbind\ra\VE,\trace\qquad
+\VE'=\cl{\C}{\VE}}
+     {\C\ts\valdec\ra\VE'\ \In\ \Env,\cl{\C}{\trace}}
+\eqno(17)
+$$
+gdzie "sladem jaki nale"ry wywie"s"c dla frazy "`$\VAL\ \valbind$'' jest
+domkni"ecie "sladu $\trace$, wywiedzionego dla
+jedynego podtermu tej frazy --- "`$\valbind$''.
+Twierdzenia podobne do poni"rszego, cho"c nieco bardziej skomplikowane,
+mo"rna dowie"s"c r"ownie"r dla innych regu"l, w kt"orych na\-st"e\-pu\-je domykanie "slad"ow.
+
+\begin{thm}
+\label{clos_traces}
+Niech program $P$ ma posta"c $\VAL\ P'$.
+Niech $C$ b"edzie kontekstem, $\trace$ "sladem elaboracji $P'$
+w kontek"scie $C$, za"s $\rea$ niech b"edzie podstawieniem
+wynik"lym z tej elaboracji.
+
+Wtedy "sladem elaboracji $P$ w kontek"scie $C$ jest $\cl{\rea(C)}{\trace}$.
+\end{thm}
+
+\begin{proof}
+Wynikiem elaboracji $P$ w kontek"scie $C$ jest wywiedzenie g"l"ownego obiektu semantycznego
+dla $P$ w kontek"scie $\rea(C)$ wed"lug regu"ly 17, lecz pomijaj"ac "slady. 
+Skoro tak, to mo"rna zastosowa"c regu"l"e 17
+dla programu $P$ i kontekstu $\rea(C)$ i otrzyma"c tez"e.
+\end{proof}
+
+Jednak najciekawszy jest przypadek "slad"ow z"lo"ronych.
+Regu"la 8, dotycz"aca typowania element"ow rekordu, jest jedn"a z regu"l,
+w kt"orych "slad programu jest otrzymywany przez z"lo"renie "slad"ow podprogram"ow:
+$$
+\frac{\C\ts\exp\ra\tau,\U,\trace\qquad\langle\C\ts\labexps\ra\varrho,\U',\trace'\rangle}
+     {\C\ts\longlabexps\ra\{\lab\mapsto\tau\}\langle +\
+\varrho\rangle,
+\ \U\langle\phantom{}\cup\U'\rangle,\ \trace\langle\append{}{\trace'}\rangle}
+\eqno(8)
+$$
+Regu"la ta jest bardzo skomplikowana. Zamiast niej, 
+za podstaw"e naszych rozwa"ra"n przyjmijmy, nie wyst"epuj"ac"a w definicji EML, 
+regu"l"e typowania pary wyra"re"n, b"ed"acej uproszczeniem szczeg"olnego przypadku regu"ly 8:
+$$
+\frac{\C\ts\exp\ra\tau,\trace\qquad\C\ts\exp'\ra\tau',\trace'}
+     {\C\ts(\exp,\exp')\ra\{1\mapsto\tau,2\mapsto\tau'\},\append{\trace}{\trace'}}
+$$
+
+\begin{obs}
+\label{app_phase}
+Niech program $T$ ma posta"c $(P, Q)$.
+Niech $C$ b"edzie kontekstem. Wtedy elaboracja $T$ w kontek"scie $C$ ma dwie g"l"owne fazy:
+\begin{itemize}
+\item elaborowany jest podprogram $P$ w kontek"scie $C$, przy czym otrzymywane jest podstawienie
+$\rea_P$ i "slad tej elaboracji $\trace_P$, 
+\item elaborowany jest podprogram $Q$ w kontek"scie $\rea_P(C)$, przy czym otrzymywane jest podstawienie
+$\rea_Q$ i "slad tej elaboracji $\trace_Q$. 
+\end{itemize}
+\end{obs}
+
+Powstaje pytanie jak uzyska"c "slad elaboracji $T$ w kontek"scie $C$, 
+zak"ladaj"ac "re $\trace_P$ i $\trace_Q$ s"a poprawnymi "sladami elaboracji $P$ i $Q$?
+Narzucaj"aca si"e odpowied"z, "re "slad $T$ r"owny jest $\append{\trace_P}{\trace_Q}$,
+niestety nie jest prawdziwa. "Slad $\trace_P$ uzyskiwany jest w potencjalnie 
+nieg"l"ownym dla $T$ kontek"scie, wi"ec mimo i"r $\trace_P$ jest g"l"owny dla $P$, 
+mo"re by"c zbyt og"olny, by sta"c si"e cz"e"sci"a "sladu $T$.
+Ilustruje to nast"epuj"acy prosty przyk"lad:
+\begin{verbatim}
+fun g fib = (fib, fib 5)
+\end{verbatim}
+gdzie $P$ to \|fib|, za"s $Q$ to \|fib 5|.
+W $\trace_P$ zmienna \|fib| nie ma przypisanego typu funkcyjnego, 
+mimo "re w "sladzie $T$ zmienna \|fib| mo"re mie"c jedynie typ funkcyjny,
+gdy"r z elaboracji $Q$ wynika, "re \|fib| jest funkcj"a 
+(w szczeg"olno"sci $\rea_Q$ przypisuje zmiennej typowej, 
+kt"ora jest typem \|fib|, typ funkcyjny).
+
+\begin{thm}
+\label{app_subst}
+Przyjmijmy oznaczenia ze Spostrze"renia~\ref{app_phase}.
+Wtedy "slad elaboracji $T$ w kontek"scie $C$ r"owny jest $\append{\widehat{\trace}}{\trace_Q}$,
+gdzie $\widehat{\trace}$ jest "sladem elaboracji $P$ w kontek"scie $\rea_Q(\rea_P(C))$.
+\end{thm}
+
+\begin{proof}
+Poniewa"r $\trace_Q$ jest "sladem elaboracji
+$Q$ w kontek"scie $\rea_P(C)$, wi"ec z definicji "sladu elaboracji,
+$\trace_Q$ jest "sladem analizy statycznej $Q$ w kontek"scie $\rea_Q(\rea_P(C))$.
+
+Z drugiej strony wynikiem elaboracji $T$ w kontek"scie $C$ 
+jest wywiedzenie g"l"ownego obiektu semantycznego
+dla $T$ w kontek"scie $\rea_Q(\rea_P(C))$, 
+wed"lug regu"ly typowania pary wyra"re"n, ale z pomini"eciem "slad"ow.
+Ale w takim razie z regu"ly typowania pary wyra"re"n wynika teza.
+\end{proof}
+
+Odpowiedniki tego prostego twierdzenia dla innych regu"l, 
+w kt"orych na\-st"e\-pu\-je z"lo"renie "slad"ow, s"a r"ownie"r do"s"c oczywiste.
+Co wi"ecej podobne twierdzenia mo"rna udowodni"c r"ownie"r dla j"ezyka Modu"l"ow EML,
+z tym "re zamiast podstawie"n b"ed"a w nich wyst"epowa"c realizacje.
+
+Niestety bezpo"srednie zastosowanie w algorytmie zbierania "slad"ow
+procedury jaka wynika z Twierdzenia~\ref{app_subst},
+prowadzi do podw"ojnej elaboracji~$P$. Pierwszy raz w kontek"scie $C$, 
+aby uzyska"c podstawienie $\rea_P$ i drugi raz w kontek"scie $\rea_Q(\rea_P(C))$,
+aby uzyska"c "slad $\widehat{\trace}$.
+
+\subsubsection{\secscheme}
+\label{sec:scheme}
+
+Jednym z najbardziej niepokoj"acyh zjawisk, wyst"epuj"acych
+podczas budowania "sladu programu ze "slad"ow podprogram"ow, jest to, 
+i"r "slady podprogram"ow czasami powstaj"a na skutek domykania
+nieg"l"ownych dla ca"lego programu "slad"ow, wzgl"edem r"ownie"r nieg"l"ownych kontekst"ow.
+Dow"od na\-st"e\-pu\-j"a\-ce\-go twierdzenia pokazuje, 
+"re zjawisko to nie musi by"c gro"zne.
+\begin{thm}
+\label{rea_clos}
+Niech $P$ b"edzie programem napisanym w j"ezyku J"adra Extended ML.
+Niech $D$ b"edzie kontekstem.
+Niech $\trace_P$ b"edzie "sladem elaboracji $P$ w kontek"scie $D$.
+Niech $\rea$ b"edzie podstawieniem.
+
+Wtedy "slad elaboracji $P$ w kontek"scie $\rea(D)$ r"owny jest $\rea(\trace_P)$.
+\end{thm}
+ 
+\begin{proof}
+Indukcja po strukturze $\trace_P$.
+Przypadki bazowe i przypadek sk"ladania "slad"ow wynikaj"a z podstawowych w"lasno"sci procesu elaboracji.
+Pozostaje przypadek, gdy $\trace_P \in \TraceScheme$.
+Wtedy, w ostatnim kroku elaboracji $P$, musia"l wyst"epowa"c pewien "slad $\trace$, 
+domykany wzgl"edem pewnego kontekstu $C$, przy czym $\trace_P = \cl{C}{\trace}$.
+
+Niech $P'$ b"edzie podprogramem $P$ odpowiadaj"acym $\trace$.
+Dla uproszczenia za"l"o"rmy, "re $P$ jest postaci $\VAL\ P'$,
+a wi"ec elaboracja $P'$ jako cz"e"sci $P$ odby"la si"e w kontek"scie $D$.
+Niech ta elaboracja daje podstawienie $\rea_{P'}$.
+W takim razie z Twierdzenia~\ref{clos_traces} wiemy, "re $C = \rea_{P'}(D)$.
+
+W razie potrzeby mo"rna przemianowa"c w $\trace$, $P'$ i $P$
+zmienne typowe wyst"epuj"ace wolno w $\trace$, a nie wyst"epuj"ace wolno w $C$ tak, 
+aby znalaz"ly si"e one poza zasi"egiem $\rea$.
+Z uzyskanej z dalszego rozumowania tezy, "re dla przemianowanego $P$ i $\trace$, 
+"slad elaboracji $P$ w kontek"scie $\rea(D)$ r"owny jest $\rea(\cl{C}{\trace})$,
+"latwo dosta"c tez"e dla oryginalnych $P$ i $\trace$.
+
+Stosuj"ac hipotez"e indukcyjn"a do $P'$, $D$, $\trace$ i $\rea$ dostaj"e,
+"re "slad elaboracji $P'$ w kontek"scie $\rea(D)$ r"owny jest $\rea(\trace)$.
+Niech ta elaboracja daje podstawienie $\phi_{P'}$.
+Z Twierdzenia~\ref{clos_traces} otrzymuj"e, "re "slad elaboracji $P$ 
+w kontek"scie $\rea(D)$ r"owny jest $\cl{\phi_{P'}(\rea(D))}{\rea(\trace)}$. Ale mo"rna pokaza"c, "re
+$$
+\cl{\phi_{P'}(\rea(D))}{\rea(\trace)} = \cl{\rea(\rea_{P'}(D))}{\rea(\trace)} = \cl{\rea(C)}{\rea(\trace)}
+$$
+Pierwsz"a z tych r"owno"sci uzyskuje si"e przez "rmudn"a indukcj"e po strukturze $P'$,
+korzystaj"ac z faktu "re odpowiednie zmienne typowe znajduj"a si"e poza zasi"egiem $\rea$
+(by"c mo"re na skutek przemianowania zmiennych), druga wynika z tego, "re $C = \rea_{P'}(D)$.
+
+Pozostaje udowodni"c, "re 
+$$\cl{\rea(C)}{\rea(\trace)} = \rea(\cl{C}{\trace})$$
+Dla uproszczenia za"lo"r"e do ko"nca dowodu, 
+i"r w $\trace$ wyst"epuje dok"ladnie jedna typowa zmienna wolna --- $\alpha$.
+%Przy u"ryciu do"s"c rozbudowanej buchalterii mo"rna 
+"Latwo to rozumowanie przenie"s"c 
+na przypadki z inn"a liczb"a zmiennych.
+
+Rozpatrz"e nast"epuj"ace mo"rliwo"sci:
+\begin{itemize}
+\item $\alpha$ wyst"epuje wolno w kontek"scie $C$.
+      Wtedy $\cl{C}{\trace} = \trace$, a~st"ad
+      $$\rea(\cl{C}{\trace}) = \rea(\trace)$$
+      Z drugiej za"s strony jedyne zmienne wolne $\rea(\trace)$ 
+      to zmienne wolne wyst"epuj"ace w $\rea(\alpha)$,
+      co wraz z faktem, i"r w $C$ wyst"epuje wolno $\alpha$, 
+      czyli w $\rea(C)$ wyst"epuj"a wolno zmienne wolne termu $\rea(\alpha)$, 
+      daje $$\cl{\rea(C)}{\rea(\trace)} = \rea(\trace)$$
+\item $\alpha$ nie wyst"epuje wolno w kontek"scie $C$.
+      Wtedy $\cl{C}{\trace} = \forall\alpha.\trace$ a~poniewa"r
+      $\forall\alpha.\trace$ nie posiada zmiennych wolnych, dostaj"e      
+      $$\rea(\cl{C}{\trace}) = \forall\alpha.\trace$$ 
+      Z drugiej strony poniewa"r $\alpha$ jest poza zasi"egiem $\rea$, 
+      to $\rea(\trace) = \trace$ oraz $\rea(C)$ nie zawiera $\alpha$, a st"ad
+      $$\cl{\rea(C)}{\rea(\trace)} = \forall\alpha.\trace$$
+\end{itemize}
+\end{proof}
+
+Teraz wreszcie mo"remy pokaza"c, w jaki spos"ob z poprawnych "slad"ow elaboracji podprogram"ow
+mo"rna zbudowa"c "slad elaboracji ich pary.
+\begin{thm}
+\label{app}
+Niech program $T$ ma posta"c $(P, Q)$.
+Niech $C$ b"edzie kontekstem w kt"orym przeprowadzana jest e\-la\-bo\-ra\-cja $T$.
+Niech $\rea_P$ b"edzie podstawieniem, wynik"lym z elaboracji $P$ jako cz"e"sci $T$,
+i niech $\trace_P$ b"edzie "sladem tej elaboracji. 
+(Zauwa"rmy, "re $P$ jest elaborowane w kontek"scie $C$.)
+Niech $\rea_Q$ b"edzie podstawieniem, wynik"lym z elaboracji $Q$ jako cz"e"sci $T$,
+i niech $\trace_Q$ b"edzie "sladem tej elaboracji. 
+
+Wtedy $\append{\rea_Q(\trace_P)}{\trace_Q}$ jest "sladem elaboracji $T$.
+\end{thm}
+ 
+\begin{proof}
+Z Twierdzenia ~\ref{app_subst} wiemy, i"r "slad elaboracji $T$ w kontek"scie $C$ 
+r"owny jest $\append{\widehat{\trace}}{\trace_Q}$,
+gdzie $\widehat{\trace}$ jest "sladem elaboracji $P$ w kontek"scie $\rea_Q(\rea_P(C))$.
+
+Zastosujmy Twierdzenie~\ref{rea_clos} z $\rea = \rea_P$ i $D = C$.
+Dostajemy, "re "sladem elaboracji $P$ w kontek"scie $\rea_P(C)$ jest $\rea_P(\trace_P)$.
+Ale poniewa"r $\rea_P$ zawiera tylko te konkretyzacje typ"ow,
+kt"ore s"a niezb"edne by uda"la si"e elaboracja $P$ w $C$ (por"ownaj rozdzia"l~\ref{sec:elabexp}),
+a $\trace_P$ jest "sladem tej w"la"snie elaboracji, mamy $\rea_P(\trace_P) = \trace_P$.
+A wi"ec "slad elaboracji $P$ w kontek"scie $\rea_P(C)$ r"owny jest $\trace_P$. 
+
+Je"sli teraz postawimy $\rea = \rea_Q$ i $D = \rea_P(C)$ to ponownie spe"lnione 
+zostan"a za"lo"renia Twierdzenia~\ref{rea_clos}, i uzyskamy
+$\widehat{\trace} = \rea(\trace_P) = \rea_Q(\trace_P)$.
+\end{proof}
+
+Podobne twierdzenia mo"rna udowodni"c dla wszystich postaci program"ow J"adra EML,
+w kt"orych sk"ladane s"a "slady i mo"re wyst"epowa"c zjawisko domykania 
+niedoprecyzowanego "sladu, wzgl"edem nieg"l"ownego kontekstu.
+Co wi"ecej, twierdzenia podobne do~\ref{rea_clos} i~\ref{app} mo"rna udowodni"c
+r"ownie"r w przypadku j"ezyka Modu"l"ow, gdy rol"e podstawie"n spe"lniaj"a realizacje.
+
+\begin{cor}
+\label{single_pass}
+Zbierania "slad"ow mo"rna dokonywa"c wraz z elaboracj"a, przy pomocy jedoprzebiegowego algorytmu.
+\end{cor}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

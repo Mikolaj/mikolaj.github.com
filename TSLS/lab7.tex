@@ -1,0 +1,54 @@
+\chapter{
+Operacje na tekstach}
+
+Operacje na tekstach w SML to w~rzeczywisto"sci operacje na listach
+znak"ow. Istnieje wbudowana funkcja \|explode|, kt"ora dostaj"ac napis,
+daje w wyniku list"e znak"ow, z kt"orych si"e on sk"lada.
+Np.\ \|explode "baba"| daje $$\|[#"b",#"a",#"b",#"a"]|$$
+lub $$\|["b","a","b","a"]|$$ w zale"rnosci od implementacji.
+
+
+\section*{Zadania}
+\begin{zadania}
+
+\item%[Zadanie 2.6]
+U"rywaj"ac funkcji \|explode| zdefiniuj funkcj"e \|size|, 
+ktora oblicza d"lugo"s"c napisu.
+
+\item%[Zadanie 2.7]
+\|implode| to funkcja odwrotna do \|explode|.
+Napisz funkcj"e "l"acz"ac"a dwa napisy.
+
+\item Napisz funkcj"e \|linesplit : string -> string list|,
+  przerabiaj"ac"a napis na list"e wierszy, z kt"orych si"e on sk"lada.
+
+\item Napisz funkcj"e \|wordsplit : string -> string list|,
+  przerabiaj"ac"a napis na list"e s"l"ow, z kt"orych si"e on sk"lada.
+
+\item Napisz funkcj"e $$\|generic_split : string -> string -> string list|,$$
+  przerabiaj"ac"a napis na list"e p"ol, z kt"orych si"e on
+  sk"lada, przyjmuj"ac drugi argument funkcji za zbi"or separator"ow p"ol.
+
+\item Napisz funkcj"e sortuj"ac"a leksykograficznie list"e s"l"ow
+  (mo"rna, a nawet nale"ry skorzysta"c z napisanej wcze"sniej funkcji
+  sortuj"acej)
+
+\item Napisz funkcj"e generuj"ac"a dla danego napisu liste $n$
+  najcz"e"sciej w nim wyst"epuj"acych s"l"ow, wraz z~liczb"a
+  wyst"apie"n ka"rdego z nich.
+
+\item Napisz funkcj"e  $$\|strchr : string * char -> int list|$$
+tak"a, "re \|strchr(s,c)| daje list"e pozycji, na kt"orych znak \|c|
+wyst"epuje w napisie \|s|.
+
+\item Napisz funkcj"e  $$\|strstr : string * string -> int list|$$
+tak"a, "re \|strstr(s,p)| daje list"e pozycji, na kt"orych zaczynaj"a
+si"e wy\-st"a\-pie\-nia napisu  \|p| w napisie \|s|. Uwaga: 
+$$\|strstr("ababababa", "babab") = [2,4]|.$$
+
+\end{zadania}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

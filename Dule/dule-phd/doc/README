@@ -1,0 +1,114 @@
+README for the Dule compiler
+
+$Id: README,v 1.29 2007-09-20 23:04:07 mikon Exp $
+
+1. Copyrights
+
+The Dule language definition, documentation and web-pages are
+Copyright (C) 2003--2006 Mikolaj Konarski
+http://www.mimuw.edu.pl/~mikon/home.english.html
+mikon@mimuw.edu.pl
+
+The Dule compiler is 
+Copyright (C) 2003--2006 Patryk Czarnik, Pawel Findeisen,
+Andrzej Gasienica-Samek, Tomasz Kolinko, Mikolaj Konarski, 
+Lukasz Kozuchowski, Aleksander Naleczynski, Piotr Roszkowski, 
+Stasiek Skowron, Michal Wesolowski and Comarch SA.
+
+The OCamlMakefile is
+Copyright (C) 1999-2004 Markus Mottl
+Downloaded from http://www.oefai.at/~markus/home/ocaml_sources.html
+and distributed under the GNU Lesser General Public License version 2.
+
+The caml-font.el (now modified under the name dule-font.el) by
+Jacques Garrigue and Ian T Zimmerman is
+Copyright 1997 Institut National de Recherche en Informatique et en Automatique
+and distributed under the terms of the GNU General Public License.
+
+The hashcons library is
+Copyright (C) 2000 Jean-Christophe FILLIATRE
+and distributed under the GNU Lesser General Public License version 2.
+
+2. License
+
+    The Dule compiler is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    The Dule compiler is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+3. Requirements
+
+For compilation you need version >= 3.06 of Objective Caml compiler suite
+  http://caml.inria.fr/
+available, among others, in .deb format
+  http://packages.debian.org/testing/source/ocaml
+The OCaml native code compilers produce faster executables,
+but if they are not available, byte compilation can be enabled 
+by changing "nc" to "bc" in Makefile.
+
+4. Compilation
+
+In directory "code", run "make" to compile 
+and "make test" to verify the compilation.
+
+On a slow machine uncomment "OCAMLFLAGS := -noassert" in Makefile
+before compilation. This speeds up some tests considerably.
+By default the compilation is set to generate native code.
+Byte compilation takes roughly the same time
+and memory, while the resulting executable runs roughly 3 times slower.
+
+5. Use
+
+You can compile Dule programs by invoking the "dule" binary 
+in "dule/code" directory, as in
+  ./dule ../test/tutorial_modules.dul
+or you can use the suitable commands defined in Makefile, as in
+  make tests-all
+
+Among the Makefile commands, "test-debugging" is an example
+of how to enable debugging of the compilation process,
+"test-errors" is an extensive test of compiler rejecting
+erroneous programs and of the error-reporting procedures,
+and "test-performance" runs type-checking and runtime performance 
+tests on several families of automatically generated example programs.
+
+To highlight Dule (and OCaml) syntax in Emacs 
+install caml-mode and put
+  (load "~/dule/doc/dule-font")
+into your .emacs file (or you can even use dule-font.el as your .emacs).
+
+6. Conventions for value naming in the compiler code
+
+- c and also d, e, a, b stand for categories (FCat.cat)
+- c when appropriate is used for sources of functors and e for targets
+- f and also g, h range over functors (FFunct.funct,
+  as well as types (BCore.typ, parser.mly)
+- f is rather used for domains of transformations and h for codomains
+- t and also u stand for transformations (FTrans.trans)
+  and for values (BCore.valu, parser.mly)
+- numerical and other postfixes and all sensible deviations are allowed
+- l is a prefix for ilists, so lc : FCat.cat IList.t, lt : FTrans.trans IList.t
+- i, j, k stand for labels (Index.t)
+- s for strings
+- er for error messages
+- var_num for variable numbers
+- l_stamp for ilist stamps
+- v for values inside indexed lists in general
+- r for rest of lists in folds and pattern-matching
+- s and also r is used for IDule.sign, r rather for domains s for codomains
+- m stands for modules (IDule.dule, BDule.dule)
+- p and q stand for specifications (BDule.spec)
+
+7. Other conventions for the coding style
+
+- most of those listed in "Caml programming guidelines" 
+    http://caml.inria.fr/FAQ/pgl-eng.html
+- in particular: The page is 80 columns wide. 

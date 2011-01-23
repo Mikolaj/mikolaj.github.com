@@ -1,0 +1,11 @@
+spec M = 
+  sig 
+    value f : ~i:{} ~j:{} -> {}
+    value g : ~i:{} ~j:{} -> {} 
+  end
+
+M = 
+  struct
+    value f = fun ~i:a ~j:a : {} -> {}
+    value g = fun ~i:_ ~j:_ -> {} (* but this is OK *)
+  end

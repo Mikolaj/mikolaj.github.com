@@ -1,0 +1,139 @@
+\chapter{
+Definiowanie typ"ow
+}
+
+Mo"rna definiowa"c typy:
+\begin{verbatim}
+    datatype friend = PAT | SUSIE | JOE   
+    datatype gift = BOTTLES_OF_BEER of int | BOOK
+\end{verbatim}
+a przy pomocy pattern matchingu na tych typach tworzy"c funkcje:
+\begin{verbatim}
+    fun give PAT = BOTTLES_OF_BEER(10)
+      | give SUSIE = BOOK
+      | give JOE = BOTTLES_OF_BEER(3)
+    fun like (BOTTLES_OF_BEER(n)) = n > 7
+      | like BOOK = true
+\end{verbatim}
+Typy mog"a by"c rekurencyjne:
+\begin{verbatim}
+    datatype int_list = INT_NIL | INT_CONS of int * int_list
+    fun sum INT_NIL = 0
+      | sum (INT_CONS(i, rest)) = i + sum rest 
+\end{verbatim}
+wzajemnie rekurencyjne:
+\begin{verbatim}
+    datatype friend_rec = PAT | SUSIE | ANYONE_WHO_GIVES_ME of gift_rec
+    and gift_rec = BOTTLES_OF_BEER of int | PHOTO of friend_rec
+    fun love PAT = false
+      | love SUSIE = true
+      | love (ANYONE_WHO_GIVES_ME(a_gift)) = like a_gift
+    and like (BOTTLES_OF_BEER(n)) = n > 7
+      | like (PHOTO(my_friend)) = love my_friend
+\end{verbatim}
+polimorficzne :
+\begin{verbatim}
+    datatype 'a option = SOME of 'a | NONE
+    val int_some_list = [SOME(5), NONE, SOME(10), SOME(3), NONE]
+    val bool_some_list = [SOME(true), SOME(true), NONE, SOME(true)]
+    fun divide (NONE, _) = NONE
+      | divide (_, NONE) = NONE
+      | divide (SOME(x), SOME(y)) = if y = 0.0 then NONE else SOME(x / y)
+\end{verbatim}
+
+\begin{verbatim}
+    fun pair_some (SOME(x), SOME(y)) = SOME(x, y)
+      | pair_some _ = NONE
+    fun divide2 (r, s) = 
+        case (pair_some (r, s)) 
+          of NONE => NONE
+           | (SOME(x, y)) => if y = 0.0 then NONE else SOME(x / y)
+\end{verbatim}
+
+Znany nam wbudowany typ \|list| 
+jest rekurencyjny i polimorficzny
+i ma nast"epuj"ac"a definicj"e:
+\begin{verbatim}
+    infixr 5 ::
+    datatype 'a list = nil | :: of ('a * 'a list)
+\end{verbatim}
+A drzewo mo"rna zdefiniowa"c na przyk"lad tak:
+\begin{verbatim}
+    datatype 'a tree = EMPTY | NODE of 'a tree * 'a * 'a tree
+\end{verbatim}
+
+
+\section*{Zadania}
+\begin{exercises}
+
+\item
+Napisz wielkie mn"ostwo funkcji na drzewach.
+Mo"resz napisa"c odpowiedniki wszystkich znanych Ci funkcji na listach.
+Mo"resz znale"z"c jakie"s funkcje specyficzne dla drzew, 
+na przyk"lad: obchodz"ace drzewo, zamieniaj"ace prawe poddrzewa z lewymi, etc.
+Mo"resz napisa"c funkcje z drzew w listy i z list w drzewa. 
+
+\item
+Zaimplementuj sortowanie drzewowe (treesort).
+
+Wskaz"owka: W uporz"adkowanym drzewie binarnym liczba wyst"epuj"aca w w"e"zle
+jest wi"eksza od wszystkich w lewym poddrzewie i mniejsza od wszyskich w prawym.
+Nale"ry zdefiniowa"c dwie g"l"owne funkcje. Jedn"a, kt"ora dostaje list"e liczb naturalnych, 
+za"s oddaje uporz"adkowane drzewo binarne zawieraj"ace elementy tej listy. 
+Drug"a, kt"ora dostaje uporz"adkowane drzewo binarne, a oddaje
+posortowan"a list"e jego element"ow. Treesort to z"lo"renie tych funkcji. 
+
+%\item
+%Zaimplementuj sortowanie stogowe (heapsort).
+
+%Wskaz"owka: st"og (heap) to drzewo, w kt"orym ka"rdy element jest mniejszy-r"owny 
+%od ka"rdego elementu wyst"epuj"acego pod nim. Nale"ry zdefiniowa"c
+%dwie g"l"owne funkcje. Jedn"a, kt"ora dostaje list"e liczb naturalnych, za"s oddaje
+%heap zawieraj"acy elementy tej listy. Drug"a, kt"ora dostaje heap, a oddaje
+%posortowan"a list"e jego element"ow. Do zrobienia tej drugiej zapewne przyda si"e
+%funkcja, kt"ora z dw"och heap"ow robi jeden.
+
+\item
+To jest bardzo "ladna (i odrobink"e nieefektywna) definicja liczb naturalnych:
+\begin{verbatim} 
+    datatype nat = ZERO | SUCC of nat
+\end{verbatim}
+\|SUCC| od successor - nast"epnik.
+Napisz kilka podstawowych funkcji i relacji (czyli funkcji typu \|nat->bool|)
+na tych liczbach naturalnych.
+
+\item
+Oto drzewo sk"ladni abstrakcyjnej (gramatyka) pewnego j"ezyka wyra"re"n
+\begin{verbatim} 
+    datatype expression =
+        NUM of int
+      | TIMES of expression * expression
+      | PLUS of expression * expression
+\end{verbatim}
+Napisz funkcj"e wyliczaj"ac"a warto"s"c wyra"renia.
+Napisz wersj"e $LL1$ po\-wy"r\-szej gramatyki.
+Napisz funkcj"e przekszta"lcaj"ac"a wyra"renie
+w gramatyce $LL1$ w wyra"renie w podanej wy"rej gramatyce.
+Napisz parser (u"rywaj"ac gramatyki $LL1$) i lekser.
+
+Wskaz"owka:
+\begin{verbatim}
+<1st_atom>   -> <numeral>
+<2nd_atom>   -> <1st_atom> <2nd_atom'>
+<2nd_atom'>  -> epsilon | * <1st_atom> <2nd_atom'>
+<3rd_atom>   -> <2nd_atom> <3rd_atom'>
+<3rd_atom'>  -> epsilon | + <2nd_atom> <3rd_atom'>
+<expression> -> <3rd_atom>
+\end{verbatim}
+
+\item
+Zdefiniuj typ drzew, w kt"orych ka"rdy wierzcho"lek mo"re mie"c
+dowolnie wielu syn"ow. Napisz troch"e funkcji na tych drzewach.
+
+\end{exercises}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

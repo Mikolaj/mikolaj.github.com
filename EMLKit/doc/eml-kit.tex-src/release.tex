@@ -1,0 +1,163 @@
+\part{Appendixes}
+
+\section{Release Notes}
+\label{sec:release}
+
+We welcome any bug-reports and comments; write to \|eml@zls.mimuw.edu.pl|.
+
+\subsection{Copyright notice}
+\label{sec:copyright}
+
+\begin{center}
+Copyright (C) 1993 Edinburgh and Copenhagen Universities: for the ML Kit\\
+Copyright (C) 1996 Marcin Jurdzinski, Mikolaj Konarski and Aleksy Schubert
+\end{center}
+
+The EML Kit is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+The EML Kit is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+\subsection{Getting the EML Kit}
+\label{sec:getting}
+
+The EML Kit binaries are available through
+anonymous ftp from \|zls.mimuw.edu.pl|.
+You should \|cd| to the \|/pub/mikon/| directory
+and get the \|eml1.tgz| archive.
+
+It contains:
+\begin{itemize}
+\item \|README|,
+\item \|ANNOUNCEMENT| --- some information about this release,
+\item \|emlkit| --- the Sun SPARC executable
+\item \|emlkit2eml|, \|emlkit2eml_types_only| --- shell scripts
+\item \|emlkit2eml.cmd|, \|emlkit2eml_types_only.cmd| --- SML scripts
+\item \|COPYING| --- text of the GNU General Public License
+\end{itemize}
+
+\subsection{Installation}
+\label{sec:installation}
+
+After ungziping and untaring the \|eml1.tgz| archive
+execute the script \|emlkit2eml|.
+It will take a while... 
+Then execute \|emlkit2eml_types_only|
+and after some time you should have in your directory
+two additional files: \|eml| and \|eml_types_only|.
+The \|eml| file is what you would probably use the most.
+Place it in a proper directory.
+
+The file \|emlkit| is an EML Kit executable with the ML Kit's style user interface.
+The \|eml| is just the exported \|eval()| and \|eml_types_only| 
+is the exported \|elab()|. Unlike the ML Kit all of these three 
+executables have \|use| visible at the top-level.
+
+The executable \|eml| parses, type-checks and evaluates EML programs.  
+Its user interface is similar to the one of the SML/NJ compiler.
+
+The executable \|eml_types_only| parses and type-checks only.
+Although \|use| is visible in it at the top-level, 
+it won't import files, because it doesn't evaluate.
+
+\section{The State of the System}
+\label{sec:state}
+
+The EML Kit is being used with success by many people
+in Warsaw and in Edinburgh, but being a large and complex
+software system, based on formidable, but changing and not error-immune foundations, 
+it suffers from small but persistent deficiencies.
+In this chapter we describe known bugs and not fully functional
+features, found in the current version of the EML Kit. 
+
+\subsection{Problems inherited from the ML Kit}
+
+\subsubsection{Special exceptions}
+\label{sec:special}
+
+The special exceptions of the SML definition,
+in particular \|Match| and \|Bind|, are not implemented in the ML Kit.
+As in the EML Dynamic Semantics for the Core new special exceptions
+are defined and heavily used, we are prevented from giving
+our implementation of the EML Dynamic Semantics for the Core 
+its full functionality (see Section~\ref{sec:core_eval}).
+
+In the event someone heavily 
+uses EML specific constructions outside axioms 
+(e.g. for experimental purposes), evaluation 
+mechanisms of the EML Kit may unexpectedly fail with:
+\begin{verbatim}
+Unimplemented: raiseNoCode
+System Crash: Reentering...
+\end{verbatim} 
+or a similar message.
+Fortunately the executable \|eml_types_only| 
+provided with this EML Kit release
+allows one to study the type behavior 
+of a program without invoking the evaluation phase.
+Similar effects can be obtained by invoking \|elab()|, 
+or \|elabFile| functions from the \|emlkit| executable .
+
+\subsubsection{Errors in the SML definition}
+\label{sec:state_errors}
+
+There are errors in the SML definition 
+(see \cite{Kah93} and \cite{Kah95} for details).
+Some of them are ``implemented'' in the ML Kit.
+We have corrected most of these (see Section~\ref{sec:errors}).
+The most notable of those that remained is
+the error concerning Exception Environments and
+the one about identifier status 
+(see \cite{Kah93} pp. 24 and 21). 
+
+Fortunately the ML Kit performs an unsound elaboration
+caused by the identifier status bug only in very pathological cases,
+and seems to avoid troubles with Exception Environment at all,
+thanks to changes in the semantics of signature matching.
+
+\subsubsection{Nonfunctional features of the ML Kit}
+\label{sec:nonfunctional}
+
+There are some bugs and unimplemented or nonfunctional features
+in the ML Kit. Some of these occur in most other SML compilers
+as for example problems with parsing ambiguity, some do not. 
+The EML Kit inherits most of these problems. 
+None of them is very dangerous, but some decrease 
+the comfort of the EML Kit use, as for example the fact that the interpreter
+doesn't check if patterns and bindings are exhaustive,
+or sometimes doesn't print position information when reporting errors.
+
+\subsection{Other problems}
+
+\subsubsection{Trace}
+\label{sec:traces}
+
+The definition of Trace has been changing rapidly lately,
+and as for now the version of the Definition of Extended ML which
+will contain the final definition of Trace is not finished.
+As a result Trace is not yet implemented in the EML Kit.
+
+Most of the effects of this omission are very esoteric and probably none 
+of the EML Kit users will ever stumble across one.
+There is one exception though. The axioms in signatures are not elaborated
+in the equality-principal signatures, as they should be. 
+The effects of this bug are of two kinds.
+
+First, if one uses ordinary equality (``\|=|'') in axioms in a signature,
+the EML Kit may reject an axiom even if it's correct.
+This happens because some of the equality types in the signature
+are not known to be equality types 
+before the signature is "equality-principalized".
+A way around is to use double equality (``\|==|'') in axioms,
+which is by the way considered by some an element 
+of the EML good programming style.
+
+Second, if one uses many sharing equations and axioms in the same signature,
+some of the axiom bodies may be wrongly considered incorrect by the EML Kit. 
+Reasons are similar as for the problem with equality.
+No one has ever come upon this bug, yet.

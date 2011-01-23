@@ -1,0 +1,4 @@
+spec ErrWw =
+(~Arg : sig type t' type t end -> sig value m : Arg.t end)
+  with
+    {Arg = :: sig type t' end struct type t' = {} end}

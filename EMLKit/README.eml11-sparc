@@ -1,0 +1,46 @@
+The README for The EML Kit 1.1 SPARC Binaries Release
+
+(this is for Sun SPARC (Solaris) only, if you run another platform
+please, take a look at the Sources Release or the i386 Binaries Release)
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+1. The EML Kit 1.1 SPARC Binaries Release is available 
+through anonymous ftp from zls.mimuw.edu.pl. 
+The archive containing the release is called 
+eml11-sparc.tar.gz and resides in the /pub/mikon/EMLKit directory.
+There is also a link to this file from our home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+The documentation is available separately from
+the /pub/mikon/EMLKit/doc ftp directory or by WWW.
+
+To install the EML Kit first ungzip and untar the archive.
+It should contain:
+README.eml11-sparc - this file
+README - some info about the EML Kit 1.1
+CHANGES - a list of changes to the EML Kit from version 1.0 to 1.1.
+emlkit - the Sun SPARC executable
+emlkit2eml - shell script
+emlkit2eml.cmd - SML script
+COPYING - text of the GNU General Public License
+
+Now execute the script emlkit2eml, 
+and after some time you should have in your directory
+an additional file "eml" which you would probably use the most.
+Place it in a proper directory.
+Installation complete.
+
+2. The EML Kit is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the eml11-sparc.tar.gz archive.
+This also means that you have the right to get the source code.
+The source code is available as eml11-src.tar.gz, through ftp or WWW.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

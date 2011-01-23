@@ -1,0 +1,28 @@
+Er = 
+:: sig value v : {} end
+  struct 
+    value v = let _ = 
+let intlist = {h = `Zero . con; 
+               t = {h = `Zero . con; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_delta = 
+      fun ~it -> {x = it; y = it}
+in
+  {intmap =
+     match
+       (match intlist with
+       map monomorphic_delta) . de
+     with [`Nil fail |
+           `Cons ht -> ht . h . x]
+  ;boolmap = 
+     match
+       (match boollist with
+       map monomorphic_delta) . de 
+     with [`Nil fail |
+           `Cons ht -> ht . h . x]
+  }
+    in {} 
+  end

@@ -1,0 +1,26 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    privar a : int ;
+    privar c : int ;
+    pricon n : int
+
+if input >= 0 ->
+
+    a :vir= 0 ;
+    c :vir= 1 ;
+    n :vir= input ;
+    do c * c <= n -> c := 2 * c 
+    od ;
+    do c <> 1 -> c := c div 2 ;
+		 if ( a + c ) * ( a + c ) <= n -> a := a + c
+		 [] ( a + c ) * ( a + c ) > n -> skip
+		 fi
+    od ;
+
+    output :vir= a
+
+fi
+
+end

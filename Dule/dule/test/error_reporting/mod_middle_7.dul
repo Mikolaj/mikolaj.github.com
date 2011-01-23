@@ -1,0 +1,38 @@
+Sh_InstPpRemMod2_1 =  
+  {M1 = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {M2 = :: ~M1 : sig type t value v : t end -> 
+            sig
+              type t 
+              value v2 : M1.t 
+            end 
+       struct type t = M1.t value v2 = M1.v end}
+  . 
+  :: ~M2 : ~M1 : sig type t value v : t end -> 
+          sig
+            type t 
+            value v2 : M1.t 
+          end ->
+       sig value n : M1.t end
+  struct value n = M2.v2 end
+
+Sh_InstPpRemMod34 =  
+  {M = :: sig type t value v : t end 
+       struct type t = {} value v = {} end} 
+  .
+  {M = :: ~M : sig type t value v : t end -> 
+            sig
+              type t 
+              value v : t 
+            end 
+       struct type t = M.t value v = M.v end}
+  . 
+  :: ~M : ~M : sig type t value v : t end -> sig
+            type t 
+            value v : t
+          end ->
+       sig 
+         value v3 : M.t 
+       end
+  struct value v3 = M.v end

@@ -1,0 +1,567 @@
+
+\section{\secover}
+\label{sec:over}
+
+W ostatnich latach programowanie funkcyjne i metody specyfikacji,
+czerpi"ac z~siebie nawzajem, szybko si"e rozwija"ly.
+Owocami tego po"rytecznego zbli\-"re\-nia s"a mi"edzy innymi formalizm Extended ML,
+a w dalszym rz"edzie system EML Kit.
+W tym rozdziale postaram si"e je opisa"c 
+na tle "srodowiska, w kt"orym si"e uformowa"ly.
+
+\subsection{\secsml}
+\label{sec:sml}
+
+Standard ML (SML)~\cite{MTH90} jest funkcyjnym j"ezykiem programowania,
+co oznacza, "re dzia"lanie programu nie polega na stopniowej zmianie stanu maszyny,
+jak to jest w przypadku j"ezyk"ow imperatywnych,
+lecz na obliczaniu warto"sci wyra"re"n. 
+Do opisywania wyra"re"n s"lu"ry cz"e"s"c Standard ML
+zwana j"ezykiem J"adra.
+
+Matematyczn"a podstaw"a modelu oblicze"n SML jest 
+rachunek $\lambda$~\cite{Bar84} wraz z rozszerzonym systemem typ"ow ML~\cite{DM82}.
+Uczynienie aplikowania funkcji g"l"ownym motorem ewaluacji
+u"latwia "`matematyczne'' my"slenie o dzia"laniu programu.
+Z kolei silny system typ"ow SML, dzi"eki swojej elastyczno"sci i og"olno"sci
+nie kr"epuj"ac u"rytkownika, pozwala wykrywa"c
+zdecydowan"a wi"ek\-szo"s"c b"l"ed"ow jeszcze przed wykonaniem programu,
+podczas procesu zwanego analiz"a statyczn"a.
+
+SML posiada bardzo silne mechanizmy modularyzacji,
+do kt"orych mo"rna si"e odwo"lywa"c przy pomocy j"ezyka Modu"l"ow.
+Do budowania globalnej struktury programu s"lu"r"a struktury,
+kt"ore s"a atomowymi modu"lami, i funktory, wyra"raj"ace hierarchiczne 
+zale"rno"sci mi"edzy modu"lami i s"lu"r"ace do ich sk"la\-da\-nia.
+
+Podstawowym narz"edziem do opisu w"lasno"sci modu"l"ow, 
+czyli do ich specyfikacji, s"a sygnatury:
+
+\begin{verbatim}
+signature TOTAL_PREORDER =
+sig
+    type elem 
+   val leq : elem * elem -> bool 
+    (* leq should be a total preorder *)
+end
+\end{verbatim}
+\|TOTAL_PREORDER| to nazwa sygnatury, zdanie "`\|type elem|'' postuluje istnienie
+typu o nazwie elem, za"s zdanie "`\|val leq : elem * elem -> bool|'' stwierdza, 
+"re powinna istnie"c funkcja \|leq| o typie \|elem * elem -> bool|.
+Komentarz w j"ezyku naturalnym zamykaj"acy sygnatur"e opisuje "r"adane w"las\-no\-"sci funkcji \|leq|.
+
+Zar"owno struktury jak i funktory mog"a by"c opatrzone sygnaturami.
+Ta przyk"ladowa struktura jest zadeklarowana jako pasuj"aca 
+do zdefiniowanej wcze"sniej sygnatury \|TOTAL_PREORDER|:
+\begin{verbatim}
+structure OddRational : TOTAL_PREORDER =
+struct
+    type elem = int * int
+    fun leq ((m, n), (k, l)) = 
+        if n = 0 andalso l = 0 
+            then m < 0 orelse (m > 0 andalso k > 0)
+        else if (n < 0 andalso l >= 0) 
+                orelse (n >= 0 andalso l < 0)
+                 then k * n <= m * l
+             else m * l <= k * n 
+end
+\end{verbatim}
+Typ \|elem| jest tu par"a liczb ca"lkowitych,
+za"s funkcja \|leq| ma pewne cechy naturalnego porz"adku na liczbach wymiernych.
+Mo"rna pokaza"c, "re wszystkie wymogi wyra"rone w \|TOTAL_PREORDER| zosta"ly spe"lnione
+(r"ownie"r te opisane w komentarzu).
+
+\subsection{\seceml}
+\label{sec:eml}
+
+Po"l"aczenie prostoty modelu oblicze"n J"adra
+z si"l"a j"ezyka Modu"l"ow czyni z SML wspania"le narz"edzie 
+do tworzenia i piel"egnowania du"rych i z"lo"ronych system"ow oprogramowania.
+Narzucaj"acymi si"e sposobami pracy z SML s"a warianty metodologii specyfikacji algebraicznych, 
+cho"cby takie w kt"orych u"rywa si"e j"ezyka naturalnego, jak w przyk"ladzie powy"rej.
+
+Dzi"eki prostocie J"adra SML istnieje du"ra swoboda wyboru 
+j"ezyk"ow do wyra"rania w"laso"sci program"ow. 
+Mo"rna u"rywa"c j"ezyk"ow bardzo s"labych, jak na przyk"lad logika r"owno"sciowa, 
+kt"ore w wypadku programowania imperatywnego nie mia"lyby szans zastosowania.
+Mo"rna u"rywa"c tak"re j"ezyk"ow silnych, 
+pozwalaj"acych wyra"ra"c skomplikowane w"lasno"sci w spos"ob bardzo zwarty.
+Do takich j"ezyk"ow nale"ry na przyk"lad bardzo mocne rozszerzenie logiki pierwszego rz"edu, 
+za pomoc"a  kt"orego buduje si"e cia"la aksjomat"ow w Extended~ML.
+
+Extended ML (EML)~\cite{bib:KST94} jest formalizmem do wywodzenia program"ow w Standard ML
+z ich specyfikacji. Proces konstrukcji oprogramowania odbywa si"e stopniowo,
+pocz"awszy od czystej specyfikacji, poprzez stadia, w kt"orych przeplataj"a
+si"e fragmenty specyfikacji i kodu w SML, a sko"nczywszy na w~pe"lni wykonywalnym programie w SML.
+Wszystkie kroki wyra"rane s"a w Extended ML, a ich poprawno"s"c dowodzona jest
+wed"lug regu"l Semantyki Weryfikacyjnej EML.
+
+Jako j"ezyk, Extended ML jest rozszerzeniem (du"rego podzbioru) Standard ML.
+Mo"rna go podzieli"c, podobnie jak w przypadku SML, na j"ezyk J"adra i j"ezyk Modu"l"ow.
+Szczeg"oln"a rol"e w procesie tworzenia oprogramowania odgrywa system modu"l"ow EML
+dopuszczaj"acy, opr"ocz element"ow znanych z SML, sygnatury w kt"orych wyst"epuj"a aksjomaty:
+
+\begin{verbatim}
+signature TOTAL_PREORDER =
+sig
+    type elem 
+    val leq : elem * elem -> bool 
+    axiom forall (a, b) => leq (a, b) orelse leq (b, a)
+    and forall (c, d, e) => 
+        (leq (c, d) andalso leq (d, e)) implies leq (c, e)
+end
+\end{verbatim}
+
+Dzi"eki swojemu ca"lkowitemu sformalizowaniu oraz sile mechanizm"ow modularyzacyjnych
+i j"ezyka specyfikacji, Extended ML daje mo"rliwo"s"c konstruowania oprogramowania
+o niezwyk"lej niezawodno"sci i "latwo"sci rozbudowy oraz piel"egnacji.
+O wygodzie stosowania EML decyduj"a dwie rzeczy: czytelno"s"c i klarowno"s"c
+formalnej definicji oraz dost"epno"s"c i jako"s"c narz"edzi wspomagaj"acych.
+
+\subsection{\secformal}
+\label{sec:formal}
+
+J"ezyk Standard ML jest "sci"sle opisany w swojej definicji \cite{MTH90}.
+Opis semantyki sk"lada si"e z dw"och g"l"ownych cz"e"sci: Semantyki Statycznej i Semantyki Dynamicznej.
+Ka"rda z nich podzielona jest z kolei na fragment dotycz"acy j"ezyka J"adra
+oraz fragment dotycz"acy j"ezyka Modu"l"ow.
+
+Formalizm wykorzystany do przedstawienia semantyki SML zwie si"e semantyk"a naturaln"a~\cite{Han93}.
+W sk"lad definicji wchodz"a zbiory regu"l postaci:
+$$
+\frac{\begin{array}{c}
+\nu_1\ \ \ \cdots\ \ \ \nu_k
+\end{array}}
+     {\phi}
+$$ %$$
+gdzie konkluzja $\phi$ jest zdaniem, za"s przes"lanki $\nu_i$ s"a albo zdaniami albo regu"lami.
+W przypadku Semantyki Statycznej zdania m"owi"a o mo"rliwo"sci przypisania elementowi j"ezyka
+pewnego typu, w przypadku Semantyki Dynamicznej --- warto"sci.
+
+Extended ML r"ownie"r posiada formaln"a definicj"e \cite{bib:KST94}.
+Podobnie jak EML jest w pewnym sensie rozszerzeniem SML,
+tak i definicja EML jest niejako nadbudowana na definicji SML. 
+Cho"c miejscami zmodyfikowany jest spos"ob prezentacji,
+wprowadzone nowe elementy, poprawione b"l"edy,
+to jednak og"olna struktura odziedziczona z definicji SML pozostaje zachowana.
+Jedyn"a zupe"lnie now"a cz"e"sci"a definicji EML jest 
+Semantyka Weryfikacyjna, opisana tym samym formalizmem co Semantyka Statyczna i Semantyka Dynamiczna, 
+a s"lu"r"aca wyra"reniu w"lasno"sci spe"lnienia specyfikacji przez implementacj"e.
+
+Semantyka naturalna czyni mo"rliwym opisanie tak wielkiego
+i skomplikowanego formalizmu jak EML we wzgl"ednie zwarty i elegancki spos"ob.
+Ta forma przezentacji ma jednak r"ownie"r swoje z"le strony.
+Niekt"ore drobne b"l"edy w definicji potrafi"a d"lugo pozostawa"c niezauwa"rone.
+Niekt"ore mechanizmy wydaj"a si"e proste i jednoznaczne jedynie dot"ad,
+dop"oki nie zostanie podj"eta pierwsza pr"oba ich implementacji.
+Niekt"ore globalne relacje pomi"edzy cz"e"sciami definicji
+s"a niejasne, dop"oki jej hierarchia modu"l"ow nie zostanie
+opisana w powa"rnym formalizmie do definiowania struktury modularnej
+takim jak na przyk"lad j"ezyk Modu"l"ow SML.
+
+\subsection{\seckit}
+\label{sec:kit}
+
+O systemie EML Kit mo"rna my"sle"c (z pewn"a doz"a dobrej woli)
+jako o w pe"lni deterministycznym, algorytmicznym i szczeg"o"lowym
+opisie Semantyki Statycznej i Semantyki Dynamicznej EML.
+
+EML Kit zmierza do tego, by pe"lni"c funkcje (podstawy i miejca do testowania)
+wygodnego "srodowiska do formalnego wywodzenia program"ow,
+przy u"ryciu j"ezyka, formalizmu i metodologii Extended ML.
+
+Wersja 1.0 stworzona przez Marcina Jurdzi"nskiego, Miko"laja Konarskiego, 
+S"lawomira Leszczy"nskiego i Aleksego Schuberta,
+jest kompletn"a implementacj"a Extended ML jako "`j"ezyka programowania''.
+Pozwala ona dokonywa"c analizy sk"ladniowej, sprawdza"c poprawno"s"c typow"a
+i wylicza"c warto"s"c dowolnych program"ow EML, czy b"edzie to czysty Standard ML,
+czy te"r pe"lny EML z aksjomatami i innymi konstrukcjami specyfikacyjnymi.
+Proces ten odbywa si"e w "scis"lej zgodno"sci z Semantyk"a Statyczn"a i Sematyk"a Dynamiczn"a EML.
+
+EML Kit bazuje na systemie ML Kit~\cite{BRTT93};
+elastycznym, eleganckim i zmodularyzowanym interpreterze Standard ML, napisanym w Standard ML.
+ML~Kit jest wiern"a i tak bezpo"sredni"a, jak to mo"rliwe,
+implemetacj"a j"ezyka zdefiniowanego w definicji SML.
+Sk"ladnia abstakcyjna jest niemal dos"lownie wzi"eta z definicji,
+a projekt wielu innych detali, takich jak na przyk"lad konwencje nazewnicze,
+jest "sci"sle zainspirowany definicj"a.
+
+\subsection{\secdepend}
+\label{sec:depend}
+
+Dwa fakty --- ten, "re definicja EML jest rozszerzeniem definicji SML,
+i ten, "re ML Kit jest tak bliski tej ostatniej --- pomog"ly nam
+w naszych wysi"lkach uczynienia systemu EML Kit wiern"a i klarown"a
+implementacj"a Extended~ML. Byli"smy w stanie rozszerzy"c ML Kit
+analogicznie do sposobu w jaki definicja EML rozszerza definicj"e SML,
+zachowuj"ac styl programowania w"la"sciwy dla systemu ML Kit.
+W ten spos"ob stworzyli"smy podstaw"e do rozwoju przysz"lych
+narz"edzi "Srodowiska Programistycznego Extended ML,
+takich jak generatory musik"ow dowodowych, czy prototypowe systemy dowodzenia.
+Ilustruje to znajomo wygl"adaj"acy diagram poni"rej.
+
+\vfil
+\vspace{10pt}
+\begin{center}
+{\footnotesize
+\setlength{\unitlength}{6.7cm}
+\begin{picture}(1.4,2.1)
+
+\put(0.7,2.1){\makebox(0,0){
+        \begin{tabular}{c}
+        Programistyczne\\
+        "Srodowisko EML
+        \end{tabular}}}
+
+\put(0.7,1.4){\makebox(0,0){
+        \begin{tabular}{c}
+        EML Kit
+        \end{tabular}}}
+\put(0.7,1.47){\line(0,1){0.07}}
+\put(0.7,1.58){\line(0,1){0.07}}
+\put(0.7,1.69){\line(0,1){0.07}}
+\put(0.7,1.80){\line(0,1){0.07}}
+\put(0.7,1.91){\vector(0,1){0.10}}
+
+\put(0.0,0.7){\makebox(0,0){
+        \begin{tabular}{c}
+        ML Kit
+        \end{tabular}}}
+\put(0.07,0.77){\vector(1,1){0.566}}
+
+\put(1.4,0.7){\makebox(0,0){
+        \begin{tabular}{c}
+        Definicja EML
+        \end{tabular}}}
+\put(1.33,0.77){\vector(-1,1){0.566}}
+
+
+\put(0.7,0.0){\makebox(0,0){
+        \begin{tabular}{c}
+        Definicja SML
+        \end{tabular}}}
+\put(0.77,0.07){\vector(1,1){0.566}}
+\put(0.63,0.07){\vector(-1,1){0.566}}
+
+\end{picture}
+
+}
+\end{center}
+\vfil
+
+\section{\secanal}
+\label{sec:anal}
+
+Ka"rdy nowoczesny j"ezyk programowania oparty jest na w"la"sciwym sobie
+prostym, klarownym matematycznym modelu.
+Proces analizy statycznej programu, przebiegaj"acy mi"edzy jego napisaniem
+a wykonaniem, polega na przetworzeniu go w odpowiadaj"acy mu matematyczny obiekt.
+W tym rozdziale chcia"lbym przedstawi"c bli"rej to uj"ecie analizy statycznej,
+ilustruj"ac je konkretnymi przyk"ladami dotycz"acymi specyfiki Extended ML.
+
+\subsection{\secall}
+\label{sec:all}
+
+W sk"lad analizy statycznej wchodz"a dzia"lania, 
+dokonywane w z g"ory ograniczonym czasie, a maj"ace za podstaw"e tekst programu.
+Wynika st"ad, "re w przypadku j"ezyk"ow dopuszczaj"acych zjawisko nieterminacji,
+samego procesu wykonywania programu nie mo"rna zaliczy"c do analizy statycznej.
+
+Analiz"e statyczn"a wykonuje si"e, by sprawdzi"c poprawno"s"c program"ow,
+na przyk"lad poprawno"s"c sk"ladniow"a, oraz by przygotowa"c program do wykonania,
+by"c mo"re poddaj"ac go wyrafinowanym przekszta"lceniom w celu optymalizacji.
+Je"sli potraktujemy Extended ML jako j"ezyk programowania,
+to na podstawie systemu EML Kit b"edziemy mogli obejrze"c
+elementy przyk"ladowej analizy statycznej tego j"ezyka.
+
+Pierwszym stadium analizy statycznej w systemie EML Kit jest analiza sk"ladniowa, 
+to znaczy przypisanie programowi jego drzewa rozbioru wed"lug gramatyki podanej w definicji Extended ML.
+Potem nast"epuje szereg dodatkowych korekcji tego drzewa,
+wynikaj"acych ze specyfiki sk"ladni EML i sposobu jej prezentacji,
+a w rezultacie powstaje ostateczne drzewo sk"ladni abstrakcyjnej programu,
+kt"ore b"edzie u"ryte jako podstawa zar"owno do dalszej 
+analizy statycznej jak i procesu wykonywania.
+Nast"epnym etapem jest elaboracja, to znaczy sprawdzanie 
+poprawno"sci programu je"sli chodzi o typy.
+Elaboracja odbywa si"e w oparciu o Semanyk"e Statyczn"a J"adra EML
+i Semantyk"e Statyczn"a Modu"l"ow EML, a przy przej"sciu z j"ezyka
+J"adra do Modu"l"ow dodatkowo odbywa si"e proces zwany
+rozwik"lywaniem prze"ladowania \ang{overloading resolution}.
+ 
+Poniewa"r programy napisane w EML mog"a si"e p"etli"c,
+ich wykonywanie, kt"ore powinno si"e odbywa"c na podstawie
+Semantyki Dynamicznej EML, nie mo"re by"c zaliczone do analizy statycznej.
+Z podobnych powod"ow weryfikacja program"ow w EML,
+kt"ora odbywa"laby si"e na podstawie Semantyki Weryfikacyjnej EML,
+nie mo"re by"c zaliczona do analizy statycznej.
+Ale ju"r generowanie musik"ow dowodowych \ang{proof obligations} ---
+pewna operacja wst"epna wzgl"edem weryfikacji, 
+kt"ora by"c mo"re zostanie w przysz"lo"sci
+zaimplementowana w ramach systemu EML Kit --- 
+zdecydowanie ma charakter statyczny i mo"rna j"a przytoczy"c jako przyk"lad
+analizy statycznej, cho"c mo"re nieco wy"rszego, ni"r si"e to zwykle spotyka, rz"edu.
+
+W pozosta"lej cz"e"sci rozdzia"lu (i w ca"lej pracy) 
+skupimy si"e na przypadku analizy statycznej w najw"e"rszym
+rozumieniu tego terminu, to znaczy na sprawdzania poprawno"sci typowej 
+fraz j"ezykowych, wzgl"edem zadanej sematyki statycznej.
+
+\subsection{\secbasic}
+\label{sec:basic}
+
+\subsubsection{\secsemantic}
+\label{sec:semantic}
+
+Sematyka statyczna frazom j"ezyka, czyli obiektom syntaktycznym, 
+przypisuje pewne twory matematyczne, zwane obiektami semantycznymi.
+Pe"lne zestawienie obiekt"ow semantycznych Semantyki Statycznej EML
+znajduje si"e w dodatku~\ref{sec:semobjeml}.
+
+Najbardziej oczywistym przyk"ladem obiektu semantycznego jest typ.
+W Semantyce Statycznej J"adra EML wyra"reniom przypisywane s"a
+obiekty semantyczne $\tau$, nale"r"ace do dziedziny semantycznej typ"ow $\Type$.
+Wyra"reniom b"e\-d"a\-cy\-mi rekordami przypisywane s"a typy rekordowe,
+wyra"reniom reprezentuj"acym funkcje przypisywane s"a typy funkcyjne, itd. 
+
+Innym powszechnie spotykanym rodzajem obiekt"ow semantycznych s"a "srodowiska.
+Reprezentuj"a one sko"nczony zbi"or nazw, wraz z przypisanymi nazwom
+obiektami semantycznymi, na przyk"lad typami.
+W Extended ML wynikiem analizy statycznej deklaracji s"a 
+obiekty semantyczne oznaczane~$\E$, 
+nale"r"ace do dziedziny semantycznej "srodowisk $\Env$.
+
+W Semantyce Statycznej Modu"l"ow wyst"epuj"a jeszcze bardziej z"lo"rone
+obiekty semantyczne. Strukturom odpowiadaj"a semantyczne struktury,
+sk"la\-da\-j"a\-ce si"e z nazwy struktury i "srodowiska opisuj"acego
+komponenty struktury, wraz z odpowiadaj"acymi im obiektami semantycznymi:
+\begin{displaymath}
+\begin{array}{rcl}
+\S\ {\rm lub}\ (\m,\E)
+                & \in   & \Str = \StrNames\times\Env \\
+\end{array}
+\end{displaymath}
+gdzie $S$ to meta-zmienna przebiegaj"aca dziedzin"e $\Str$, 
+b"ed"ac"a produktem dziedzin $\StrNames$ i $\Env$, 
+po kt"orych przebiegaj"a z kolei meta-zmienne $\m$~i~$\E$.
+
+Sygnaturom odpowiadaj"a semantyczne sygnatury,
+sk"ladaj"ace si"e z semantycznej struktury i zbioru nazw,
+o kt"orych nale"ry my"sle"c, "re s"a zwi"azane:
+\begin{displaymath}
+\begin{array}{rcl}
+\sig\ {\rm lub}\ \longsig{}
+                & \in   & \Sig =  \NameSets\times\Str \\
+\end{array}
+\end{displaymath}
+gdzie $\sig$, $N$ i $S$ to znowu meta-zmienne.
+
+\subsubsection{\secjudgments}
+\label{sec:judgments}
+
+Os"ady to zdania postaci:
+\[C\ts{\it fraza}\ra A\]
+gdzie $C$ i $A$ to obiekty semantyczne, za"s {\it fraza} to element j"ezyka.
+Zdanie takie mo"rna czyta"c "`w kontek"scie $C$, {\it fraza} daje $A$''.
+
+Przy pomocy Semantyki Statycznej J"adra EML mo"rna wywodzi"c na przy\-k"lad zdania
+podobne do:
+$$\E\ts\exp\ra\tau$$
+("`w "srodowisku $\E$, wyra"renie $\exp$ daje typ $\tau$''),
+$$\E_1\ts\dec\ra\E_2$$
+("`w "srodowisku $\E_1$, deklaracja $\dec$ daje "srodowisko $\E_2$'').
+%gdzie $\exp$ jest wyra"reniem, a $\dec$ deklaracj"a.
+Za"s w Semantyce Statycznej Modu"l"ow pojawiaj"a si"e mi"edzy innymi os"ady postaci:
+$$\B\ts\sigexp\ra\S,\trace$$
+gdzie $\B$ to baza zawieraj"aca w szczeg"olno"sci "srodowisko, $\sigexp$ to sygnatura, a $\trace$ to "slad.
+
+Aby zasygnalizowa"c, czym jest "slad, musimy przypomie"c, 
+"re w Semantyce Statycznej EML os"adami prawdziwymi s"a te, kt"ore mo"rna wywie"s"c przy pomocy regu"l.
+Ka"rdy prawdziwy os"ad posiada wi"ec (by"c mo"re wi"ecej ni"r jedno) drzewo wywodu.
+W pewnym uproszczeniu "slady s"a w"la"snie drzewami wywodu pewnych os"ad"ow.
+
+
+\subsubsection{\secprincipal}
+\label{sec:principal}
+
+Niech $\statsem$ b"edzie semantyk"a statyczn"a 
+i niech $\succ$ b"edzie cz"e"sciowym porz"adkiem na zbiorze wywod"ow $\statsem$.
+Wtedy obiekt semantyczny $A$ nazywamy g"l"ownym \ang{principal} dla obiektu syntaktycznego ${\it fraza}$
+w kontek"scie obiektu semantycznego $C$, wzgl"edem relacji $\succ$ , 
+w ramach semantyki $\statsem$, gdy
+\begin{itemize}
+\item istnieje wyw"od $\trace$ w ramach $\statsem$ os"adu $\C\vdash{\it fraza}\ra A$, 
+\item je"sli $\trace'$ jest wywodem $\C\vdash{\it fraza}\ra A'$ w ramach $\statsem$, 
+      to $\trace\succ\trace'$.
+\end{itemize}
+
+W Semantyce Statycznej EML pojawiaj"a si"e definicje maj"ace charakter definicji obiektu g"l"ownego.
+Przytocz"e dwie spo"sr"od nich.
+
+Typ $\tau$ wraz ze "sladem $\trace$ jest g"l"owny dla wyra"renia $\exp$ w kontek"scie $C$,
+gdy (w troch"e innym sformu"lowaniu ni"r oryginalne)
+\begin{itemize}
+\item $\C\vdash\exp\ra\tau,\trace$, 
+\item je"sli $\C\vdash\exp\ra\tau',\trace'$, to
+      $\tau\succ\tau'$ i $\trace\succ\trace'$.
+\end{itemize} 
+\pagebreak
+gdzie "`$\succ$'' jest relacj"a uog"olniania typ"ow 
+($\tau\succ\tau'$, gdy typ $\tau$ jest og"olniejszy ni"r $\tau'$,
+czyli gdy typ $\tau'$ jest instancj"a typu $\tau$),
+kt"or"a mo"rna w naturalny spos"ob rozszerzy"c na "slady.
+Mo"rna udowodni"c, "re w SML (a tak"re w EML) ka"rde wyra"renie, 
+kt"ore ma typ, ma r"ownie"r typ g"l"owny~\cite{Ler92}. 
+
+M"owimy, "re sygnatura semantyczna $(\N)\S$ z $\trace$ jest g"l"owna 
+dla sygnatury syntaktycznej $\sigexp$ w bazie $\B$ 
+gdy (w uproszczeniu)
+\begin{itemize}
+\item $\B\vdash\sigexp\ra\S,\trace$, 
+\item je"sli $\B\vdash\sigexp\ra\S',\trace'$, to
+      $\sigord{\longsig{}}{}{\S'}$ i $\trace\succ\trace'$.
+\end{itemize}
+gdzie relacja "`$\sigord{}{}$'' jest instancjacj"a sygnatur.
+W dodatku A do ksi"a"rki~\cite{MT91} zawarty jest dow"od
+istnienia sygnatur g"l"ownych w SML. Mo"rna pokaza"c,
+"re r"ownie"r w EML ka"rda sygnatura, dla kt"orej mo"rna
+wywie"s"c sygnatur"e semantyczn"a, posiada sygnatur"e semantyczn"a g"l"own"a.
+
+\subsection{\secinterest}
+\label{sec:interest}
+
+\subsubsection{\secindeterm}
+\label{sec:indeterm}
+
+Semantyk"e statyczn"a $\statsem$ nazywamy niedeterministyczn"a, 
+je"sli istnieje taki element j"ezyka {\it fraza} i takie obiekty semantyczne $C$, $A_1$, $A_2$,
+"re zar"owno os"ad $C\ts{\it fraza}\ra A_1$ jak i $C\ts{\it fraza}\ra A_2$
+s"a wyprowadzalne w $\statsem$.
+
+Sematyka Statyczna EML jest niedeterministyczna.
+St"ad na przyk"lad nie ka"rdy typ, jaki mo"rna wywie"s"c dla wyra"renia, jest jego typem g"l"ownym.
+W pustym kontek"scie wyra"reniu:
+\begin{verbatim}
+let
+   fun S x y z = (x z) (y z)
+in
+   S
+end 
+\end{verbatim}     
+mo"rna przypisa"c zar"owno typ 
+$(\alpha\rightarrow\alpha\rightarrow\gamma)\rightarrow 
+(\alpha\rightarrow\alpha)\rightarrow\alpha\rightarrow\gamma$, 
+jak i typ 
+$(\alpha\rightarrow\beta\rightarrow\beta)\rightarrow
+(\alpha\rightarrow\beta)\rightarrow\alpha\rightarrow\beta$,    
+ale "raden z nich nie jest r"owny g"l"ownemu typowi tego wyra"renia:
+$(\alpha\rightarrow\beta\rightarrow\gamma)\rightarrow
+(\alpha\rightarrow\beta)\rightarrow\alpha\rightarrow\gamma$.
+
+\subsubsection{\secimposing}
+\label{sec:imposing}
+
+Ustalmy semantyk"e statyczn"a $\statsem$ i operacj"e syntaktyczn"a $insert$,
+kt"ora w pewien spos"ob z dw"och obiekt"ow syntaktycznych tworzy jeden.
+Niech $T$ i $P$ b"ed"a obiektami syntaktycznymi.
+Niech $C$ b"edzie obiektem semantycznym 
+i niech $\phi$ b"edzie w"lasno"sci"a obiekt"ow semantycznych.
+
+Wtedy m"owimy, "re $P$ wymusza $\phi$ w $insert(P, T)$ przy $C$, gdy jednocze"snie
+\begin{itemize}
+\item istnieje obiekt semantyczny~$A$ taki, "re mo"rna wywie"s"c 
+      $\C\vdash T \ra A$ oraz nie zachodzi w"lasno"s"c~$\phi$ dla~$A$,
+\item dla ka"rdego~$A'$, dla kt"orego mo"rna wywie"s"c 
+      $\C\vdash insert(P, T) \ra A'$, zachodzi w"lasno"s"c~$\phi$.
+\end{itemize}
+
+Wa"rnym przypadkiem wymuszania w Semantyce Statycznej EML
+jest wymuszenie przez aksjomat zr"ownania typ"ow w sygnaturze.
+Ilustruje to nast"epuj"acy przyk"lad:
+\begin{verbatim}
+sig
+    type t
+    type u
+    val f : t -> u
+    axiom forall x => f x == f (f x)
+end
+\end{verbatim}
+Niech $insert(P, T)$ b"edzie powy"rsz"a sygnatur"a, 
+$P$ wyst"epuj"acym w niej aksjomatem, a $T$ sygnatur"a bez aksjomatu.
+Niech $C$ b"edzie pust"a baz"a, a $\phi$ w"lasno"sci"a obiektu semantycznego,
+sk"ladaj"acego si"e w szczeg"olno"sci ze "sro\-do\-wis\-ka,
+m"owi"ac"a, "re powinno ono przypisywa"c 
+typom syntaktycznym \|t| i \|u| ten sam typ semantyczny.
+
+Wida"c, "re obiekt powsta"ly w wyniku g"l"ownego wywodu dla $T$
+nie spe"lnia w"lasno"sci $\phi$.
+Natomiast obiekt powsta"ly w wyniku g"l"ownego wywodu dla sygnatury $insert(P, T)$,
+a co za tym idzie r"ownie"r ka"rdy obiekt, 
+jaki mo"rna wywie"s"c dla tej sygnatury, spe"lnia $\phi$.
+Tak wi"ec, w sygnaturze $insert(P, T)$ aksjomat $P$ wymusza zr"ownanie typ"ow \|t| i~\|u|.
+
+\subsection{\secanaleml}
+\label{sec:analeml}
+
+Semantyka Statyczna EML jest niedeterministyczna.
+W dodatku niekt"ore z przes"lanek wyst"epuj"acych w regu"lach
+wyra"raj"a w"lasno"sci postaci
+"`dla ka"r\-de\-go wywodu takiego "re $\phi$ zachodzi,
+$\psi$ musi zachodzi"c'' --- dobrymi przyk"ladami
+s"a wymagania g"l"owno"sci sygnatur pojawiaj"ace si"e w Semantyce Statycznej Mo\-du\-"l"ow.
+
+Z powodu niedeterminizmu i kwantyfikacji po niesko"nczonych zbiorach,
+niemo"rliwa jest bezpo"srednia implementacja Semantyki Statycznej EML.
+Na\-le\-"ry przet"lumaczy"c j"a do bardziej "`denotacyjnej'' postaci
+(niekt"orzy wol"a nazywa"c t"e posta"c "`deterministyczn"a'').
+Dopiero wtedy mo"re ona zosta"c niemal dos"lownie
+zaimplementowana w j"ezyku programowania, na przyk"lad w~SML.
+
+Takie przeformu"lowanie jest nietrywialnym zadaniem.
+Na szcz"e"scie, po\-dob\-ny problem dotycz"acy SML
+zosta"l rozwi"azany ju"r jaki"s czas temu.
+Algorytm Damasa i Milnera~\cite{DM82} jest dobrze znanym szkieletem
+narz"edzia do sprawdzania poprawno"sci typowej program"ow J"adra SML.
+Za"s dow"od twierdzenia o sygnaturach g"l"ownych,
+z rozdzia"lu~A.2 klasycznej pozycji~\cite{MT91},
+jest przewodnikiem w zmaganiach z j"ezykiem Modu"l"ow SML.
+W ko"ncu, sam ML Kit jest bardzo klarown"a i skromn"a
+reformulacj"a i implementacj"a Semantyki Statycznej SML,
+opart"a na wymienionych powy"rej ideach.
+
+Moja praca nad przeformu"lowaniem specyficznych dla EML
+fragment"ow Semantyki Statycznej czasami sprowadza"la si"e 
+do trywialnych rozszerze"n na przyk"lad algorytmu Damasa i Milnera,
+gdzie jedynym k"lopotem by"lo zmaganie z maszyneri"a systemu ML Kit. 
+Tak by"lo w przypadku prac nad kwantyfikatorami i pozosta"lymi konstrukcjami specyfikacyjnymi
+oraz w przypadku analizy innych ni"r podstawowe postaci aksjomat"ow.
+
+Czasami jednak rozszerzenie wymaga"lo dowodu poprawno"sci,
+albo bardzo dobrej znajomo"sci budowy systemu.
+By"lo to potrzebne na przyk"lad przy okazji prac nad semantyk"a funktor"ow EML,
+oraz nad ustaleniem poprawno"sci rozwi"aza"n dotycz"acych 
+rozwik"lywania prze"ladowania i zbior"ow jawnych zmiennych typowych.
+
+Jeszcze kiedy indziej trzeba by"lo znale"z"c zupe"lnie nowe podej"scie,
+udowodni"c jego poprawno"s"c i zmie"sci"c w ramach systemu ML Kit.
+Niekt"ore z takich przedsi"ewzi"e"c doprowadzi"ly do propozycji zmian w samej definicji EML.
+Tak by"lo w przypadku prac nad zasi"egiem zmiennych typowych, 
+nad warunkami poprawno"sci aksjomat"ow, czy nad reprezentacj"a "slad"ow.
+
+Jednak zdecydowanie najwi"eksze trudno"sci sprawia"ly
+elaboracja aksjomat"ow w sygnaturach oraz zbieranie "slad"ow analizy statycznej.
+Te w"la"snie dwa zagadnienia zostan"a om"owione 
+ze szcze\-g"ol\-n"a dok"ladno"sci"a w nast"epnych rozdzia"lach.
+Opis innych nietrywialnych problem"ow, 
+w szczeg"olno"sci tych wymienionych powy"rej, znajduje si"e w pracy~\cite{JKS96}.
+Natomiast wyczerpuj"acy obraz implementacji analizy statycznej EML, w ramach systemu EML~Kit, 
+mo"rna uzyska"c jedynie poprzez lektur"e jego kodu "zr"od"lowego, wraz z definicj"a Extended ML.
+
+%Wydaje si"e, "re znajomo"s"c definicji Extended ML%~\cite{bib:KST94} 
+%jest niezb"edna do pe"lnego zrozumienia tej pracy.
+%Przydatne by"loby r"ownie"r obycie z algorytmem Damasa i Milnera%~\cite{DM82} 
+%,opisanym w bardziej eleganckim uj"eciu w pracy~\cite{Ler92}.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

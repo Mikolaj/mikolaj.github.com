@@ -1,0 +1,281 @@
+KNOWN BUGS:
+--- record pattern matching is only partially implemented
+--- some modular code may fail [e.g. Sh_Wwprog118], because not (Pp(ls)=Pp(lr) => ls=lr) (spec reconstruction is not complete)
+--- perhaps Ww(Pp) = Pp(Ww) causes errors, by clash of indexes or by length=0
+
+these disappear when memoizing unify is debugged:
+--- unification seems to loop (should fail) on core_middle_8.dul, also takes very long on other erroneous programs with mapping, also on anonymous.dul with r.boolmap.de changed to r.boolmap.unde and maybe even to r.boolmap
+--- memoization of unify is commented out, because it needs debugging
+
+TO DO: (encrypted;)
+1. example based on current compiler, example SubFFunct from Substitution by
+   ind load AppFFunct with {}; ind load Substitution with SubFunct
+17. prove smth. about rewriting, fixpoint may be now a speed bottleneck,
+    see if hash-consing of t_comp removed the need for topological
+    sorting of fix redexes.
+20. proof of correctness of the type reconstruction algorithm
+42. @ operator from Charity
+46. add tools for separate compilation, compiled code as pseudo-module, 
+    like Int, Word,..
+84. add built in int, char, etc. _cleanly_, e.g. Ocaml primitives in Dule
+47. add coinciding algera/coalgera or Views using value t2ind : ...
+58. complete t_map for case of F_COMP (F_ii . F_PR) --- probably
+    not only expressible when there are folds over inductive modules,
+    but isssue warning when t_map gets trivial --- probably typing error
+70. add folds for monstrous inductive types spawned by Ind, then shorten RDule,
+63. what subset of RDule BDule generates
+65. think about default variants, or exceptions, or coexponent and covariables
+66. think about axioms, Ww (m, s), indexed categories
+67. pattern-matching (done: _ for Char)
+68. think about functional or contextual completness
+69. try again higher-order modules, specify exactly where not possible
+78. how to order [let] to show which things are independent,
+94. check what should be right-associative in parser, better errors,
+    example programs with syntax errors
+110. see how bug.ml is solved in Dule and make a paper about Solving conflicts
+114. consider beta-lifting and fun y -> y*x changed to (fun y x -> y*x) x
+123. optimize memoization and hash-consing
+124. eq_pi wrong for ii.pr ??? 
+127. reconstruct file caches (the Dule "make")
+  %not true currently (about overcoming abatraction):
+  %
+  %possible, unless the modules come from outside our program 
+  %(but not as libraries included by $\|load|$),
+  %e.g. from the standard prelude or compiler command-line,
+  %in which case there is no other meta-global level to reach them from.
+132. check that all conditions in elabLDule are true in core_front
+134. use ... as in PhD and list comprehensions as well as pattern matching
+137. make F_wild, not only F_x, add wild flag to F_var
+139. %If it is possible, following should be mentioned in a document like
+     %"requirement for a software to enter the archive" :
+     % - use and provide ocamlfind and META
+     % - can produce ocamldoc documentation 
+140. Add universal type for prototyping
+141. check that I do not use =, but eq
+142. may [occur] happen in f buried in lf_stamp?
+160. is [occurs] in modules possible --- depends on Ww inside get_elem?
+144. (* this below doesn't work, because exponent in map: 
+     value v = ((map it -> map it) ~it:(map it -> map it)) ~it:{} *)
+148. issue warnings when variables undecided after unify in core and modules
+158. args to spec rec equal to stripped are wrongly accepted
+161. treat Ww as COMP and so unify luni in core and modules --- this is hard
+     because Ww is trimmed to fit arguments of Pp(s,...), and wouldn't fit s
+162. how to merge locations? (l_start_1, l_end_2) --- do I need this?
+163. fix (* needen't be small *) in luni
+164. fix memory leaks caused by Caches
+166. better error reporting: multiple locations, flags, 
+     correct location in type-backtracking, etc., pp issues 
+170. is the typing reconstructed by the algorithm the most general?
+171. why [t43] triggers surprise in core_middle
+173. in mod_back turn into internal those errors that are impossible w/o _._
+174. [Sh_compchoose2] should fail? Similarly as weakly guessing [map]?
+175. is [loccurs] good?
+176. should [IList]'s [Elem] have eq? Then eqset recursive.
+179. perhaps recover the el_dule that checks s1=r2 in M_Comp etc.
+181. add first class modules (load M) --- type-checking hard
+182. repair s_CC in mod_front
+183. internal error instead of reconstruction error at error_reporting/mod_middle_1.dul, mod_middle_4.dul, mod_middle_10.dul
+145. repair record patterns in ll_parser.ml
+187. Cope with [Sh_Wwprog118] by (multiple;<) backtracking. In core? No. ?
+188. prettify UpdateIndexAVL'
+189. merge symbol tables with separate compilation, some code already written
+191. what is the complexity of the reconstruction algorithm 
+     (exponential, I know, but assuming a constant bound on the nesting 
+     of [map], or something)?
+192. Make sure and write somewhere all uncommented asserts introduce
+     overhead of at most a multiplicative constant, mark others with warnings
+193. %(if large then {Nat = Nat_optimized; Set = Tree}
+%else {Nat = Nat; Set = List})
+%. Set.add ~e:Nat.zero Set.empty
+%I need uppercase labels in records for this. Is it good?
+194. memoize t_TF, t_map and t_TF_coco'
+196. think about better idioms for multiple signatures of a single module,
+     see old_compiler4.dul where libraries are used unnecessarily
+Probably not true:
+%say the projections out of links are crude,
+%because we banned composition. We make things totally concrete - really?
+%then trim them to new, abstract sigs.
+199. perhaps allow module composition to make projecting cleaner than by |
+197. make sure all (mod_back) code is unpp-unPP-choice independent
+200. improve foot (unpp)
+201. removing
+  SemIDule_for_Elab = IDule | SemIDule :> SemIDule_for_Elab
+should cause an error. Does it? Currently, internal error happens 
+with no-execution.
+202. perhaps revert to substitutions inside case, etc., using special
+  delayed reduction of `T_comp (`T_pr, u) for their code, then before
+  t_comp t u, see if t is `T_pr or composition with (several) `T_pr, etc.
+204. in [trg_bad] [fail] causes failure, with [->]
+205. syntax for Ocaml patterns plus wire current patterns
+206. examples from Charity, possibly a translator
+207. interface ocamlyacc to Dule
+208. see if m|q should be isolated (examples in regression_short)
+209. perhaps each spec in spec rec should have its own parms
+211. sig local type bool =... local value true =... value v : bool (*true*) end
+212. add warinings when matching redundant (_ ilist is empty)
+  e.g. with [`A -> {}|_ -> {}] : ~it:[`A] -> {}, any other warnings?
+214. old version of anonymous.dul does not work, because module
+  NatCoList13 has larger source of codomain --- how to express such idioms?
+    spec NatCoList13 = CoList13 with {Elem = Nat; CoList = NatCoList}
+    NatCoList13 = load CoList13 with 
+      {{Elem = Nat; CoList = NatCoList; NthCoList = NatNthCoList}}
+215. allow :> only when sig1 <= sig2 and disallow [load] under [with]
+  so that we cannot violate abstraction guarantees for libraries 
+  (we do not in the usual coding style) --- renaming combined with partial 
+  application of modules is tricky/deep; perhaps create separate idioms
+
+DONE:
+21. i is sometimes wrongly bound in F_ii, fix make equal upto alpha
+0. prettier modularization in current program
+19. not a module in el_dule
+2. guessing by cod
+9. is this a CC
+11. Comp with different cod, dom
+7. sugar for T_ired (in ElabCDule)
+10. finish type-checking (fold unfold)
+22. finish Ww as needed
+28. List' = copy List in library
+26. Perhaps simplify SDule by identifying S : R with S = -> R
+27. make sigs before -> in SDule.EE local to this EE, also snse
+34. complete ee in dpaf
+32. remove -> rem when possible, better change remove to rem in IList
+31. add mutually recursive types by bounding self in ind or putting fb
+38. add eta to eq_funct
+4. rewriting
+39. COMP (PAIR (ID BB), F_ii) good in Elab fails in Sim. 
+41. make F_ii, case and fold use "up" to avoid alpha, etc.
+35. check that sig in Ww not out of scope
+45. remove up
+23. ad let in prep
+14. forbid gluing Pp in el_base or make this correct
+15. recursive modules to allow irec c: list(c) or higher order mods or poly
+18. look how sim_T_ee lu i u may be written as curry
+44. change idenifiers in t_*f in ElabEDule
+24. iflatten_assert in case in ElabEDule should be Error/OK not assert
+37. remove some lg and other args in EDule but then unpp in DynECore
+25. check unify on F_COMP and paf as a non-normal form in various places
+54. add TE_map and CDule.map
+52. add CutComp 
+50. perhaps remove unPp and domain or else domain : dule -> SigEnv.par
+59. EDule.Bb takes lists while Base takes single functs and trans
+60. check unPp a propos prog27 in short.ml
+55. look at modules: toolLDule.ml dynEDule.ml and above
+13. check in ElabSDule in Ww,Mm and Pair, Inst, Link, Ind
+80. move from a b c to c d e a b for categories
+61. switch ElabCDule.el_typ to OkError
+83. remove or repair local
+88. should Join inherit domain? yes --- analogy to Pp
+89. finish Comp_Pr, in fact a true signature-reconstruction is needed, no
+90. perhaps make Comp left-associative then move Comp_Pr from prep to EM
+85. finish automatic signatures
+30. change ElabCDule.el_valu into OkError: speed + error messages + clear
+95. optimize, e.g. mt_Base
+98. repair *.dul examples when commented out
+99. put into .dud text with unwinded loads and Ii, for soundness
+101. use GDule to conserve memory
+6. general recursion and contradiction with T_ss and other
+8. is covariant arrow good
+64. adjoints as giving rise to labeled product and exponent
+107. remove first three clauses in t_comp
+116. change Cut to Trim
+113. move scripts into Makefile
+118. parse fold f g as (fold f) g
+120. remove li_label and change ilist to list in link
+71. switch all signature names to be the same as module
+62. position information
+79. partial application in T_abs, after true type-reconstruction
+128. Lo_progtest11149 bug in ElabBDule
+131. hold off trans reductions until types infered?
+133. "it" instead of "nut" after Arc
+143. for composing with vars <> should be ID, etc.
+130. check that lc and lt have never non-rigid stamps
+126. move mentos outside
+129. if t_TF was used in core_front we would have problem with ilist stamps
+87. should Comp cut implicitly? Yes, Inst does, to cut cats from args. No.
+149. perhaps make "." "|" simple and only "with" trimming
+151. error: type libraries and specs on declaration rather than on use
+147. make el_sp n correct by adding things to n in Pp, etc.
+153. ensure that link T = T end is illegal --- this is topological sorting
+152. is sig end forth-equal to {}? So is sig-checking sound? y, y --- approx.
+146. in type part remove modules with empty list of cats 
+     --- then type t = EqCat (* = <> *) stays illegal --- OK
+121. assure even dead code is type-checked
+112. rewrite OCaml borrowed code
+77. mark which errors are impossible
+82. a variant of BDule with unifying recursive signatures and type-inference
+92. repair el_sp_types(S_Ww) by inspecting only sign args of m1
+111. name args to fold, etc. g not f1 in code
+75. in IList make inter, diff check eq
+122. colon after comment, which relates to code below
+168. currently unused specs are not fully type-checked
+159. spec recs are computed again for each single spec
+167. use assert and fail in lib.dul, etc.
+143. add [if then else] and [rec] similar to [fold] --- OK and NO
+183. do signatures translated form user language have always defined product?no
+178. ensure test/errors/* report errors agreeing with their names
+118. How isDU in singlePp copes with sig type t end -> sig value v : t end ?
+97. pretty-p of FCore
+105. a lemma that t_FT(f, t) rewrites just as t (T_map is not an obstacle)
+165. is Pp lr always defined here? in mod_back and in M_Ind --- nm
+184. with good map are those in m_Record in comiler.dul correct? yes
+185. add an old version of compiler.dul to test/
+103. symbol table for Index --- is hash-consing too slow? yes, changed
+125. simplify eq_funct_inner and funct_hash
+138. check what Marek says about modules being functors
+169. prettify exceptions for Dule assert and fail
+210. make dule-font.el standalone (but ocaml-mode still needed)
+198. make sure the parser has no reduce/reduce conflicts and few s/r
+177. use asserts in tests (core, strange) to catch errors
+195. change pp so that exponential size types are printed fine with small depth
+203. [Weak] doesn't work, see comment in tools.ml, sometimes even segfaults
+213. pretty-printing of inductive lists
+
+WILL NOT BE DONE:
+3. APPL and simple F_ii f, but not so simple, because f has to be a -> a
+   and after CURRY it's a -> EE(c, a), so fake EE in src is needed as in fold. 
+29. dule instead of ident in library for _, but Z = : {_} for Z is simpler
+5. are adjoints with only beta contradicting --- later
+40. loop w/o smth, no longer hurts
+42. change last appl in t_case in dyncore to have only id as args, old
+16. PP as i in F_ii to allow mutally recursive types, e.g in dynEDule!
+33. error instead of fb when cyclic type abbreviation, based on free vars
+36. remove src and dom from ToolLCore and DynECore 
+43. optimize from ToolLCore to DomEDule
+12. is cheking modules in ElabSDule doable in ElabLDule, no: Comp-2-args,
+    yes: products cannot be defined more, in this Core category
+51. possibly Record only when closed, now close to being catesian, good
+56. perhaps add subtyping to funct and trans, and not only dule, too complex
+91. perhaps compile MDUle to SDule with module type-reconstruction
+93. maybe always enter link with empty pe
+76. finish type-checking in SDule --- circularity --- too long
+57. understand levels, SELF, RIGHTA in prep.ml and simplify
+81. enable testing runs with ElabLDule on, etc.
+49. maybe add src to category, maybe also paf and fig
+96. repair map or generalize product --- only needed for monstrous folds
+117. parsing of LDule, for separate compilation --- w/o sharing too large
+106. combine record f lt, pr likes dom; in, con likes cod, etc. --- complex
+115. see why T_ii is not an action of F_ii on transformations --- in a way is
+108. show how to obtain "theorems for free"
+109. draw the diagrams for the pseudo-adjunctions with weak eta --- no
+     because subst for _ss are not weak eta
+102. make fold end, map end, etc. --- too verbose for typical use
+48. variants to SimLTrans: 1.map 2.no map 3.no tl_ and fix instead of fold
+135. when doing vmap f_COMP the stamp should be refreshed?
+136. simple case with [`Succ n => n + 1] and let f = n => n .`Succ?
+53. add a variant to SemETrans with case, fold taking an open term
+104. is_trivial? are changes needed in unify now after eta-reduction? No-BB.
+156. remove `OK from elabEDul --- at the cost of allowing repeated ids
+155. check S_Mm(S_Mm(..)) --- not important
+154. Hashtbl.replace for add, maybe
+157. %think about S_Bb (r, ...) as S_Bb (M_Id r, ...)
+     %and ww(m, bb (r, ...)) as bb (m, ...)
+150. should Trim only work for Bb sigs? --- no, for Vars as well!
+86. is every automatic or reconstructed signature expressible? - no such:)
+119. (* why this wrong:  Result = Outcome *) in List22 --- no longer
+100. perhaps make el_dule give r not lr to increase sharing --- who cares
+180. do I assume in Ww that context of a signature is a Pp? No.
+     If not perhaps change the examples in semantics of s_WW in thesis. No.
+172. perhaps [value e = ...] in tutorial of the core language?
+186. should sc_BB check if types end in BB? no, el_typ does this
+190. express trim m1 r2 in terms of comp and trim s1 r2, see {sec:modcut}
+

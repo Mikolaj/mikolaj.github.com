@@ -1,0 +1,741 @@
+\part{Elaboration} 
+\label{sec:elaboration}
+
+\section{Static Semantics of Extended ML}
+\label{sec:static}
+   
+The Definition of Extended ML uses a formalism called Natural Semantics 
+(a kind of operational semantics) to describe the static semantics of EML.
+There is a collection of semantic objects, defined using mathematical notation,
+and a set of rules to be used in derivation of judgments of the form
+\[C\ts{\it phrase}\ra A\]
+which can be read ``{\it phrase} elaborates to $A$ in context $C$''
+($C$, $A$ are semantic objects, {\it phrase} is an EML phrase).
+
+Fundamental concepts of the Static Semantics are defined 
+using quantification over derivations. For example
+{\it phrase} is said to possess a type $\tau$ in a context $C$, 
+if there \emph{exists} a derivation of the sentence
+\[C\ts{\it phrase}\ra\tau\]
+In addition some of the conditions in the rules
+express properties of the form ``\emph{for all} derivations
+such that $\phi$ holds, $\psi$ must hold'' --- good examples
+are the principality requirements appearing in the Static Semantics for Modules.
+
+Because of the quantification over infinite sets,
+it is impossible to implement Static Semantics of EML
+literally.
+One has to translate it into a more ``denotational'' form
+(some prefer to call it a ``deterministic'' form)
+before it can be straightforwardly (at last)
+implemented in a programming language like SML.
+Such a reformulation is a non-trivial task.
+
+Fortunately the similar problem concerning SML 
+has been solved quite a while ago.
+Milner's algorithm \cite{DM82} 
+is a well known skeleton for 
+an SML Core language type-checker,
+and the proof of the Principality Theorem
+from Section~A.2 of the Commentary on Standard~ML \cite{MT91}
+is a good guideline for dealing with SML Modules language.
+Last but not least, the ML Kit is a very clean and modest
+reformulation/implementation of the SML Static Semantics,
+based on the above-mentioned ideas. 
+
+Our work on reformulating the EML-specific
+fragments of the Static Semantics sometimes
+amounted to trivial extensions of e.g.
+Milner's algorithm, the only work being
+a struggle with the ML Kit machinery.
+Sometimes however the extension required a proof of correctness,
+or a very good knowledge of the ML Kit design.
+And still sometimes a new approach had to be found,
+proven correct and implemented within the ML Kit frames.
+
+The greater part of our work was being done after
+the Version 1 of the EML definition \cite{bib:KST94} had been published.
+In the result of our work and our discussions with the EML authors
+we found out that some changes to the definition
+would simplify the task of its implementation, or make the definition
+as seen from the perspective of its deterministic reformulation,
+more elegant. The authors of Extended ML
+have agreed to incorporate these changes into the
+future version of the definition. Meanwhile we are going
+to use the Definition of Extended ML, Version 1 as basis for
+the discussion of the elaboration part of the EML Kit,
+referring when necessary to the proposed modifications,
+described in detail in Section~\ref{sec:changes}.
+
+\section{Implementation of EML-specific language constructs}
+\label{sec:eml-spec}
+
+Even those marginally familiar with the EML expect, that to change an SML compiler 
+into an EML compiler one has to add some code for handling
+new EML keywords like $\FORALL$, $\TERM$, etc. 
+
+\subsection{New Core language constructs}
+\label{sec:corestructs}
+
+There are several rules in the EML Static Semantics for the Core, 
+with no counterparts in the SML definition.
+These rules describe the typing of the new EML Core language constructs.
+They are listed in Table \ref{tab:new_core}.
+
+\begin{longtable}{clll}
+\caption[The rules describing the typing of the new Core language constructs]
+{\bf  The rules describing the typing of the new Core language constructs\label{tab:new_core}}\\
+ rule number & \sl form of the construct & \sl name of the construct & \sl phrase class\\
+7.1   &  {$\qmark$}         & undefined value            &  $\atexp$   \\
+11.1  &  $\expb_1\ \|==|\ \expb_2$ & comparison          &  $\exp$     \\            
+11.2  &  {$\existsexp$}     & existential quantifier     &  $\exp$     \\
+11.3  &  {$\forallexp$}     & universal quantifier       &  $\exp$     \\
+11.4  &  {$\termexp$}       & convergence predicate      &  $\exp$     \\
+18.1  &  $\EQTYPE\ \typbind$     & equality type declaration  &  $\dec$     \\
+28.1  &  $\tyvarseq\ \tycon$ {\tt = ?} & question mark type binding &  $\typbind$ \\ 
+\end{longtable}
+
+\noindent Let's take a closer look at the simplest one:
+$$        % convergence predicate
+\frac{\C\ts\expb\ra\tau,\U,\trace}
+     {\C\ts\termexp\ra\BOOL,\U,\emptylist}
+\eqno(11.4) 
+$$ 
+This can be read: "if $\expb$ can elaborate in the context $C$ to the type $\tau$,
+set $U$ and trace $\trace$ then $\termexp$ can elaborate in the
+context $C$ to the type $\BOOL$, set $U$ and empty trace".
+For the purpose of implementation we can read it
+"if $\expb$ elaborates in the context $C$ to its most general type $\tau$,
+set $U$ and its most general trace $\trace$ then $\termexp$ elaborates in the
+context $C$ to the type $\BOOL$, set $U$ and empty trace". 
+This reformulation can be justified by an easy proof
+that Milner's algorithms extended to cover this rule remains correct.
+
+Here is the implementation of the rule:
+{\small
+\begin{verbatim}
+fun elab_exp (C, exp) =
+  case exp of 
+  ...
+  (* Convergence predicate expression *)                    (* rule 11.4 *)
+     | IG.CONVERexp(i, exp) => 
+         let
+           val (S, tau, out_exp) = elab_exp(C, exp)
+         in
+           (S, StatObject.TypeBool, OG.CONVERexp(okConv i, out_exp))
+         end
+\end{verbatim}
+} 
+
+\noindent \|CONVERexp| is the name of the abstract syntax tree node 
+(see Section~\ref{sec:ast}) representing the $\TERM$ construct.
+\|i| is an info item used to propagate error messages and other information during elaboration.
+In this case it's converted using \|okConv|, to indicate that the elaboration was successful
+in this particular point. \|S| is a substitution needed 
+by the machinery of Milner's algorithm,
+The code looks quite straightforward, partly because the $U$ set and the trace are taken care of elsewhere.
+
+The implementation of other rules is not much more conceptually complicated,
+although expressing some of the side conditions, such as the one from rule 18.1:
+$$       
+\forall(\theta,\CE)\in \Ran\TE,\ \theta {\rm\ admits\ equality} 
+$$ 
+which from a mathematical point of view looks very innocently,
+required a lot of struggle with the implementation of the Static Objects.
+
+\subsection{Axioms}
+\label{sec:axioms}
+
+Axioms can appear in two different places ---
+in structures (rule~57.1) and in signatures (rule~74.1).
+When appearing inside structures axioms may have quite a complicated body, e.g.:
+
+\begin{verbatim}
+    axiom exists i => 1 - i == 1 + i 
+      and ((fn x => x) 3) terminates
+\end{verbatim}
+
+\noindent
+Inside signatures they can be even more complex, e.g.:
+\begin{verbatim}
+    axiom let 
+              structure Order : ORDER = ? 
+          in 
+              forall (x, y) => (Order.leq (x, y)) proper  
+          end 
+      and (fn x => x) == (fn y => y)
+\end{verbatim}
+The rules describing the semantics of various possible forms of axiom bodies 
+are listed in Table \ref{tab:axiom_bodies}.
+
+\begin{longtable}{cll}
+\caption[The rules describing the semantics of various possible forms of axiom bodies]
+{\bf  The rules describing the semantics of various possible forms of axiom bodies\label{tab:axiom_bodies}}\\
+ rule number & \sl form & \sl phrase class\\
+57.1  &  $\axiomdec$           &  $\strdec$    \\
+61.1  &  $\longaxiombind$      &  $\axiombind$ \\            
+61.2  &  $\expb$               &  $\axexp$     \\
+74.1  &  $\axiomspec$          &  $\spec$      \\
+86.2  &  $\axiomdescription$   &  $\axiomdesc$ \\
+86.3  &  $\longspecexp$        &  $\specexp$   \\
+\end{longtable}
+
+\noindent The implementation of all of these rules except rule 61.2
+was quite easy.
+Rule 61.2 defines the elaboration of the simplest form of an axiom body:
+$\expb$ --- an expression with no question marks allowed inside.
+Modified according to our suggestions (see Sections~\ref{sec:principality} and \ref{sec:bool}),
+rule 61.2 looks as follows:
+$$
+\frac{
+\of{\C}{\B}\ts\expb\ra\BOOL,\emptyset,\trace
+\qquad
+\localfrac{\of{\C}{\B}\ts\expb\ra\tau,\emptyset,\trace'}{\cl{}{\trace}\succ\trace'\wedge\tau=\BOOL}}
+{\B\ts\expb\ra\cl{}{\trace}}
+\eqno(61.2)
+$$
+
+The implementation of this rule was quite difficult and complicated.
+A major problem was, that a trace collected at one of the intermediate
+stages of the $\expb$ elaboration cannot be closed with respect
+to context of this stage, because the context needn't be principal yet. 
+We had to design an involved algorithm to correctly organize the ongoing
+collection, updating and closure of traces during elaboration.  
+The simplified version of the skeleton of the implementation
+of rule 61.2 is given below. The \|ElabDec| module referred to 
+frequently in this piece of code is responsible for a large 
+part of the Core language elaboration, and contains 
+(by our decision) most of our tools for elaboration of axioms.
+{\small
+\begin{verbatim}
+(****************************************************)
+(* Axiomatic expressions - Definition (eml) page 47 *)
+(****************************************************)
+
+fun elab_axexp (B : Env.Basis, axexp : IG.axexp) : OG.axexp =
+    case axexp of
+         IG.AXIOM_EXPaxexp(i, exp : IG.exp) =>
+           let	
+               val (tau, out_exp) = 
+                   ElabDec.elab_resolve_close_and_process_exp(
+                   Env.C_of_B B, exp)	
+           in
+               if tau = ElabDec.TypeBool then 
+                   if ElabDec.U_of_exp_empty(exp) then 
+                       OG.AXIOM_EXPaxexp(okConv i, out_exp)
+                   else OG.AXIOM_EXPaxexp(errorConv(i, 
+                       ErrorInfo.UNGUARD_EXPLICIT_TV_IN_AXEXP), out_exp)
+               else OG.AXIOM_EXPaxexp(errorConv(i, 
+                   ErrorInfo.AXEXP_SHOULD_BE_BOOL), out_exp)
+           end
+\end{verbatim}
+} 
+\noindent
+
+\section{Implementation of the EML module system}
+\label{sec:modules}
+
+\subsection{Structure bindings}
+\label{sec:struct_bind}
+
+In the Definition of Standard ML rule 62 was describing
+completely the elaboration of structure bindings.
+In the Definition of Extended ML the abstract syntax tree
+has changed due to the introduction of undefined structure bindings
+and the restrictions concerning guardedness.
+In the result, rule 62:
+$$
+\frac{\B\ts\singlestrbind\ra\SE,\trace\qquad
+\langle\plusmap{\B}{\NamesFcn\SE}\ts\strbind\ra\SE',\trace'\rangle}
+     {\B\ts\longstrbind\ra\SE\ \langle+\SE'\rangle,\optappend{\trace}{\trace'}}
+\eqno(62) 
+$$
+serves only for handling the optional components of structure bindings.
+The task of defining the semantics of structure/signature matching and related issues
+falls now to the rules describing the elaboration of single structure bindings.
+
+\subsection{Single structure bindings}
+\label{sec:single_bind}
+
+There are two very important and new features of the EML module system.
+First, modules behave like abstractions, which means that the semantics
+of a module is fully determined by its signature.
+Second, undefined structure and functor bindings are introduced. 
+In effect, one can declare a module and safely refer to it
+even before the implementation of this module is written.
+
+The EML rules for single structure bindings 
+express the semantics of structures-abstractions,
+of undefined structure bindings and of unguarded structure bindings
+without too much verbosity, in a unified, non-conflicting way:
+$$
+\frac{
+\begin{array}{c}
+\B\ts\psigexp\ra (\N)\S,\trace\qquad
+       \B\ts\strexp\ra\S',\trace'\\
+\N\cap\of{\N}{\B}=\emptyset\qquad(\N)\S\geq\S''\prec\S'
+\end{array}
+}
+     {\B\ts\singledef\ra\{\strid\mapsto\S\},\ \append{\trace}{\trace'}}
+\eqno(62.1)
+$$
+
+$$       % structure binding without body
+\frac{ \B\ts\psigexp\ra (\N)\S,\trace
+\qquad\N\cap\of{\N}{\B}=\emptyset}
+     {\B\ts\singleundef\ra\{\strid\mapsto\S\},\ \trace}
+\eqno(62.2)
+$$      
+
+$$      % structure binding without signature
+\frac{\B\ts\strexp\ra\S,\trace}
+     {\B\ts\singleunguarded\ra\{\strid\mapsto\S\},\ \trace}
+\eqno(62.3)
+$$  
+Note that the third premise in rule 62.1 is always satisfied in the implementation, 
+because at the beginning of elaboration of $\psigexp$ 
+the free names are chosen to be distinct from the names
+of the basis, and in the meantime 
+no alpha-conversion of the result is made.
+
+Here is the fragment of the EML Kit source code directly corresponding to these rules:
+{\small
+\begin{verbatim}
+(********************************************************)
+(* Single Structure Bindings - Definition (eml) page 47 *)
+(********************************************************)
+
+fun elab_sglstrbind (B: Env.Basis, sglstrbind: IG.sglstrbind):
+  (Env.StrEnv * OG.sglstrbind) =
+
+  case sglstrbind of 
+
+   (* Single structure bindings *)
+   IG.SINGLEsglstrbind(i, strid, psigexp, strexp) =>
+    let
+      val (S', out_strexp) = elab_strexp(B, strexp)
+      val (Sigma, out_psigexp) = elab_psigexp(B, psigexp)
+      val (i', S'')  = sigMatchStr(i, Sigma, S')
+      val (N, S) = Stat.unSig(Sigma)
+    in
+      (Env.singleSE(strid, S),
+       OG.SINGLEsglstrbind(i', strid, out_psigexp, out_strexp))
+    end
+
+   (* Undefined structure bindings *)
+ | IG.UNDEFsglstrbind(i, strid, psigexp) =>
+    let
+      val (Sigma, out_psigexp) = elab_psigexp(B, psigexp)
+      val (N, S) = Stat.unSig(Sigma)
+    in
+      (Env.singleSE(strid, S),
+       OG.UNDEFsglstrbind(okConv i, strid, out_psigexp))
+    end
+
+   (* Unguarded structure bindings *)
+ | IG.UNGUARDsglstrbind(i, strid, strexp) =>
+    let
+      val (S, out_strexp) = elab_strexp(B, strexp)
+    in
+      (Env.singleSE(strid, S),
+       OG.UNGUARDsglstrbind(okConv i, strid, out_strexp))
+    end
+\end{verbatim}
+}
+\noindent
+As can be seen, the result of elaboration of the single structure binding
+is a structure environment \|Env.singleSE(strid, S)| obtained from the signature, 
+rather than from the structure itself. Similarly, the result of elaboration of 
+the unguarded structure binding is the structure environment obtained from its signature.
+
+\subsection{Functor bindings}
+\label{sec:funct_bind}
+
+Analogously as in the case of structures, the functors in EML
+behave like parameterized abstractions
+and the undefined functor bindings are introduced.
+Rules 99 and 99.1 describe this in detail:
+$$
+\frac{
+      \begin{array}{c}
+      \B\ts\psigexp\ra(\N)\S,\trace_1
+         \qquad\N\cap\of{\N}{\B}=\emptyset\qquad\B'=\B\oplus\{\strid\mapsto\S\}\\
+         \B'\ts\psigexp'\ra\sig,\trace_2 \qquad
+      \B'\ts\strexp\ra\S',\trace_3\\
+        \sig\geq\S''\prec\S' \qquad
+      \langle\B\ts\funbind\ra\F,\trace_4\rangle
+      \end{array}
+     }
+     {
+      \begin{array}{c}
+       \B\ts\emlfunbinder\ \emloptfunbinder\ra\\
+       \qquad \qquad
+              \{\funid\mapsto(\N)(\S,\sig)\}
+              \ \langle +\ \F\rangle,\ \append{\trace_1}{\append{\trace_2}{\optappend{\trace_3}{\trace_4}}}
+      \end{array}
+     } 
+\eqno(99)
+$$
+
+$$      % functor binding without body
+\frac{
+      \begin{array}{c}
+      \B\ts\psigexp\ra(\N)\S,\trace_1
+         \qquad
+         \B\oplus\{\strid\mapsto\S\} \ts\psigexp'\ra\sig,\trace_2 \\
+      \N\cap\of{\N}{\B}=\emptyset\qquad\langle\B\ts\funbind\ra\F,\trace_3\rangle
+      \end{array}
+     }
+     {
+      \begin{array}{c}
+       \B\ts\emlnobfunbinder\ \emloptfunbinder\ra\\
+       \qquad \qquad
+              \{\funid\mapsto(\N)(\S,\sig)\}
+              \ \langle +\ \F\rangle,\ \append{\trace_1}{\optappend{\trace_2}{\trace_3}}
+      \end{array}
+     }
+\eqno(99.1)
+$$ 
+The implementation of these rules was largely analogous
+to the implementation of the rules for structures.
+
+The second premise in rule 99 is always satisfied in the EML Kit, 
+because at the beginning of elaboration of $\psigexp$ 
+the free names are chosen to be distinct from the names
+of the basis, and in the meantime 
+no alpha-conversion of the result is made.
+As a result, we had no need of implementing 
+any explicit check for this side condition.
+
+\section{The work related to the changes in presentation conventions}
+\label{sec:presentation}
+
+\subsection{The type variable {\tt num}}
+\label{sec:num}
+
+There is a special type variable {\tt num} in the Definition of Extended ML.
+The definition of generalization is changed with respect
+to the Definition of Standard ML, 
+and the definition of a substitution is added.
+In effect it is possible to capture formally the notion of \emph{overloading resolution}.
+
+In the SML definition, where the overloading resolution is described
+informally, it is only required to take place at each $\topdec$.
+In the EML overloading resolution has to be done at $\strdec$
+for declarations (see rule 57, where principality for $\dec$ is required),
+and at $\axexp$ for axioms (see Section~\ref{sec:principality}).
+
+Fortunately, the place where most SML compilers, including the ML Kit, 
+choose to resolve overloading is $\strdec$, so no general changes 
+to the existing overloading resolution for declarations were necessary.
+The functions performing resolution of overloading inside declarations 
+only had to be extended for the sake of the new EML constructs 
+and put to work of resolving overloading inside axiom bodies.
+
+\subsection{The $U$ sets}
+\label{sec:u_sets}
+
+Let's suppose we have a guarding construct $G$ 
+(see~\cite{bib:KST94}, Section~4.6 for the definition of guarding constructs),
+which is a fragment of some larger piece of SML or EML code.
+The $U$ set for $G$ according to the SML definition  
+is the set of explicit type variables scoped at $G$.
+The $U$ set for $G$ according to the EML definition
+is the set of explicit type variables occuring unguarded in $G$.
+
+This is not the same, because the set of unguarded variables 
+of a guarding construct $G$ contains all the variables scoped at $G$
+and additionally every variable that is scoped at one of the outer guarding 
+constructs, but occurs unguarded in $G$.
+
+Let's look at the following example:
+
+\begin{verbatim}
+  val d = (fn x : 'a => x, let val f = (fn y : 'a => y) in 1 end)
+\end{verbatim}
+
+\noindent
+\begin{tabular}[h]{lll}
+Here the SML $U$'s are: & for the first val & ---  {\{\|'a|\}},\\
+                        & for the second    & ---  ~$\emptyset$.\\ 
+But the EML $U$'s are:  & for the first val & ---  {\{\|'a|\}},\\
+                        & for the second    & ---  {\{\|'a|\}}.\\
+\end{tabular}
+
+Fortunately, the function which computes the SML $U$'s in the ML Kit, 
+does it by first computing the EML $U$'s and then subtracting 
+variables scoped at outer guarding constructs.      
+We extended the functions, computing EML $U$'s, to deal with the EML-specific constructs
+and made the functions visible in 
+the signatures of the modules containing them.
+
+\section{Implementation of the corrections to the SML definition}
+\label{sec:errors}
+
+There are some known errors in the Definition of Standard ML
+(see \cite{Kah93} and \cite{Kah95}).
+The EML definition adapted the suggested corrections to these
+errors.
+This has obliged us to incorporate analogous changes
+to the EML Kit. We describe them in this section.
+See also Section~\ref{sec:state_errors}.
+
+\subsection{Local declarations}
+\label{sec:let_error}
+
+Rule 6 of the Static Semantics of EML looks as follows:
+$$
+\frac{\begin{array}{c}
+\C\ts\dec\ra\E,\trace\qquad\C\oplus\E\ts\exp\ra\tau,\U,\trace'\\
+\TyNamesFcn\tau\subseteq \of{\T}{\C}
+\end{array}}
+     {\C\ts\letexp\ra\tau,\U,\append{\trace}{\trace'}}  
+\eqno(6) 
+$$ 
+In rule 6 of the Static Semantics of SML there
+is no third premise. This may lead to an unsound
+elaboration (see \cite{Kah93} for details).
+
+The third premise is implemented in the EML Kit,
+although the elaboration algorithm is sound even without this change, 
+because of the side-effects used to generate fresh type names.
+
+As a result of implementing this correction some SML programs, like
+
+\begin{verbatim}
+    let
+        datatype int_list = 
+            CONS of int * int_list 
+          | NIL
+    in 
+        CONS
+    end   
+\end{verbatim}
+
+\noindent
+are rejected by the EML Kit. 
+This is signaled by a proper error message (see Section~\ref{sec:messages}).
+
+\subsection{Match rules}
+\label{sec:mrule_error}
+
+In rule 16 the EML definition has $\C\oplus\VE$ instead of $\C+\VE$ 
+found in the SML definition (see \cite{Kah95}):
+$$
+\frac{\C\ts\pat\ra(\VE,\tau),\U,\trace\qquad\C\oplus\VE\ts\exp\ra\tau',\U',\trace'}
+     {\C\ts\longmrule\ \ra\tau\rightarrow\tau',\ \U\cup\U',\ \append{\trace}{\trace'}}
+\eqno(16) 
+$$
+As in the previous case, the change is adopted in the EML Kit,
+although even without this change, the elaboration is sound,
+because of the side-effects used to generate fresh type names.
+
+\subsection{Well-formedness predicate}
+\label{sec:well_error}
+
+The well-formedness predicate, described in the EML definition, Section~5.3,
+is strengthened with respect to the SML definition well-formedness predicate.
+We have implemented the additional check of signature type structures' names
+and refrained from making a special check for functor signature type structures' names,
+because it's unnecessary in an implementation according to \cite{MT91} and \cite{BRTT93}.
+
+\section{Proposed changes to the Static Semantics of EML}
+\label{sec:changes}
+
+\subsection{The side condition for rule 17}
+\label{sec:side}
+
+For compatibility reasons, a side condition similar to the
+one in rule 17 of the SML definition:
+$$
+\U\cap\TyVarFcn\VE'=\emptyset
+$$
+should be added to rule 17 of the EML definition.
+
+Recall the example from Section~\ref{sec:u_sets}:
+
+\begin{verbatim}
+  val d = (fn x : 'a => x, let val f = (fn y : 'a => y) in 1 end)
+\end{verbatim}
+
+\noindent
+\begin{tabular}[h]{lll}
+Here the SML $U$'s are: & for the first val & ---  {\{\|'a|\}},\\
+                        & for the second    & ---  ~$\emptyset$.\\ 
+But the EML $U$'s are:  & for the first val & ---  {\{\|'a|\}},\\
+                        & for the second    & ---  {\{\|'a|\}}.\\
+\end{tabular}
+
+Now that we see the difference between SML $U$'s and EML $U$'s
+we would think that rule 17 would behave differently in SML than in EML. 
+(Rule 17 is the only rule of the SML definition where the $U$'s are used.)
+
+Unexpectedly, if we drop the side condition in the SML rule 17, 
+which makes the EML rule 17 and the SML rule 17 so modified 
+identical up to notation (actually up to imperative features
+missing in EML and traces not present in SML as well, 
+but this is not important for this argument), we observe
+that both rules give identical results.
+This is because in rule 17 the $U$ sets are used by adding them to the context.
+And this context always contains the explicit type variables scoped 
+at the outer guarding constructs (the variables which
+make the difference between EML $U$'s and SML $U$'s) 
+and so it doesn't matter if one adds unguarded variables or scoped variables. 
+
+Even more unexpectedly, if we do not remove the side condition from
+SML rule 17, but instead add the mentioned side condition to the EML rule 17,
+which again makes these rules almost identical, we get that the rules behave 
+differently: the above example which type-checks in SML, doesn't type-check
+in EML with rule 17 enriched with the side condition.
+
+The way out is to add to EML rule 17 not the SML side condition:
+$$
+\U\cap\TyVarFcn\VE'=\emptyset
+$$
+but a modified one:
+$$
+\U\cap\TyVarFcn\VE'\subseteq\of{\U}{\C}
+$$
+Now rule 17 of SML and rule 17 of EML behave identically.
+
+To conform to the EML tradition of expressing properties using traces 
+rather than other semantic objects, it's actually 
+better to make this side condition a bit stronger:
+$$
+\U\cap\TyVarFcn\cl{\C}{\trace}\subseteq\of{\U}{\C}
+$$
+This modification allows us to add similar side conditions
+to rules 11.1--11.3, which describe EML-specific guarding constructs.
+
+\subsection{The principality requirement for axiom bodies}
+\label{sec:principality}
+
+The second premise of rule 57.1
+should be moved to rule 61.2,
+thus changing the place where the principality is imposed
+on axioms in structures (which doesn't do any harm)
+and adding the principality requirement for the axioms in signatures.
+
+As a result specifications like:
+\begin{verbatim}
+    sig 
+        axiom let 
+                  fun g a b = a + b 
+              in 
+                  true 
+              end 
+    end 
+\end{verbatim}
+where overloading in axiom bodies cannot be resolved,
+become incorrect.
+
+Moreover, the relation between the Modules part of the Static Semantics and the Core part 
+is being made simpler and more unified, and a good reformulation of Trace
+is made possible (see Section~\ref{sec:reformulation}).
+
+\subsection{Axiom bodies should be of type $\BOOL$}
+\label{sec:bool}
+
+In order to reject nonsensical axiom bodies,
+the requirement in rule 61.2 that $\expb$ has to be able to elaborate to $\BOOL$
+should be changed to a stronger one, that whenever $\expb$ elaborates
+to $\tau$, the $\tau$ is $\BOOL$.
+
+Programs like:
+
+\begin{verbatim}
+    exception Oj
+    fun f a = raise Oj
+    axiom (f 1)
+\end{verbatim}
+
+\noindent
+would be banned in this way. 
+(The EML Kit issues an error message whenever this restriction is violated. 
+See Section~\ref{sec:messages} for information about error messages.)
+
+\subsection{Reformulation of Modules Trace}
+\label{sec:reformulation}
+
+The Core Trace is defined in a clean and precise way:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\mbox{\SimTrace} \uplus\TraceScheme}\\
+\SimTrace = \Type\uplus\Env\uplus(\Context\times\Type)\uplus\phantom{\Env}\\
+\qquad (\Context\times\Env)\uplus\TyEnv\uplus(\VarEnv\times\TyRea)\\
+\TraceScheme = \uplus_{k\geq 0} \TraceScheme^{(k)}\\
+\TraceScheme^{(k)}=\mbox{TyVar}^k\times\Trace
+\end{array}
+\end{displaymath} 
+
+In the Version 1 of the Definition of Extended ML, 
+Modules Trace is defined as follows:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\SimTrace\uplus\TraceScheme\uplus\BoundTrace}\\
+\BoundTrace=\NameSets\times\Trace\\
+\SimTrace = \SimTrace_{\rm COR}\uplus\StrNames\uplus\Rea\uplus\VarEnv\\
+\end{array}
+\end{displaymath} 
+The $\TraceScheme$ mentioned here is the Core $\TraceScheme$.
+
+Why is this definition of Modules Trace not satisfactory?
+\begin{itemize}
+\item
+   Core Trace, without any apparent reason, appear in the definition 
+   of Module Trace not as a whole $\Trace_{\rm COR}$, but as two separated fragments:
+   $\TraceScheme$ and $\SimTrace_{\rm COR}$.
+   This is obviously against principles of modular construction,
+   and precludes thinking of the Core Trace as an abstract domain 
+   with certain operations, forcing one to remember 
+   the implementation details of Core Trace when studying Modules Trace. 
+\item
+   Rules 61.2, 61.1 and 57.1 of the Version 1 of the EML definition 
+   can be considered ``type-correct'', but only at the cost of either:
+\begin{itemize}
+\item 
+     implicitly injecting $\Trace_{\rm COR}$ into $\Trace$ in rule 61.2
+     and implicitly extending the definition of ${\rm Clos}$ (which is defined in
+     the EML definition to operate on the Core Trace and not Modules Trace) 
+     for use in rule 57.1, or
+\item 
+     making the ``type'' of rule 61.2 `$\B\ts\axexp\ra\trace_{\rm COR}$' 
+     instead of `$\B\ts\axexp\ra\trace$', making the ``type'' of 
+     rule 61.1 `$\B\ts\axiombind\ra\trace_{\rm COR}$' 
+     (note that we thus assume that $\Trace_{\rm COR}$ is 
+     implemented as a Tree of some objects),
+     and finally implicitly injecting $\TraceScheme$ into the $\Trace$ in rule 57.1,
+     after using the ${\rm Clos}$ which has the type 
+     $\Trace_{\rm COR}\to\TraceScheme$ in this rule.
+\end{itemize}
+\item
+   Rule 57 doesn't seem to ``type-check'' in any way.
+\end{itemize}
+
+We propose the following definition of Modules Trace:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\Trace_{\rm COR}\uplus\SimTrace\uplus\BoundTrace}\\
+\BoundTrace=\NameSets\times\Trace\\
+\SimTrace = \StrNames\uplus\Rea\uplus\VarEnv\uplus\TyEnv\uplus\Env\\
+\end{array}
+\end{displaymath}
+
+Why is it better?
+\begin{itemize}
+\item 
+   The relation of Modules Trace to Core Trace is made clearer
+   and more modular. 
+\item 
+   When the place where ${\rm Clos}$ is performed is moved 
+   to rule 61.2, as described in Section~\ref{sec:principality},
+   rules 57, 57.1, 61.1 and 61.2 "type-check" in a straightforward way. 
+\item 
+   An implicit injection of $\Trace_{\rm COR}$ into $\Trace$
+   is involved when needed (and is not involved
+   when is not needed, as e.g. when injecting $\TyEnv$ 
+   into $\Trace$ in rule 71, which of course doesn't
+   have anything to do with Core).
+\end{itemize}
+
+

@@ -1,0 +1,4 @@
+spec M = sig type t end
+
+M = :: ~M1:M -> M
+  struct type t = M1 . list end

@@ -1,0 +1,177 @@
+begin
+
+    glocon input : int ;
+    vircon output : int -> int ;
+    privar aq : int -> int ;
+    pricon n : int ;
+
+    pricon lob : int ;
+    pricon ctrl : int ;
+    pricon empty : int -> int ;
+    pricon dom : ( int -> int ) -> int ;
+    pricon hib : ( int -> int ) -> int ;
+    pricon val : ( int -> int ) -> int -> int ;
+    pricon high : ( int -> int ) -> int ;
+    pricon hiext : ( int -> int ) -> int -> int -> int 
+
+    lob :vir= 1 ;
+
+    ctrl :vir= lob - 1 ;
+
+    empty :vir= begin 
+
+		    glocon ctrl ;
+
+		    glocon input : int ;
+		    vircon output : int
+
+		    if input = ctrl -> output :vir= 0
+		    fi
+
+		end ;
+
+    dom :vir= begin
+
+		  glocon ctrl ;
+
+		  glocon input : int -> int ;
+		  vircon output : int
+
+		  output :vir= input . ctrl
+
+	      end ;
+
+    hib :vir= begin
+
+		  glocon lob ;
+		  glocon dom ;
+
+		  glocon input : int -> int ;
+		  vircon output : int
+
+		  output :vir= dom . input + lob - 1
+
+	      end ;
+
+    val :vir= begin
+
+		  glocon lob ;
+		  glocon hib ;
+
+		  glocon input : int -> int ;
+		  vircon output : int -> int ;
+		  pricon aux_arr : int -> int
+
+		  aux_arr :vir= input ;
+		  output :vir= begin 
+
+				   glocon lob ;
+				   glocon hib ;
+
+				   glocon input : int ;
+		    		   vircon output : int ;
+				   glocon aux_arr
+
+				   if input >= lob and input <= hib . aux_arr -> 
+				       output :vir= aux_arr . input
+				   fi
+
+			       end 
+
+	      end ;
+
+    high :vir= begin
+
+		   glocon hib ;
+		   glocon val ;
+
+		   glocon input : int -> int ;
+		   vircon output : int
+
+		   output :vir= val . input . ( hib . input )
+
+	       end ;
+
+    hiext :vir= begin
+
+		    glocon ctrl ;
+		    glocon dom ;
+		    glocon hib ;
+		    
+    		    glocon input : int -> int ;
+		    vircon output : int -> int -> int ;
+		    pricon aux_arr : int -> int
+
+		    aux_arr :vir= input ;
+		    output :vir= begin 
+
+				     glocon ctrl ;
+				     glocon dom ;
+				     glocon hib ;
+				     
+			  	     glocon input : int ;
+		    		     vircon output : int -> int ;
+				     glocon aux_arr ;
+		                     pricon aux_val : int
+
+    		  		     aux_val :vir= input ;
+                                     output :vir= begin 
+
+						      glocon ctrl ;
+						      glocon dom ;
+						      glocon hib ;
+						      
+				                      glocon input : int ;
+		    		                      vircon output : int ;
+				                      glocon aux_arr ;
+						      glocon aux_val 
+						      
+						      if input = ctrl -> 
+							  output :vir= dom . aux_arr + 1
+						      [] input = hib . aux_arr + 1 -> 
+							  output :vir= aux_val
+						      [] input <> ctrl and input <> hib . aux_arr + 1 -> 
+						          output :vir= aux_arr . input
+						      fi
+
+			                          end
+
+			         end 
+
+		end ;
+
+if input >= 1 ->
+
+    n :vir= input ;
+
+    begin
+
+	glocon empty ; glocon hiext ; glocon dom ; glocon high ; glocon val ;
+
+	virvar aq : int -> int ; glocon n : int ;
+	privar i2 : int ; privar i3 : int ; privar i5 : int ;
+	privar x2 : int ; privar x3 : int ; privar x5 : int 
+
+	aq :vir= empty ; aq := hiext . aq . 1 ;
+	i2 :vir= 1 ; i3 :vir= 1 ; i5 :vir= 1 ;
+	x2 :vir= 2 ; x3 :vir= 3 ; x5 :vir= 5 ;
+	do dom . aq <> n -> 
+	    if x3 >= x2 and x2 <= x5 -> aq := hiext . aq . x2 
+	    [] x2 >= x3 and x3 <= x5 -> aq := hiext . aq . x3 
+	    [] x2 >= x5 and x5 <= x3 -> aq := hiext . aq . x5
+	    fi ;
+	    do x2 <= high . aq -> i2 := i2 + 1 ; x2 := 2 * val . aq . i2 
+	    od ; 
+	    do x3 <= high . aq -> i3 := i3 + 1 ; x3 := 3 * val . aq . i3 
+	    od ; 
+	    do x5 <= high . aq -> i5 := i5 + 1 ; x5 := 5 * val . aq . i5 
+	    od
+	od
+
+    end ;
+
+    output :vir= aq
+
+fi
+
+end

@@ -1,0 +1,79 @@
+\documentclass[a4paper]{report}
+\usepackage[polish]{babel}
+%\documentstyle[a4,12pt,polish]{book}
+
+\flushbottom
+
+\newcounter{ex}[chapter]
+\def\Item[#1]{\item}
+\newenvironment{exercises}
+{\begin{list}{{\bf Zadanie \thechapter.\theex}}{\usecounter{ex}}}
+{\end{list}}
+\let\zadania\exercises
+\let\endzadania\endexercises
+\def\f#1{\ifmmode\mathord{\mbox{\em #1}\;}\else{\em #1\ }\fi}
+%\def\f#1{\ifmmode\mathord{\mbox{\|#1|}\;}\else{\|#1|\ }\fi}
+\def\|{\verb|}
+
+%%%%%%%%%%%%%%%%%%%
+%
+%\includeonly{lab9i10}
+%%%
+%\sfvariables
+%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\author{Marcin Benke\thanks{
+   Instytut Informatyki, 
+% Wydzia"l Matematyki, Informatyki i Mechaniki, 
+   Uniwersytet Warszawski.}
+\\{\tt benke@mimuw.edu.pl}\\\emph{redakcja i rozdzia"l~\ref{MBchapter}} 
+\and
+Grzegorz Grudzi"nski$^2$\\{\tt gsg@mimuw.edu.pl}\\\emph{rozdzia"l~\ref{GGchapter}}
+\and
+Miko"laj Konarski$^2$\\{\tt mikon@mimuw.edu.pl}\\\emph{pozosta"le rozdzia"ly}}
+
+%\footnotemark[\value{footnote}]
+
+\title{Tajny Skrypt Lab SML\thanks{Nazwa jest historyczna.}\\v 0.33}
+
+%\special{!userdict begin /bop-hook{gsave 200 30 translate 60 rotate
+%/Times-Roman findfont 150 scalefont setfont 90 90 moveto 0.8 setgray
+%(TAJNE) show grestore}def end}
+
+\maketitle
+
+%\begin{titlepage}
+%\hbox{}
+%\clearpage
+%\end{titlepage}
+\tableofcontents
+
+\include{disclaim}
+\include{lab1} 
+\include{lab2}
+\label{lab:list}
+\include{lab3}
+\include{lab4}
+\include{lab5}
+\include{lab6}
+\include{lab7}
+\label{MBchapter}
+\chapter{
+Leniwo"s"c}
+\label{GGchapter}
+\include{lab9}
+\include{lab10}
+\appendix
+\include{zal}
+\include{rozw}
+\include{jak}
+
+\end{document}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

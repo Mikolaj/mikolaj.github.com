@@ -1,0 +1,25 @@
+Er = 
+:: sig value v : {intmap : ind c: [`Nil|`Cons {h : {x : [`A];
+			     y : [`A]}; t : c}];
+                  boolmap : ind c: [`Nil|`Cons {h : {x : [`True|`False];
+			      y : [`True|`False]}; t : c}]}
+end
+  struct 
+    value v =
+let intlist = {h = `A; 
+               t = {h = `A; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_delta = 
+      fun ~it -> {x = it; y = it}
+in
+  {intmap =
+     match intlist with
+     map monomorphic_delta
+  ;boolmap = 
+     match boollist with
+     map monomorphic_delta
+  }
+  end

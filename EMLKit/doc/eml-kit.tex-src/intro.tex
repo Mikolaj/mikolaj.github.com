@@ -1,0 +1,96 @@
+\part{Introduction}
+\label{sec:intro}
+
+The EML Kit is a parser, type-checker and evaluator of
+the Extended ML programming language. It has been developed for three purposes.
+
+\section{The EML Kit as a programming tool}
+\label{sec:tool}
+
+The EML Kit can be used for type-checking and testing EML programs
+at all stages of their development. 
+
+The EML Kit can help in teaching EML or SML programming
+or in developing SML software with the EML formalism. 
+In the latter case, if the efficiency of the resulting
+code is important, the EML Kit should be used in conjunction
+with a production quality SML compiler. An EML program 
+should be transformed, with the help of the EML Kit, from its 
+initial high-level EML form, through all the intermediate EML stages,
+to the final SML code. Then the SML code should be compiled by the SML compiler.
+
+The executable called \|eml|, which parses, type-checks and evaluates EML programs,
+seems to be the most suitable for people using the EML Kit as a programming tool. 
+The user interface of this executable is similar to the user interface 
+of the well known SML/NJ compiler.
+The \|use| primitive is accessible at the the top-level,
+allowing to import files in the same way as in most SML compilers. 
+
+\section{The EML Kit as a vehicle for experiments}
+\label{sec:vehicle}
+
+The EML Kit lets the EML authors and all the people involved in
+the EML-related work fiddle with a straightforward implementation of the EML language.
+
+Current research concerning EML is centered on the Verification
+Semantics of EML and on issues which one may call ``implementation''
+of the Verification Semantics. These include designing a proof theory
+for EML and building prototype provers. 
+The Verification Semantics heavily uses the Static Semantics, 
+e.g. for expressing the property of having a type.
+Moreover the Static Semantics of the EML is burdened with
+the responsibility of gathering various information for the Verification Semantics.
+The EML Kit contains an implementation of the Static Semantics of EML,
+including the ``gathering'' mechanisms.
+
+For the people treating the EML Kit as a medium of experiments, 
+the best tool is the \|emlkit| executable.
+Its user interface is very similar to the ML Kit user interface, 
+which is described best in the ML Kit documentation \cite{BRTT93}.
+In short, the \|emlkit| consists of an SML interpreter with the
+initial basis enriched by types and functions implementing
+EML definition's semantic objects, rules, etc.
+Among others there are functions \|parse|, \|elab|, \|eval|
+and \|parseFile|, \|elabFile|, \|evalFile|, which can be used
+for respectively; parsing, elaborating or evaluating of the EML programs
+in the interactive or non-interactive way.
+
+\section{The EML Kit as a ``denotational definition''}
+\label{sec:denotational}
+
+The EML Kit can be thought of (with some amount of good will)
+as a fully deterministic, algorithmic and detailed
+description of the EML static and dynamic semantics.
+
+The EML definition describes the EML language using
+a kind of BNF notation for its grammar, and an extension
+of the formalism called Natural Semantics for the Static and Dynamic Semantics.
+This form of presentation makes it possible to
+describe such a large system as EML in a relatively compact
+and clean way. There is a price to pay, however.
+Some small mistakes long remain unnoticed.
+Some mechanisms seem simple and unambiguous, 
+but the first attempt to implement them
+shows that they are not.
+Some global relations between parts of the Definition 
+are obscure until the modules hierarchy
+is described in a serious module-handling formalism, like the 
+one of the SML programming language.
+
+We hope that this report will describe results
+of the analysis of EML from the perspective
+of the EML Kit, as well as give an overview of the EML Kit seen 
+as an EML ``denotational definition''. We reckon, that  
+a knowledge of at least the Definition of Extended ML~\cite{bib:KST94} 
+is essential for the understanding of our paper.
+
+Part~\ref{sec:parsing} of this paper, written by Aleksy Schubert,
+describes the changes to the ML Kit parsing,  
+which were needed to obtain the implementation of 
+the Extended ML Full Grammar and Derived Forms.
+Part~\ref{sec:elaboration}, written by Miko{\l}aj
+Konarski, is devoted to issues related with 
+the implementation of the Static Semantics of EML.
+Part~\ref{sec:misc}, written by Marcin Jurdzi\'nski,
+describes the implementation of the Dynamic Semantics of EML
+and the design of several small but important parts of the EML Kit.   

@@ -1,0 +1,148 @@
+\chapter{
+Rekursja ogonowa, akumulatory i r"o"rne takie
+}
+
+Cz"esto funkcj"e mo"rna zdefiniowa"c
+na kilka istotnie ro"rnych sposob"ow.
+Sztandarowym przyk"ladem jest funkcja daj"aca $n$--t"a
+liczb"e Fibonacciego, w"sr"od kt"orej najprostszych
+definicji istniej"a drastyczne ro"rnice z"lo"rono"sci czasowej.
+Du"r"a rodzin"e innych przyk"lad"ow stanowi"a funkcje przy kt"orych
+definiowaniu mo"rna ale nie trzeba u"rywa"c \emph{akumulatora}
+tzn.\ dodatkowego parametru kt"ory kumuluje sk"ladowe wyniku.
+
+Oto definicja silni bez akumulatora:
+\begin{verbatim}
+fun fact n = if n <= 1 then 1 else n * fact (n - 1)
+\end{verbatim}
+i z akumulatorem:
+\begin{verbatim}
+fun fact_tr n = 
+    let
+        fun fact_acc (acc, k) = if k <= 0 then acc 
+                                else fact_acc (acc * k, k - 1)
+    in
+        fact_acc (1, n)
+    end
+\end{verbatim}
+przy czym wida"c, "re dla ka"rdego $n$ mamy
+ $$\f{fact} n = \f{fact\_tr} n = n!.$$
+
+Jak wygl"ada obliczanie \|fact 4|?
+Funkcja \|fact 4| wywo"luje \|fact 3|, zapami"etuj"ac, "re wynik tego wywo"lania
+powinna pomno"ry"c przez 4, nim odda go jako sw"oj wynik.
+Funkcja \|fact 3| wywo"luje \|fact 2|, zapami"etuj"ac, "re wynik tego wywo"lania
+powinna pomno"ry"c przez 3.
+Funkcja \|fact 2| wywo"luje \|fact 1|, zapami"etuj"ac, "re wynik tego wywo"lania
+powinna pomno"ry"c przez 2. 
+Teraz \|fact 1| oddaje 1. Nast"epnie \|fact 2| mno"ry to przez 2 i oddaje 
+rezultat tego mno"renia, czyli 2. Potem \|fact 3| mno"ry to przez 3 i~daje 6. 
+Potem \|fact 4| mno"ry to przez 4 i oddaje 24.
+A wi"ec kolejno"s"c mno"re"n by"la nast"epuj"aca: $((1 * 2) * 3) * 4$.
+
+\pagebreak
+
+Twierdz"e, "re kolejno"s"c mno"re"n przy obliczaniu \|fact_tr 4|
+jest odwrotna, czyli $((4 * 3) * 2) * 1$.
+Zobaczmy: \|fact_tr 4| wywo"luje \|fact_acc (1, 4)|, kt"ory po wykonaniu
+jednego mno"renia na rozruch wywo"luje \|fact_acc (4, 3)|.
+Nast"epnie \|fact_acc (4, 3)| mno"ry 4 przez 3 i wywo"luje \|fact_acc (12, 2)|.
+Nast"epnie \|fact_acc (12, 2)| mno"ry 12 przez 2 i wywo"luje \|fact_acc (24, 1)|.
+Nast"epnie \|fact_acc (24, 1)| mno"ry 24 przez 1 i wywo"luje \|fact_acc (24, 0)|.
+\begin{description}
+\item[(*)] A teraz \|fact_acc (24, 0)| oddaje 24 
+    i wynik ten zwracany jest ju"r bez zmian 
+    przez kolejno \|fact_acc (24, 1)|,
+    \|fact_acc (12, 2)|, \|fact_acc (4, 3)|, \|fact_acc (1, 4)| i \|fact_tr 4|.
+\end{description}
+
+Skoro kolejno"s"c mno"re"n jest odwrotna, \|fact| i~\|fact_tr|
+rzeczywi"scie istotnie si"e od siebie r"o"rni"a.
+R"o"rnic jest wi"ecej. Na przyk"lad definicja \|fact| jest
+niew"atpliwie bardziej czytelna od \|fact_tr|. 
+A z drugiej strony w \|fact_tr| wyst"epuje wy"l"acznie
+tzw. rekursja ogonowa (tail recursion),
+przez co \|fact_tr| wykonuje si"e nieco szybciej
+i zu"rywa nieco mniej pami"eci ni"r \|fact|, w kt"orym rekursja
+nie jest ogonowa.
+
+Kiedy funkcja zawiera rekursj"e ogonow"a?
+Wtedy, kiedy w definicji funkcji wo"lanie rekurencyjne nie jest podwyra"reniem
+"radnego innego wyra"renia (z wyj"atkiem drugiej lub trzeciej ga"lezi 
+wyra"renia warunkowego).
+Je"sli rekursja jest ogonowa, wynik wykonania ka"rdej 
+funkcji wo"lanej jest przekazywany bez modyfikacji jako wynik funkcji
+wo"laj"acej, tak jak w miejscu oznaczonym (*).
+
+Ka"rdy przywoity kompilator zast"epuje sekwencj"e
+powrot"ow tak"a jak (*) jedn"a instrukcj"a skoku,
+a tak"re u"rywa jednego rekordu aktywacji dla wszystkich
+rekurencyjnych wciele"n funkcji. W ten spos"ob rekurencja jest
+automatycznie zast"epowana iteracj"a.
+%
+% Wida"c, "re w wypadku \|fact| taka optymalizacja nie jest mo"rliwa,
+% gdy"r \|fact| w"la"snie w rekordach aktywacji zapami"etuje jakie mno"renia
+% ma wykona"c i podczas sekwencji powrot"ow te mno"renia wykonuje.
+%
+% Oczywi"scie fakt, "re jaka"s definicja funkcji jest ogonowa lub nieogonowa,
+% albo u"rywa akumulatora, b"ad"z si"e bez niego obywa, nie wystarcza by j"a oceni"c.
+% Zawsze trzeba rozwa"ry"c wszelkie wady i zalety alternatywnych definicji.
+
+
+\section*{Zadania}
+\begin{exercises}
+
+\item%[Zadanie 3.1]
+Napisz wersj"e funkcji \|length| z~rekursj"a ogonow"a.
+
+\item%[Zadanie 3.2]
+Napisz funkcj"e \|decimal|, kt"ora dostaje list"e cyfr
+i odaje liczb"e jaka powstaje z tych cyfr,
+je"sli je ustawi"c za sob"a (or something).
+np.\ \|decimal [1, 9, 9, 5]| ma da"c 1995.
+
+\item%[Zadanie 3.3]
+Napisz dwie wersje funkcji \|reverse| odwracaj"acej list"e.
+Jedna z tych wersji ma dzia"la"c w czasie liniowym.
+
+\item%[Zadanie 3.4]
+Czy mo"rna napisa"c ogonow"a wersj"e funkcji \|take|?
+Je"sli tak, to czy warto jej u"rywa"c?
+Odpowied"z uzasadnij pe"lnymi zdaniami.
+
+\item%[Zadanie 3.5]
+Napisz wersj"e funkcji \|interval| (z poprzedniego rozdzia"lu)
+z rekursj"a ogonow"a. Nie u"rywaj \|reverse| \|;-)|.
+
+\item%[Zadanie 3.6]
+Napisz funkcj"e \|real_max|, kt"ora dostaje list"e liczb rzeczywistych
+i~oddaje najwi"eksz"a z nich. Napisz dwie istotnie r"o"rne wersje.
+Kt"ora wersja bardziej Ci si"e podoba ?
+
+\pagebreak
+
+\item%[Zadanie 3.7]
+To inna wersja funkcji \|quicksort|:
+\begin{verbatim}
+fun quicksort [] = [] : int list
+  | quicksort [x] = [x]
+  | quicksort (a::rest) = 
+    let fun split(left,right,[]) = 
+            quicksort left @ (a::quicksort right)
+          | split(left,right,x::l) =
+            if x < a then split(x::left,right,l)
+            else split(left,x::right,l)
+    in split([],[],rest)
+    end
+\end{verbatim}
+Por"ownaj j"a z wersj"a podan"a w rozwi"azaniu zadania z~pracowni~\ref{lab:list}.
+Czytelno"s"c, ogonowo"s"c, akumulatorowo"s"c, etc.
+
+\end{exercises}
+
+{\bf Jak zwykle eksperymenty surowo wskazane!}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

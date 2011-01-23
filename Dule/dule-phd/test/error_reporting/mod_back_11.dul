@@ -1,0 +1,4 @@
+spec ErrWw =
+(~Arg : sig type t end -> sig value m : Arg.t end)
+  with
+    : {{Arg : sig end}}

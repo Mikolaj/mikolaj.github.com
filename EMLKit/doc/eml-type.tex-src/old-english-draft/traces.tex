@@ -1,0 +1,85 @@
+
+\section{\sectrace}
+\label{sec:trace}
+
+\subsection{\sectraces}
+\label{sec:traces}
+
+\ifthenelse{\boolean{ifglish}}
+{
+Traces serve to record semantic objects produced during elaboration.
+The gathered information is then heavily used in the EML Verification Semantics.
+Traces also play some role in the Static Semantics, although with enough care
+EML type-checking can be performed without the use of traces (see Section~\ref{sec:inter}).
+
+The ${\rm Clos}$ operator is used in several places of the Static Semantics
+(rules 11.1, 11.2, 11.3 and 17)
+to bound type variables in traces with respect to the given context: 
+$$\cl{C}{\trace}=\forall\alphak.\trace,\ where\ \alphak=\TyVarFcn(\trace)\setminus\TyVarFcn C$$
+It is not obvious, that a trace collected at one of the intermediate
+stages of a phrase elaboration can be closed with respect
+to context of this stage, because the context nor the trace needn't be principal yet. 
+
+In the Definition of Extended ML~\cite{bib:KST94} Core Trace is defined in the following way:
+
+The presentation of Modules Trace found in ~\cite{bib:KST94} is not fully satisfactory, 
+mainly from the implementation point of view (see~\cite{JKS96}). In the next versions of 
+EML Definition, Modules Trace will be defined as below, and I'm going to
+use this presentation for our discussion:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\Trace_{\rm COR}\uplus\SimTrace\uplus\BoundTrace}\\
+\BoundTrace=\NameSets\times\Trace\\
+\SimTrace = \StrNames\uplus\Rea\uplus\VarEnv\uplus\TyEnv\uplus\Env\\
+\end{array}
+\end{displaymath}
+}
+{}
+
+\cite{KST97}:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\mbox{\SimTrace} \uplus\TraceScheme}\\
+\SimTrace = \Type\uplus\Env\uplus(\Context\times\Type)\uplus(\Context\times\Env)\uplus\phantom{\Env}\\
+\qquad (\Context\times\TyNames)\uplus\TyEnv\uplus(\VarEnv\times\TyRea)\\
+\TraceScheme = \uplus_{k\geq 0} \TraceScheme^{(k)}\\
+\TraceScheme^{(k)}=\mbox{TyVar}^k\times\Trace
+\end{array}
+\end{displaymath} 
+\cite{JKS96}:
+\begin{displaymath}
+\begin{array}{l}
+\Trace = \Tree{\Trace_{\rm COR}\uplus\SimTrace\uplus\BoundTrace}\\
+\BoundTrace=\NameSets\times\Trace\\
+\SimTrace = \StrNames\uplus\Rea\uplus\VarEnv\uplus\TyEnv\uplus\Env\\
+\end{array}
+\end{displaymath}
+\subsection{\secsubstitutions}
+\label{sec:substitutions}
+
+\ifthenelse{\boolean{ifglish}}
+{
+Looking at the Definition of EML one could expect, that collection of traces is
+a simple thing; just elaborate the sub-phrases of a given phrase getting some
+semantic objects and traces, and join the traces adding some of the semantic objects 
+in between, if necessary. The problem is that the elaboration is performed using
+the algorithm which assigns too general semantic objects to the phrases and then
+``improves'' the first cautious guesses, by applying substitutions.
+In the result the traces resulting from the sub-phrases elaboration are 
+too general, and cannot be immediately used to obtain correct trace for a given phrase.
+
+It's clear, that somewhere substitutions should be applied to traces. Where?
+A natural choice is to apply a substitution to a trace every time the substitution is applied
+to the semantic object being the result of the elaboration of the sub-phrase.
+The soundness of this procedure follows from it's conformance to the principles of the Milner's algorithm.
+
+}
+{}
+
+\subsection{\secscheme}
+\label{sec:scheme}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 

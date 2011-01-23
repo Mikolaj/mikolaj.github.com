@@ -1,0 +1,41 @@
+The README for The EML Kit 1.1 Obligations Generator Sources Release
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+1. The EML Kit 1.1 Proof Obligations Generator Sources Release is available 
+through anonymous ftp from zls.mimuw.edu.pl. 
+The archive containing the release is called 
+eml11ogen-src.tar.gz and resides in the /People/mikon/EMLKit directory.
+There is also a link to this file from our home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+
+To install the EML Kit Proof Obligations Generator first ungzip and untar 
+the archive.
+It should contain:
+README - info about the EML Kit Proof Obligations Generator
+EML11.README - original info about the EML Kit 1.1
+CHANGES - a list of changes to the EML Kit from version 1.1 to this 
+          extension
+COPYING - text of the GNU General Public License
+README.eml11-src - installation guide for EML Kit 1.1
+README.eml11ogen-src - this file
+examples/ - some EML examples
+src/ - SML source code of the EML Kit Proof Obligations Generator
+tools/ - compilation tools
+
+Follow instructions in README.eml11-src.
+In section considering parameter of "make" command choose option
+of making an interpreter with the ML Kit style user interface.
+
+2. The EML Kit Proof Obligations Generator is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the eml11ogen-src.tar.gz archive.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

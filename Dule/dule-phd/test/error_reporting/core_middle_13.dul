@@ -1,0 +1,26 @@
+Er = 
+:: sig value v : ind c: [`Nil|`Cons {h : {x : [`True|`False];
+					 y : [`True|`False]}; t : c}]
+end
+  struct 
+    value v = let r = 
+let intlist = {h = `Zero . con; 
+               t = {h = `Zero . con; 
+                    t = `Nil . con} .`Cons . con} .`Cons . con
+    boollist = {h = `True; 
+                t = {h = `False; 
+                     t = `Nil . con} .`Cons . con} .`Cons . con
+    monomorphic_map = 
+      map fun ~it -> {x = it; y = it}
+in
+  {intmap =
+     (map fun ~it -> {x = it; y = it}) ~it:intlist
+  ;boolmap = 
+     (map fun ~it -> {x = it; y = it}) ~it:boollist
+  ;intmap2 =
+     monomorphic_map ~it:intlist
+  ;boolmap2 = 
+     monomorphic_map ~it:boollist
+  }
+    in r . boolmap2
+  end

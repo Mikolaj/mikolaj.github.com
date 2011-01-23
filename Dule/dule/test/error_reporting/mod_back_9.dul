@@ -1,0 +1,5 @@
+spec Pp_err_ex2 =
+  {Arg : sig end;
+   S : ~Arg : sig type t end -> sig
+         value m : Arg.t 
+       end}

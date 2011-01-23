@@ -1,0 +1,131 @@
+\documentclass[12pt,a4paper,twoside]{article}
+
+\usepackage[polish]{babel}
+
+\usepackage{amsthm}
+
+\input{mac}      % stolen macros
+\input{emlmacros} % more stolen macros
+
+\def\|{\verb|}  
+\newcommand{\mikoncomment}[1]{{\sf [[[MIKON\@: #1]]]}}             
+\newcommand{\ang}[1]{(ang.:\ #1)}
+
+\begin{document}
+
+\input{pl-mac}
+\def\figurename{Tabela}  
+\def\proofname{Dow"od} 
+
+\newtheorem{thm}{\Theorem}[section]
+\newtheorem{cor}[thm]{\Corollary}
+\newtheorem{lem}[thm]{\Lemma}
+\newtheorem{obs}[thm]{\Observation}
+
+%\newtheorem{defn}{\Definition}
+
+\title{\MyTitle}
+\author{\MyAuthor}
+\date{\MyDate}
+
+%???????\makeatletter
+
+%\maketitle
+
+%\thispagestyle{empty}
+%\mbox{}
+%\newpage
+
+{ \bf
+
+\thispagestyle{empty}
+\centerline{\LARGE Uniwersytet Warszawski}
+\vspace{10pt}
+\centerline{\large Praca magisterska z informatyki}
+\vfil
+
+\vspace{60pt}
+\begin{center}%
+  {\LARGE \MyTitle \par}%
+  \vskip 1.5em%
+  {\large
+    \lineskip .5em%
+    \begin{tabular}[t]{c}%
+      \MyAuthor
+    \end{tabular}\par}%
+  \vskip 1em%
+  {\large \MyDate}%
+\end{center}%
+\vfil
+
+\vspace{120pt}
+\begin{flushright}
+  \begin{minipage}{225pt}
+    \textsl{\large Praca napisana pod kierunkiem\\ 
+            dra hab.\ Andrzeja Tarleckiego}
+  \end{minipage}
+\end{flushright}
+
+}
+
+\newpage
+
+%\thispagestyle{empty}
+%\mbox{}
+%\newpage
+
+\tableofcontents
+
+\newpage
+
+%\part*{\partpreface}
+%\label{part:preface}
+%\input{preface}
+
+%\newpage
+
+\part{\partintro}
+\label{part:intro}
+\input{intro}
+
+\newpage
+
+\part{\parttheory}
+\label{part:theory}
+\input{axioms}
+\newpage
+\input{traces}
+
+\newpage
+
+\part{\partimpl}
+\label{part:impl}
+\input{actual}
+
+\newpage
+
+\part{Podsumowanie}
+\input{preface}
+
+\newpage
+
+\appendix
+\part*{\partget}
+\addcontentsline{toc}{part}{\partget}
+\label{part:get}
+\input{getting}
+
+\newpage
+
+\input{bib}  
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+

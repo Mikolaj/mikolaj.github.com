@@ -1,0 +1,5 @@
+spec M = 
+  sig 
+    value v : {a : {}; a : {}} 
+  end
+

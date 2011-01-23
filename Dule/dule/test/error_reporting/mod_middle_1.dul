@@ -1,0 +1,15 @@
+Err = 
+link
+spec Nat =
+  sig
+    type t
+  end
+Nat =  
+  struct
+    type t = {}
+  end
+
+  spec NatAny = ~Nat -> sig end
+  Test = :: ~NatAny -> sig end 
+         struct end
+end

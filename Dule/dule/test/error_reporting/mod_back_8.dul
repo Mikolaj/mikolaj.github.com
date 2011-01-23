@@ -1,0 +1,3 @@
+TV = :: sig type t value v : t end
+     struct type t = {} value v = {} end
+WrongCoerce = TV :> sig type t value v : {} end

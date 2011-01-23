@@ -1,0 +1,1237 @@
+(* Copyright (C) 2003 Mikolaj Konarski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: strange_commented.dul,v 1.43 2006-04-22 01:38:51 mikon Exp $
+ *) 
+
+(* this file is outdated, most of the material is now in Dule tutorial *)
+
+(* This file contains examples showing _some_ of the syntax and abbreviations 
+   as well as particular mechanisms and peculiarities of Dule, with comments.
+   This is not a tutorial nor an example of the preferred Dule programming 
+   style. Most of the examples are either contrived or monstrous. 
+   Square braces denote quotations of the source code in comments. *)
+
+(* First a trivial example which does not use any exponential object. *)
+Interp =
+link
+  spec Bool = 
+    sig
+      type bool 
+      value ttrue : bool
+      value ffalse : bool
+    end
+  Bool = (* module [Bool] has to match specification [Bool] *)
+    struct
+      type bool = [`True|`False] (* short for [[`True {}|`False {}]] *)
+      value ttrue = `True 
+          (* short for [{} .`True] where dot denotes composition *)
+      value ffalse = `False
+    end
+  spec Syntax =
+    sig
+      type expression
+      value empty : expression
+      value constant : expression
+    end
+  Syntax =
+    :: Syntax (* this header might have been omitted *)
+    struct
+      type expression = [`Empty|`Var|`Const]
+      value empty = `Empty  
+      value constant = `Const
+    end
+  spec Syntax2Bool = (* here we'll simulate the exponent ;} *)
+  ~Syntax ~Bool ->
+    sig
+      value always_ttrue : {for_Empty : Bool.bool;
+                            for_Const : Bool.bool}
+      value is_empty : {for_Empty : Bool.bool;
+                        for_Const : Bool.bool}
+      value a_non_empty_expression : Syntax.expression
+    end
+  module Syntax2Bool = (* the [module] keyword is optional here *)
+    struct
+      value always_ttrue = {for_Empty = Bool.ttrue;
+                            for_Const = Bool.ttrue}
+      value is_empty = {for_Empty = Bool.ttrue;
+                        for_Const = Bool.ffalse}
+      value a_non_empty_expression = 
+        Syntax.constant (* [`Const] wouldn't type-check here *)
+    end
+  spec TypeChecker =
+  ~Syntax2Bool:Syntax2Bool -> (* [: Syntax2Bool] might be omitted *)
+    sig
+      value is_correct : {for_Empty : Bool.bool;
+                          for_Const : Bool.bool}
+      value is_empty_correct : Bool.bool
+      value an_incorrect_expression : Syntax.expression
+      type error_message
+      value why_empty_not_correct : error_message
+    end
+  module TypeChecker = 
+    struct
+      value is_correct = Syntax2Bool.is_empty
+      value is_empty_correct = Bool.ttrue
+      value an_incorrect_expression = Syntax2Bool.a_non_empty_expression
+      type error_message = Bool.bool
+      value why_empty_not_correct = Bool.ffalse
+    end
+  spec Values = sig type values value nil : values end
+  Values = struct type values = {values : {}} value nil = {values = {}} end
+  spec Evaluator =
+  ~Syntax ->
+    sig
+      type vals
+      value eval : {for_Empty : vals;
+                    for_Const : vals}
+    end
+  module Evaluator = 
+    :: ~Values -> Evaluator
+    struct
+      type vals = Values.values (* e.g. [Bool] is not visible here *)
+      value eval = {for_Empty = Values.nil;
+                    for_Const = Values.nil}
+    end
+  Interpreter =
+    :: ~TypeChecker ~Evaluator ->
+         sig 
+           value interpret_empty : {eerror : TypeChecker.error_message;
+                                    vvalue : Evaluator.vals}
+         end
+    struct
+      value interpret_empty = 
+        {eerror = TypeChecker.why_empty_not_correct;
+         vvalue = Evaluator.eval.for_Empty}
+     (* [vvalue = Values.nil] --- wouldn't type-check here *)
+    end
+  Result = Interpreter
+end
+(* This program compiles to a target language normal form term
+   where [Interpreter.interpret_empty] subcomponent contains a record
+   with a component named [eerror] containing a normal form term
+   corresponding to a fully typed [`False]. *)
+
+
+(* Now there come two simple examples using the exponential object,
+   but not on the level of types or modules where Dule has none,
+   rather on the level of values, where Dule has (a labeled) one. *)
+
+(* These examples also illustrate the [with] module instantiation operation
+   and the [with] specification specializing construct. 
+   The specification of the instatiated module could always 
+   be written anew by hand, at least as long
+   as we do not deal with axioms and proof obligations, but this would
+   result in laborious and confusing specification-code duplication. *)
+
+(* The [prog46] is the easier of the two examples.
+   Both parameter and argument modules have types named [t]. *)
+Prog46 =
+link
+  spec T = sig type t end
+  spec Bool = 
+  ~T ->
+    sig
+      type t
+      value true_ : t
+      value false_ : t
+      value not_ : ~it:t -> t (* the labeled exponent *)
+      value and_ : ~b:t ~it:t -> t (* [b] and [it] are labels *)
+      value or_ : ~b:t ~it:t -> t
+      value if_ : ~it:t ~then_:T.t ~else_:T.t -> T.t 
+    end
+  library Bool = 
+      (* [library] means [Bool] will not be used for this linking
+         until it is included (possibly many times) using [load] *)
+    struct 
+      type t = [`True|`False]
+      value true_ = `True
+      value false_ = `False
+      value not_ = [`True -> `False (* short for [`True fun ~it -> ..] *)
+                   |`False -> `True]
+      value and_ = [`True fun ~b ~it -> b
+                   |`False fun ~it ~b -> `False]
+      value or_ = [`True fun ~b ~it -> `True
+                  |`False fun ~b ~it -> b]
+      value if_ = [`True fun ~then_ ~else_ ~it -> then_
+                  |`False fun ~then_ ~else_ ~it -> else_]
+    end
+  (* a specialization of the [Bool] signature: *)
+  spec TrivBool = Bool with {T = :: T struct type t = {} end}
+  (* an instance of [Bool] module with trivial [T.t] type: *)
+  TrivBool = load Bool with {T = :: T struct type t = {} end}
+      (* [load] is a second order operation thus not expressible
+         in our first order 100% categorical semantics, but performed
+         in an outer denotational semantics layer, which also takes care
+         of specification copying and Core type-reconstruction *)
+  spec BoolBool = Bool with {T = TrivBool (* this is a module projection *)}
+  (* an instance of [Bool] where [if_] acts on boolean alternatives: *)
+  BoolBool = load Bool with {T = TrivBool}
+  spec Test = 
+  ~BoolBool -> 
+    sig
+      value trivtest : {}
+      value booltest : TrivBool.t
+      value test : BoolBool.t
+    end
+  module Test =
+    struct
+      value trivtest = 
+        TrivBool.if_ ~it:TrivBool.true_ ~then_:{} ~else_:{}
+      value booltest = TrivBool.not_ ~it:
+        (BoolBool.if_ ~it:BoolBool.true_
+           ~then_:TrivBool.false_ ~else_:TrivBool.true_)
+      value test = BoolBool.and_ ~b:BoolBool.true_
+        ~it:(BoolBool.or_ ~b:BoolBool.false_ 
+              ~it:BoolBool.true_)
+    end
+  Result = Test
+end
+
+
+(* The [prog47] is the harder of the [with] examples.
+   Some types are named [t], some are named [bool]
+   so sometimes a renaming becomes necessary. *)
+Prog47 =
+link
+  spec T = sig type t end
+  spec Bool = 
+  ~T ->
+    sig
+      type bool
+      value true_ : bool
+      value false_ : bool
+      value not_ : ~it:bool -> bool 
+      value and_ : ~b:bool ~it:bool -> bool 
+      value or_ : ~b:bool ~it:bool -> bool 
+      value if_ : ~it:bool ~then_:T.t ~else_:T.t -> T.t 
+    end
+  library Bool =
+    struct
+      type bool = [`True|`False]
+      value true_ = `True
+      value false_ = `False
+      (* this below is a bit more familiar style of coding
+         which sometimes induces longer source and target codes: *)
+      value not_ = fun ~it -> match it with [`True -> `False
+                                            |`False -> `True]
+      value and_ = fun ~b ~it -> match it with [`True -> b
+                                               |`False -> `False]
+      value or_ = fun ~b ~it -> match it with [`True -> `True
+                                              |`False -> b]
+      value if_ = fun ~it ~then_ ~else_ -> match it with [`True -> then_
+                                                         |`False -> else_]
+    end
+  spec TrivBool = Bool with {T = :: T struct type t = {} end}
+  TrivBool = load Bool with {T = :: T struct type t = {} end}
+  library ArgBool =
+    {T = :: ~TrivBool -> T
+       struct
+         type t = TrivBool.bool
+       end}
+  spec BoolBool = Bool with load ArgBool
+  BoolBool = load Bool with load ArgBool
+  spec Test = 
+  ~BoolBool -> 
+    sig
+      value trivtest : {}
+      value booltest : TrivBool.bool
+  (* [value booltest : BoolBool.T.t] --- would be wrong
+      because we have not created any submodules
+     [value booltest : T.t] --- would be wrong
+      because the last [with] deletes [T] replacing it by [load ArgBool]
+      (and so adds [TrivBool] and then instantiates
+      types of values with [TrivBool.bool]) *)
+      value test : BoolBool.bool
+    end
+  Test =
+    struct
+      value trivtest = 
+        TrivBool.if_ ~it:TrivBool.true_ ~then_:{} ~else_:{}
+      value booltest = TrivBool.not_ ~it:
+        (BoolBool.if_ ~it:BoolBool.true_
+           ~then_:TrivBool.false_ ~else_:TrivBool.true_)
+      value test = BoolBool.and_ ~b:BoolBool.true_
+        ~it:(BoolBool.or_ ~b:BoolBool.false_ 
+              ~it:BoolBool.true_)
+    end
+  Result = Test
+end
+
+
+(* An example with inductive types and some variations on [map]. *)
+Prog48 =
+link
+  spec Nat =
+    sig
+      type t
+      (* function [t2ind] serves as a one-way datatype specification
+         type [t] might be defined in any way, operations [zero] and [succ]
+         might be bizarre, but there must be a way (called [t2ind])
+         to convert from [t] to [ind nat: [`Zero|`Succ nat]] *)
+      value t2ind : ~n:t -> ind nat: [`Zero|`Succ nat]
+      value zero : t
+      value succ : ~n:t -> t
+      value is_zero : ~it:t -> [`True|`False]
+      value plus : ~n:t ~m:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value t2ind = fun ~n -> n
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+      value is_zero = 
+        fold [`Zero -> `True
+             |`Succ -> `False]
+      value plus = fun ~m ~n -> 
+        match n with
+        fold [`Zero -> m
+             |`Succ nn -> nn .`Succ . con] (* short for [`Succ fun ~nn ->..] *)
+    end
+  spec Elem = sig type t end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value tde : ~l:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+      value tde2 : ~l:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+      value tde3 : ~l:t -> [`Nil|`Cons {head : Elem.t; tail : t}]
+      value nil : t
+      value cons : ~head:Elem.t ~tail:t -> t
+      value map1 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value map2 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value map3 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value map4 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value map5 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t
+      value map6 : ~f: ~e:Elem.t -> Elem.t ~it:t -> t
+      value map7 : ~f: ~e:Elem.t -> Elem.t ~it:t -> t
+      value map8 : ~f: ~e:Elem.t -> Elem.t -> ~l:t -> t
+      value map9 : ~f: ~e:Elem.t -> Elem.t ~l:t -> t
+      value mapA : ~f: ~e:Elem.t -> Elem.t ~l:t -> t
+      value mapB : ~f: ~e:Elem.t -> Elem.t -> ~it:t -> t
+      value mapC : ~f: ~it:Elem.t -> Elem.t ~l:t -> t
+      value mapD : ~f: ~it:Elem.t -> Elem.t -> ~it:t -> t
+    end
+  library List =
+    struct
+      type t = ind list: [`Nil|`Cons {head : Elem.t; tail : list}]
+      (* destructor could be defined using [fold] just as [map] is: *)
+      value tde2 = fun ~l ->
+        match l with
+        fold [`Nil -> `Nil
+             |`Cons ht -> 
+                 {head = ht.head; tail = ht.tail . con} .`Cons] 
+      (* or using a strange categorical style: *)
+      value tde3 = fun ~l ->
+        match l with
+        fold [`Nil -> `Nil
+             |`Cons ht -> ht . {head; tail = tail . con} .`Cons] 
+      (* but built-in combinators might be faster and more readable: *)
+      value tde = fun ~l -> l . de
+      value nil = `Nil . con
+      value cons = fun ~head ~tail -> {head; tail} .`Cons . con
+      value map1 = fun ~f ~l -> 
+        match l with (* [match l with t] stands for [t ~it:l] *)
+        fold [`Nil -> `Nil . con
+             |`Cons ht -> {head = f ~e:ht.head; tail = ht.tail} .`Cons . con]
+      value map2 = fun ~f ~l -> 
+        (fold [`Nil fun ~f ~it -> `Nil . con
+              |`Cons fun ~f ~it:{head; tail} -> 
+                 {head = f ~e:head; tail} .`Cons . con])
+          ~f ~it:l
+      value map3 =
+        let consf = fun ~f ~it:{head; tail} -> 
+          {head = f ~e:head; tail} .`Cons . con in
+        fun ~f ~l -> 
+          (fold [`Nil fun ~f ~it -> `Nil . con
+                |`Cons consf])
+            ~f ~it:l 
+      value map4 = 
+        let consf = fun ~f -> fun ~it:ht -> 
+          {head = f ~e:ht.head; tail = ht.tail} .`Cons . con in
+        fun ~f ~l -> 
+          match l with
+          fold [`Nil -> `Nil . con
+               |`Cons (consf ~f)]
+      value map5 = fun ~f ~l -> 
+        let consf = fun ~it -> 
+          {head = f ~e:it.head; tail = it.tail} .`Cons . con in
+        match l with
+        fold [`Nil -> `Nil . con
+             |`Cons consf]
+      value map6 = 
+        let fhead = fun ~f ~it ->
+          match it with
+          [`Nil -> `Nil . con
+          |`Cons ht ->
+	      let {head; tail} = ht in
+	      {head = f ~e:head; tail} .`Cons . con] in
+        fold fhead
+      value map7 = 
+        let fhead =
+          [`Nil fun ~f ~it -> `Nil . con
+          |`Cons fun ~f ~it:{head; tail} -> 
+             {head = f ~e:head; tail} .`Cons . con] in
+        fold fhead
+      value map8 = fun ~f ->
+        let rec mapr = fun ~l ->
+        match l . de with
+          [`Nil -> `Nil . con
+          |`Cons ht -> {head = f ~e:ht.head; 
+                        tail = mapr ~l:ht.tail} .`Cons . con]
+        in mapr
+      value rec map9 = fun ~f ~l ->
+        match l . de with
+        [`Nil -> `Nil . con
+        |`Cons ht -> {head = f ~e:ht.head; 
+                      tail = map9 ~f ~l:ht.tail} .`Cons . con]
+      value mapA = fun ~f ~l -> 
+        (map e -> f ~e) ~it:l
+      value mapB = fun ~f -> 
+        map e -> f ~e
+      value mapC = fun ~f ~l -> 
+        match l with
+        map f
+      value mapD = fun ~f -> 
+        map f
+    end
+  spec NatList = List with {Elem = Nat}
+  NatList = load List with {Elem = Nat}
+  spec ToolNatList =
+  ~NatList -> 
+    sig 
+      value hd : ~l:NatList.t -> [`OK Nat.t|`Error]
+      value hd2 : ~l:NatList.t -> [`OK Nat.t|`Error]
+      value do_at_tail : ~f: ~l:NatList.t -> [`OK Nat.t|`Error] ->
+                           ~l:NatList.t -> [`OK Nat.t|`Error]
+      value list_first : ~n:Nat.t -> {l : NatList.t; n : Nat.t}
+      value three : Nat.t
+      value nz_plus : ~n:Nat.t -> ~e:Nat.t -> Nat.t
+    end
+  ToolNatList =
+    struct 
+      value hd = fun ~l ->
+        match NatList.tde ~l with
+        [`Nil -> `Error
+        |`Cons ht -> ht.head .`OK]
+      value hd2 = 
+        (* we may also ensure the only external value we use is [tde]: *)
+        {dl = NatList.tde} . fun ~l ->
+        match dl ~l with
+        [`Nil -> `Error
+        |`Cons ht -> ht.head .`OK]
+      value do_at_tail = fun ~f -> fun ~l ->
+        match NatList.tde ~l with
+        [`Nil -> `Error
+        |`Cons ht -> f ~l:ht.tail] 
+      value list_first = fun ~n ->
+        match Nat.t2ind ~n with
+        fold [`Zero -> {l = NatList.nil; n = Nat.zero}
+             |`Succ {l; n} -> {l = NatList.cons ~head:n ~tail:l;
+                               n = Nat.succ ~n}]
+      value three = Nat.succ ~n:(Nat.succ ~n:(Nat.succ ~n:Nat.zero))
+      value nz_plus = fun ~n -> fun ~e ->
+        match Nat.is_zero ~it:e with
+        [`True -> e
+        |`False -> Nat.plus ~m:e ~n]
+    end
+  spec Test = 
+  ~ToolNatList -> 
+    sig 
+      value test : NatList.t
+    end
+  Test =
+    struct 
+      value test = NatList.mapA
+        ~f:(ToolNatList.nz_plus ~n:ToolNatList.three)
+        ~l:(ToolNatList.list_first ~n:ToolNatList.three).l
+    end
+  spec Tests = 
+  ~Nat ->
+    sig 
+      value test_5 : [`OK Nat.t|`Error]
+      value test_4 : [`OK Nat.t|`Error]
+      value test_0 : [`OK Nat.t|`Error]
+    end
+  Tests =
+    :: ~Test -> Tests
+    struct 
+      value test_5 = ToolNatList.hd ~l:Test.test
+      value test_4 = (ToolNatList.do_at_tail ~f:ToolNatList.hd) ~l:Test.test
+      value test_0 = (ToolNatList.do_at_tail 
+                        ~f:(ToolNatList.do_at_tail 
+                              ~f:ToolNatList.hd)) 
+                       ~l:Test.test
+    end
+  Result = Tests
+end
+
+
+(* The co-natural numbers from chapter 2.4.1 of "Charitable thoughts".
+   The alien code in comments is in the Charity programming language
+     http://www.cpsc.ucalgary.ca/Research/charity/home.html. *)
+
+(* First a simpler non-modular version. *)
+BothNat =
+link
+  spec BothNat =
+    sig
+      type nat
+      value zero : nat
+      value succ : ~n:nat -> nat
+      type conat
+      value infinity : conat
+      value nat_2_conat : ~it:nat -> conat
+      value nat_2_conat' : ~it:nat -> conat
+      value is_zero : ~cn:conat -> [`True|`False]
+    end
+  BothNat = 
+    struct
+      type nat = ind t: [`Zero|`Succ t]
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+      (* data C -> conat = denat: C -> SF(C). *)
+      (* where
+         data SF A -> C = ss: A -> C
+                        | ff: 1 -> C.
+       *)
+      type conat = coind t: [`coZero|`coSucc t]
+      (* def inf: 1 -> conat
+             = () => (| x => denat:ss x |) ().
+       *)
+      value infinity = 
+        match {} with (* yes, {} suffices here *)
+        unfold cn -> cn .`coSucc 
+      (* def nat_2_conat: nat -> conat
+             = n   => (| zero    => denat: ff
+                       | succ n' => denat: ss n'
+                       |)
+                          n. 
+      *)
+      value nat_2_conat =
+        unfold n ->
+          match n . de with
+          [`Zero -> `coZero
+          |`Succ nn -> nn .`coSucc] (* [nn] is of type [nat] *)
+      (* def nat_2_conat': nat -> conat
+             = n   => {| zero: () => (denat: ff)
+                       | succ: cn => (denat: ss cn)
+                       |}
+                          n.
+      *)
+      value nat_2_conat' =
+        fold [`Zero ->`coZero . uncon
+             |`Succ cn -> cn .`coSucc . uncon] (* [cn] is of type [conat] *)
+      value is_zero = fun ~cn ->
+        match cn . unde with
+        [`coZero -> `True
+        |`coSucc -> `False]
+    end
+  Result =
+    :: ~BothNat -> 
+         sig
+           value test1_false : [`True|`False]
+           value test2_true : [`True|`False]
+           value test3'_false : [`True|`False]
+           value test4'_true : [`True|`False]
+           value test5_false : [`True|`False]
+         end
+    struct 
+      value test1_false = 
+        BothNat.is_zero ~cn:(BothNat.nat_2_conat 
+          ~it:(BothNat.succ ~n:(BothNat.succ ~n:BothNat.zero)))
+      value test2_true = 
+        BothNat.is_zero ~cn:(BothNat.nat_2_conat ~it:BothNat.zero)
+      value test3'_false = 
+        BothNat.is_zero ~cn:(BothNat.nat_2_conat' 
+          ~it:(BothNat.succ ~n:(BothNat.succ ~n:(BothNat.succ 
+            ~n:BothNat.zero))))
+      value test4'_true = 
+        BothNat.is_zero ~cn:(BothNat.nat_2_conat' ~it:BothNat.zero)
+      value test5_false = 
+        BothNat.is_zero ~cn:BothNat.infinity
+    end
+end
+
+(* Then a richer and modular version. Less readable but more general. *)
+Conat =
+link
+  spec Nat =
+    sig
+      type t
+      value t2ind : ~n:t -> ind nat: [`Zero|`Succ nat]
+      value tde : ~n:t -> [`Zero|`Succ t]
+      value zero : t
+      value succ : ~n:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value t2ind = fun ~n -> n
+      value tde = fun ~n -> n . de
+      value zero = `Zero . con
+      value succ = fun ~n -> n .`Succ . con
+    end
+  spec CoNat =
+    sig
+      type t
+      value t2coind : ~cn:coind conat: [`coZero|`coSucc conat] -> t
+      value tde : ~cn:t -> [`coZero|`coSucc t]
+      value zero : t
+      value succ : ~cn:t -> t
+    end
+  CoNat = 
+    struct
+      type t = coind conat: [`coZero|`coSucc conat]
+      value t2coind = fun ~cn -> cn
+      value tde = fun ~cn -> cn . unde
+      value zero = `coZero . uncon
+      value succ = fun ~cn -> cn .`coSucc . uncon
+    end
+  spec Nat2CoNat = 
+  ~Nat ~CoNat ->
+    sig
+      value nat_2_conat : ~n:Nat.t -> CoNat.t
+      value nat_2_conat' : ~n:Nat.t -> CoNat.t
+    end
+  Nat2CoNat =
+    struct
+      value nat_2_conat = 
+        fun ~n -> CoNat.t2coind ~cn:
+          match n with
+          unfold n ->
+            match Nat.tde ~n with
+            [`Zero -> `coZero
+            |`Succ nn -> nn .`coSucc]  
+      value nat_2_conat' = fun ~n ->
+        match Nat.t2ind ~n with
+        fold [`Zero -> CoNat.zero
+             |`Succ cn -> CoNat.succ ~cn:cn]
+    end
+  spec NatOps =
+  ~Nat ->
+    sig
+      value pred : ~n:Nat.t -> Nat.t
+      value one : Nat.t 
+      value two : Nat.t 
+      value three : Nat.t 
+    end
+  NatOps = 
+    struct
+      value pred = fun ~n ->
+        match Nat.tde ~n with
+        [`Zero -> Nat.zero
+        |`Succ nn -> nn]
+      value one = Nat.succ ~n:Nat.zero
+      value two = Nat.succ ~n:(Nat.succ ~n:Nat.zero)
+      value three = Nat.succ ~n:(Nat.succ ~n:(Nat.succ ~n:Nat.zero))
+   end
+  spec CoNatOps =
+  ~CoNat ->
+    sig
+      value co_pred : ~cn:CoNat.t -> CoNat.t
+      value infinity : CoNat.t
+      value is_zero : ~cn:CoNat.t -> [`True|`False]
+    end
+  CoNatOps = 
+    struct
+      value co_pred = fun ~cn ->
+        match CoNat.tde ~cn with
+        [`coZero -> CoNat.zero
+        |`coSucc cn -> cn]
+      value infinity = CoNat.t2coind ~cn:
+        (match CoNat.zero with
+        unfold cn -> cn .`coSucc)
+      value is_zero = fun ~cn ->
+        match CoNat.tde ~cn with
+        [`coZero -> `True
+        |`coSucc -> `False]
+    end
+  spec CoNatConstants =
+  ~CoNat ->
+    sig
+      value co_zero : CoNat.t
+      value co_one : CoNat.t 
+      value co_two : CoNat.t 
+      value co_three : CoNat.t 
+      value infinity : CoNat.t
+    end
+  CoNatConstants = 
+    :: ~Nat2CoNat ~NatOps ~CoNatOps -> CoNatConstants
+    struct
+      value co_zero = CoNat.zero
+      value co_one = Nat2CoNat.nat_2_conat ~n:NatOps.one 
+      value co_two = Nat2CoNat.nat_2_conat ~n:NatOps.two
+      value co_three = Nat2CoNat.nat_2_conat' ~n:NatOps.three
+      value infinity = CoNatOps.infinity
+    end
+  spec CoNat2Nat = 
+  ~Nat ~CoNat ->
+    sig
+      value conat_2_nat : ~upto:Nat.t ~cn:CoNat.t -> Nat.t
+      value exhaust : ~cn:CoNat.t -> Nat.t
+    end
+  CoNat2Nat =
+    struct
+      value conat_2_nat = fun ~upto ~cn ->
+        (match Nat.t2ind ~n:upto with
+         fold [`Zero -> {rest = cn; 
+                         result = Nat.zero}
+              |`Succ {rest; result} -> 
+                 match CoNat.tde ~cn:rest with
+                 [`coZero -> {rest; result}
+                 |`coSucc cn -> {rest = cn; 
+                                 result = Nat.succ ~n:result}]])
+        . result
+      value rec exhaust = fun ~cn ->
+         match CoNat.tde ~cn with
+        [`coZero -> Nat.zero
+        |`coSucc cn -> Nat.succ ~n:(exhaust ~cn)]
+    end
+  Result =
+    :: ~CoNatConstants ~CoNat2Nat ~NatOps -> 
+         sig
+           value test0 : Nat.t 
+           value test1 : Nat.t 
+           value test2 : Nat.t 
+           value test3 : Nat.t 
+           value test0' : Nat.t 
+           value test1' : Nat.t 
+           value test2' : Nat.t 
+           value test2'' : Nat.t 
+           value test3' : Nat.t 
+           value test3'' : Nat.t 
+ end
+    struct 
+      value test0 = CoNat2Nat.exhaust ~cn:CoNatConstants.co_zero
+      value test1 = CoNat2Nat.exhaust ~cn:CoNatConstants.co_one
+      value test2 = CoNat2Nat.exhaust ~cn:CoNatConstants.co_two
+      value test3 = CoNat2Nat.exhaust ~cn:CoNatConstants.co_three
+      (* loops OK: 
+      value testw = CoNat2Nat.exhaust ~cn:CoNatConstants.infinity 
+       *)
+      value test0' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.three ~cn:CoNatConstants.co_zero
+      value test1' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.one ~cn:CoNatConstants.co_one
+      value test2' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.three ~cn:CoNatConstants.co_two
+      value test2'' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.two ~cn:CoNatConstants.co_three
+      value test3' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.three ~cn:CoNatConstants.co_three
+      value test3'' = 
+        CoNat2Nat.conat_2_nat ~upto:NatOps.three ~cn:CoNatConstants.infinity
+    end
+end
+
+
+(* From here onwards the examples get freaky. *)
+
+(* Some abstract syntax tree types to test nested types.
+   Normally such types would be defined using inductive modules
+   and thus more readable and more flexible. *)
+IndSyntax =
+link
+  spec Nat =
+    sig
+      type t
+      value zero : t
+      value one : t 
+      value plus : ~n:t ~m:t -> t
+      value pred : ~n:t -> t
+    end
+  Nat = 
+    struct
+      type t = ind nat: [`Zero|`Succ nat]
+      value zero = `Zero . con
+      value one = `Zero . con .`Succ . con
+      value plus = fun ~m ~n -> 
+        match n with
+        fold [`Zero -> m
+             |`Succ nn -> nn .`Succ . con]
+      value pred = fun ~n ->
+        match n . de with
+        [`Zero -> `Zero . con
+        |`Succ nn -> nn]
+    end
+  (* First a slight hint how inductive modules could be used here: *)
+  spec rec SyntaxExp = ~Nat -> sig type exp end
+  and SyntaxIns = sig type ins end
+  module ind SyntaxExp =
+    struct
+      type exp = {location : Nat.t;
+                  code : [`Do SyntaxIns.ins
+                         |`Const Nat.t]}
+    end
+  and SyntaxIns =
+    struct
+      type ins = [`Ignore SyntaxExp.exp
+                 |`Seq {i1 : SyntaxIns.ins;
+                        i2 : SyntaxIns.ins}]
+    end
+  (* Then a non-modular nested inductive abstract syntax tree: *)
+  spec Syntax =
+  ~Nat -> 
+    sig
+      type exp
+      value test : {test_4 : Nat.t;
+                    test_3 : Nat.t;
+                    test_1 : Nat.t}
+    end
+  SyntaxIndInd =
+    :: Syntax
+    struct
+      type exp = 
+        ind exp: {location : Nat.t;
+                  code : [`Do ind ins: [`Ignore exp
+                                       |`Seq {i1 : ins;
+                                              i2 : ins}]
+                         |`Const Nat.t]}
+      value test =
+        let exp0 = {location = Nat.zero;
+                    code = Nat.zero .`Const} . con
+            exp1 = {location = Nat.one;
+                    code = Nat.zero .`Const} . con 
+            exp2 = {location = Nat.one;
+                    code = Nat.one .`Const} . con in
+        let program =
+          {location = Nat.one;
+           code = {i1 = exp0 .`Ignore . con;
+                   i2 = {i1 = exp1 .`Ignore . con;
+                         i2 = exp2 .`Ignore . con} .`Seq . con}
+            .`Seq . con .`Do} . con 
+            sum_all = fun ~it:{location; code} ->
+          Nat.plus ~n:location
+            ~m:match code with
+               [`Do fold [`Ignore n -> n
+                         |`Seq {i1; i2} -> 
+                            Nat.plus ~n:i1 ~m:i2]
+               |`Const n -> n]
+            sum_loc = fun ~it ->
+          Nat.plus ~n:it.location
+            ~m:match it.code with
+               [`Do fold [`Ignore n -> n
+                         |`Seq {i1; i2} -> 
+                            Nat.plus ~n:i1 ~m:i2]
+               |`Const n -> Nat.zero]
+            sum_con = fun ~it ->
+          (match it.code with
+          [`Do fold [`Ignore n -> n
+                    |`Seq {i1; i2} -> 
+                       Nat.plus ~n:i1 ~m:i2]
+          |`Const n -> n])
+        in
+        {test_3 = match program with
+                  fold sum_loc;
+         test_1 = match program with
+                  fold sum_con;
+         test_4 = match program with
+                  fold sum_all}
+         
+    end
+  (* Now a coinductive nested inside the inductive: *)
+  SyntaxIndCoind =
+    :: Syntax
+    struct
+      type exp = 
+        ind exp: {location : Nat.t;
+                  code : [`Do coind ins: [`Ignore exp
+                                         |`Seq {i1 : ins;
+                                                i2 : ins}]
+                         |`Const Nat.t]}
+      value test =
+        let exp0 = {location = Nat.zero;
+                    code = Nat.zero .`Const} . con
+            exp1 = {location = Nat.one;
+                    code = Nat.zero .`Const} . con 
+            exp2 = {location = Nat.one;
+                    code = Nat.one .`Const} . con in
+        let program =
+          {location = Nat.one;
+           code = {i1 = exp0 .`Ignore . uncon;
+                   i2 = {i1 = exp1 .`Ignore . uncon;
+                         i2 = exp2 .`Ignore . uncon} .`Seq . uncon}
+            .`Seq . uncon .`Do} . con 
+            sum_all = fun ~it ->
+          Nat.plus ~n:it.location
+            ~m:match it.code with
+               [`Do
+                  let rec fi = fun ~it ->
+                    match it . unde with
+                    [`Ignore n -> n
+                    |`Seq {i1; i2} ->  
+                       Nat.plus ~n:(fi ~it:i1) ~m:(fi ~it:i2)]
+                  in fi
+               |`Const n -> n]
+            sum_shallow = fun ~it ->
+          Nat.plus ~n:it.location
+            ~m:match it.code with
+               [`Do -> Nat.zero
+               |`Const n -> n]
+            sum_221 = fun ~it ->
+          (match it.code with
+          [`Do i ->
+             let rec fi = fun ~i ->
+               match i . unde with
+              [`Ignore n -> n
+              |`Seq {i1; i2} ->  
+                 Nat.plus ~n:(fi ~i:i2(*!*)) ~m:(fi ~i:i2)]
+             in Nat.pred ~n:(fi ~i)
+          |`Const n -> n])
+        in
+          {test_4 = match program with
+                  fold sum_all;
+           test_3 = match program with
+                  fold sum_221;
+	   test_1 = match program with
+                  fold sum_shallow}
+    end
+  Result = {SyntaxExp; SyntaxIndInd; SyntaxIndCoind}
+end
+
+
+(* In [link] operation, modules are implicitly composed (linked)
+   using the normal, categorical module composition. This composition
+   denoted by a dot is also seen in other places, for example
+   when a record module is composed with a projection to obtain a component. *)
+
+(* Sometimes also another explicit operation appears, denoted
+   by the keyword [with]. This is the module instantiation
+   which serves not only for filling in implementation details, 
+   as the normal composition does, but lets the input module to influence
+   the result signature of the whole operation. *)
+
+(* There is a second notation for the module instantiation.
+   Module [m2 with m1] may be also written [m1 | m2]. The order of
+   arguments used by [with] notation is chosen to match the syntax 
+   of specification specialization operation of the same name
+   The order of arguments used by [|] matches the order in normal composition.
+   While in [m1 . m2] the module [m2] is given a tool [m1] to operate with,
+   in [m1 | m2] module [m2] is instantiated to a new area [m1] to operate on,
+   and the codomain signature of [m2] is specialized by [m1]. *)
+
+(* This example shows many things not often seen in normal programs.
+   Here the specialized signature is written by hand (ignoring the value part)
+   and not built using the [with] construct out of the general signature.
+   The instantiation is written here using the [|] notation
+   and the associativity is enforced by the parenthesis.
+   Notice that any other order of parenthesis would lead to an error.
+   The first curly brackets are a record operation on modules.
+   The linking operation is roughly a generalization of the record operation
+   but here the record operation suffices as there is no need of
+   implicit composition, named specifications, inductive modules, etc.
+   The second, double curly brackets is a double record operation.
+   It differs from the record in that the argument modules are implicitly
+   added with suitable names to the result of the operation. *)
+List22 =
+link
+  spec Elem = 
+    sig 
+      type t 
+      value z : t 
+      value x : t
+    end
+  spec List = 
+  ~Elem ->
+    sig
+      type t
+      value mapt : ~f: ~e:Elem.t -> Elem.t ~l:t -> t 
+      value z2 : t
+      value hd : ~l:t -> Elem.t
+    end
+  spec DoMap = 
+  ~Elem -> 
+    sig 
+      value head_of_x2 : Elem.t
+    end
+  module Outcome =
+(   (* compositions are left associative, 
+       so this paren could have been omitted *)
+    {Elem =
+       :: Elem
+       struct
+         type t = [`True|`False]
+         value z = `True
+         value x = `False
+       end}
+    | (* if this was normal composition, later we wouldn't know [`True] *)
+(   {{(* Elem = Elem; --- this component will be added automatically *)
+     List =
+       :: List
+       struct
+         type t = ind t: [`Nil|`Cons {head : Elem.t; tail : t}]
+         value mapt = fun ~f ~l -> 
+           (map fun ~it:e ->  f ~e) ~it:l
+         value z2 = {head = Elem.z; 
+                     tail = {head = Elem.z; 
+                             tail = `Nil . con}
+                              .`Cons . con}
+                      .`Cons . con
+         value hd = fun ~l -> 
+           match l with
+           fold [`Nil -> Elem.z
+                |`Cons ht -> ht.head]
+       end}} 
+    . (* normal composition here *)
+    {DoMap =
+       :: ~List -> DoMap
+       struct
+         value head_of_x2 =
+           let x2 = List.mapt ~f:(fun ~e -> Elem.x) ~l:List.z2 in
+           List.hd ~l:x2
+       end}
+))  . (* and normal composition here *)
+    :: ~DoMap : 
+          sig
+            value head_of_x2 : [`True|`False]
+          end ->
+         sig 
+           value outcome : [`OK|`Error] 
+         end
+    struct
+      value outcome = 
+        match DoMap.head_of_x2 with
+        [`True -> `Error
+        |`False -> `OK]
+    end
+  module Result = Outcome
+end
+
+
+(* This example shows how one could define inductive types such as [nat]
+   implicitly, by using the induction on modules instead
+   of on types and values. This is and odd thing to do but this proves
+   that the mutually recursive modules of [Dule] are made using
+   real recursion (induction, fix-point) on modules rather than
+   some ad hoc mixing transformations. *)
+Rec15 =
+link
+  spec rec Nat = (* a recursive specification *)
+    sig
+      type nat
+      value t2ind : ~n:nat -> ind nat: [`Zero|`Succ nat]
+      value tde : ~n:nat -> [`Zero|`Succ Nat.nat]
+      value zero : nat
+      value succnat : ~it:nat -> nat
+      value succ : ~it:Nat.nat -> nat
+      value is_zero : ~it:nat -> [`True|`False]
+      value plus : ~n:Nat.nat ~m:Nat.nat -> Nat.nat
+      value six : Nat.nat
+    end
+  module ind Nat = (* inductive module *)
+    struct
+      type nat = [`Zero|`Succ Nat.nat] (* notice no [ind] here *)
+      value t2ind = fun ~n -> 
+        match n with (* no [fold] *)
+        [`Zero -> `Zero . con
+        |`Succ n -> Nat.t2ind ~n .`Succ . con]
+      value tde = fun ~n -> n
+      value zero = `Zero
+      value succnat = fun ~it ->
+	match it with
+        [`Zero -> Nat.zero .`Succ
+        |`Succ n -> (Nat.succ ~it:n) .`Succ]
+      value succ = fun ~it -> it .`Succ
+      value is_zero = [`Zero -> `True|`Succ -> `False]
+      value plus = fun ~m ~n -> 
+        match Nat.tde ~n with
+        [`Zero -> m
+        |`Succ nn -> Nat.succ ~it:(Nat.plus ~n:nn ~m)]
+      value six = 
+        let one = Nat.succ ~it:Nat.zero in
+        let three = Nat.plus ~m:(Nat.plus ~m:one ~n:one) ~n:one in 
+          Nat.plus ~m:three ~n:three
+    end 
+  Result = Nat
+end
+
+
+(* Some contorted examples with fixed points. *)
+Fixes =
+link
+  Fx1 = :: sig value r : {a : {}} end
+    struct
+      value r = let rec rf = {a = {}} in {a = rf.a}
+    end
+  Fx7 = :: sig value r : [`B] end
+    struct
+      value r = let rec rf = {a = rf.b; b = `B} in rf.a
+    end
+  Fx8 = :: sig value r : [`B] end
+    struct
+      value r = let rec rf = {a = fun ~x -> rf.b ~x; 
+                              b = fun ~x -> `B} in rf.a ~x:{}
+    end
+  Fx9 = :: sig value r : [`B] end
+    struct
+      value r = 
+        let rec mods = {nat = {tde = `B; plus = mods.nat.tde}} 
+        in mods.nat.plus
+    end
+  Fx10 = :: sig value r : {} end
+    struct
+      value r = 
+        let rec mods = {nat = {tde = {}; plus = mods.nat.tde}} 
+        in mods.nat.tde
+    end
+  Fx11 = :: sig value r : {} end
+    struct
+      value r = 
+        let rec mods = 
+          {nat1 = {nat2 = {tde = {}; plus = mods.nat1.nat2.tde}}} 
+        in mods.nat1.nat2.plus
+    end
+  Fx121 = :: sig value r : {} end
+    struct
+      value r =
+      let rec mods = 
+        {int1 = mods.nat1.nat2.tde1;
+         nat1 = {int2 = {};
+                 nat2 = {tde1 = mods.nat1.int2; 
+                         tde2 = mods.int1; 
+                         plus = mods.nat1.nat2.tde2}}} 
+      in mods.nat1.nat2.plus
+    end
+  Fx12 = :: sig value r : [`B] end
+    struct
+      value r = (: {}) . 
+      let rec mods = 
+        {int1 = mods.nat1.nat2.tde1 . : [`B];
+         nat1 = {int2 = `B;
+                 nat2 = {tde1 = mods.nat1.int2; 
+                         tde2 = mods.int1 . : [`B]; 
+                         tde3 = mods.nat1.nat2.tde2; 
+                         plus = mods.nat1.nat2.tde3}}} 
+      in mods.nat1.nat2.plus
+    end
+  Fx13 = :: sig value r : [`B] end
+    struct
+      value r =
+      let rec mods = 
+        {int1 = mods.nat1.nat2.tde1;
+         nat1 = {int2 = mods.nat1.nat2.tde2;
+                 nat2 = {tde1 = mods.nat1.int2; 
+                         tde2 = `B; 
+                         tde3 = mods.int1;
+                         plus = mods.nat1.nat2.tde3}}} 
+      in mods.nat1.nat2.plus
+    end
+  Fx14 = :: sig value r : [`B] end
+    struct
+      value r =
+      let rec mods = 
+        {int1 = mods.nat1.nat2.tde1;
+         nat1 = {int2 = `B;
+                 nat2 = {tde1 = mods.nat1.int2; 
+                         tde2 = mods.int1; 
+                         tde3 = mods.nat1.nat2.tde2; 
+                         plus = mods.nat1.nat2.tde3}}} 
+      in mods.nat1.nat2.plus
+    end
+  Fx15 = :: sig value r : 
+      {int1 : [`B];
+       nat1 : {int2 : [`B];
+               nat2 : {tde1 : [`B]; 
+                       tde2 : [`B]; 
+                       tde3 : [`B]; 
+                       plus : [`B] }}} end
+    struct
+      value r =
+      let rec mods = 
+        {int1 = mods.nat1.nat2.tde1;
+         nat1 = {int2 = `B;
+                 nat2 = {tde1 = mods.nat1.int2; 
+                         tde2 = mods.int1; 
+                         tde3 = mods.nat1.nat2.tde2; 
+                         plus = mods.nat1.nat2.tde3}}} 
+      in mods
+    end
+  Result = {Fx1;
+            Fx7;
+            Fx8;
+            Fx9;
+            Fx10;
+            Fx11;
+            Fx121;
+            Fx12;
+            Fx13;
+            Fx14;
+            Fx15}
+end
+
+
+The_best = 
+link
+  spec V = 
+    sig 
+      value v1 : ~it:[`True|`False] -> [`True|`False]
+      value v2 : ~it:[`True|`False] -> [`True|`False]
+      value v3 : ~it:[`True|`False] -> [`True|`False]
+      value v4 : ~it:[`True|`False] -> [`True|`False]
+    end
+  V = 
+    struct 
+      value v1 = map it -> map -> map -> map it -> map -> map -> map it
+      value v2 = map it -> unfold -> fold it -> unfold it -> fold -> unfold it
+      value v3 = map it -> map -> map -> map -> map -> map -> map it
+      value v4 = map it -> fold -> unfold -> fold -> unfold -> fold it
+    end
+  spec Result = 
+    sig 
+      value r1 : [`True|`False] 
+      value r2 : [`True|`False] 
+      value r3 : [`True|`False] 
+      value r4 : [`True|`False] 
+    end
+  Result = 
+    :: ~V -> Result
+    struct 
+      value r1 = V.v1 ~it:`True
+      value r2 = V.v2 ~it:`False
+      value r3 = V.v3 ~it:`True
+      value r4 = V.v4 ~it:`False
+    end
+end
+
+Failed_NatEvenOdd_from_Views = 
+link
+spec Nat =
+  sig
+    type t
+    value t2ind : ~it:t -> ind nat: [`Zero|`Succ nat]
+    value tde : ~it:t -> [`Zero|`Succ t]
+    value zero : t
+    value succ : ~n:t -> t
+    value pred : ~n:t -> t
+    value add : ~n:t ~it:t -> t
+    value mult : ~n:t ~it:t -> t
+    value sub : ~n:t ~it:t -> t
+    value is_zero : ~it:t -> [`True|`False]
+    value leq : ~n:t ~it:t -> [`True|`False]
+    value eq : ~n:t ~it:t -> [`True|`False]
+  end
+spec NatEvenOdd =
+~Nat ->
+  sig
+    value t2view : ~it:Nat.t -> ind t: [`Zero|`Even t|`Odd t]
+    value view2t : ~it:ind t: [`Zero|`Even t|`Odd t] -> Nat.t
+  end
+NatEvenOdd = 
+  struct
+    value t2view = fun ~it -> (* wrong *)
+      (match Nat.t2ind ~it with
+      fold [`Zero -> {n = `Zero . con; even = `True}
+           |`Succ {n; even} -> 
+              if even then {n = n . `Odd . con; even = `False}
+              else {n = n . `Even . con; even = `True}]) . n
+    value view2t =
+      fold [`Zero -> Nat.zero
+           |`Even n -> Nat.succ ~n
+           |`Odd n -> Nat.succ ~n]
+  end
+end

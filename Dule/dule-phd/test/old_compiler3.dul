@@ -1,0 +1,2516 @@
+(* Copyright (C) 2003 Mikolaj Konarski
+ *
+ * This file is part of the Dule compiler.
+ * The Dule compiler is released under the GNU General Public License (GPL).
+ * Please see the file Dule-LICENSE for license information.
+ *
+ * $Id: old_compiler3.dul,v 1.6 2006-05-19 01:23:34 mikon Exp $
+ *) 
+
+(* old version of compiler.dul *)
+
+Old3 = 
+link
+
+(* this program depends on the prelude *)
+spec Bool = Bool
+Bool = load Bool
+spec Char = Char
+Char = load Char
+spec CharList = CharList
+CharList = load CharList
+spec String = String
+String = load String
+
+spec Index =
+  sig
+    type t
+    value eq : ~i:t ~it:t -> [`True|`False]
+  end
+spec IdIndex =
+~String -> 
+  sig
+    type t
+    (* constructors: *)
+    value s2type : ~s:CharList.t -> t   (* type identifier *)
+    value s2value : ~s:CharList.t -> t  (* value identifier *)
+    value s2case : ~s:CharList.t -> t   (* case identifier *)
+    value s2dule : ~s:CharList.t -> t   (* module identifier *)
+    value s2sp : ~s:CharList.t -> t     (* specification identifier *)
+    value loc2wild : ~s:CharList.t -> t (* wild card identifier *)
+    (* conversions: *)
+    value t2string : ~it:t -> CharList.t (* longer *)
+    value t2s : ~it:t -> CharList.t
+    (* tests: *)
+    value is_dule : ~it:t -> [`True|`False]
+    value is_sp : ~it:t -> [`True|`False]
+    value eq : ~i:t ~it:t -> [`True|`False]
+  end
+IdIndex =
+  struct
+    type t = 
+      [`TYPE CharList.t
+      |`VALUE CharList.t
+      |`CASE CharList.t
+      |`DULE CharList.t 
+      |`SP CharList.t
+      |`WILD CharList.t]
+    value s2type = fun ~s -> s .`TYPE
+    value s2value = fun ~s -> s .`VALUE
+    value s2case = fun ~s -> s .`CASE
+    value s2dule = fun ~s -> s .`DULE
+    value s2sp = fun ~s -> s .`SP
+    value loc2wild = fun ~s -> s .`WILD
+    value t2string = String .
+      [`TYPE s -> append ~l1:atu(*"type "*) ~l2:s
+      |`VALUE s -> append ~l1:atu(*"value "*) ~l2:s
+      |`CASE s -> append ~l1:atu(*"constructor "*) ~l2:s
+      |`DULE s -> append ~l1:atu(*"module "*) ~l2:s
+      |`SP s -> append ~l1:atu(*"specification "*) ~l2:s
+      |`WILD s -> 
+          append ~l1:atu(*"wild card at position "*) ~l2:s]
+    value t2s =
+      [`TYPE s -> s
+      |`VALUE s -> s
+      |`CASE s -> s
+      |`DULE s -> s
+      |`SP s -> s
+      |`WILD s -> String.append ~l1:String.atu(*"wild card at "*) ~l2:s]
+    value is_dule =
+      [`TYPE s -> `False
+      |`VALUE s -> `False
+      |`CASE s -> `False
+      |`DULE s -> `True
+      |`SP s -> `False
+      |`WILD s -> `False]
+    value is_sp =
+      [`TYPE s -> `False
+      |`VALUE s -> `False
+      |`CASE s -> `False
+      |`DULE s -> `False
+      |`SP s -> `True
+      |`WILD s -> `False]
+    value eq =
+      let t2s =
+        [`TYPE s -> s
+        |`VALUE s -> s
+        |`CASE s -> s
+        |`DULE s -> s
+        |`SP s -> s
+        |`WILD s -> s]
+      in
+      fun ~i ~it -> String.eq ~l:(t2s ~it:i) ~it:(t2s ~it)
+  end
+spec AtIndex =
+~IdIndex -> 
+  sig
+    (* these are reserved --- not accesible through lexer: *)
+    value atu : IdIndex.t (* standard function space *)
+    value atj : IdIndex.t (* argument part of a types's source *)
+    value atk : IdIndex.t (* context part of a types's source *)
+    value ate : IdIndex.t (* argument part of a value's domain *)
+    value atd : IdIndex.t (* context part of a value's domain *)
+    (* these are accesible: *)
+    value it : IdIndex.t  (* default argument name *)
+    value result : IdIndex.t (* name of the module holding the results *)
+    value tt : IdIndex.t (* name of constructor of truth *)
+    value ff : IdIndex.t (* name of constructor of falsity *)
+    (* conversions: *)
+    value sp2dule : ~it:IdIndex.t -> IdIndex.t
+    value dule2sp : ~it:IdIndex.t -> IdIndex.t
+end
+AtIndex =
+  struct
+    value atu = IdIndex.s2value ~s:String.atu
+    value atj = IdIndex.s2type ~s:String.atu
+    value atk = IdIndex.s2type ~s:String.atu
+    value ate = IdIndex.s2value ~s:String.atu
+    value atd = IdIndex.s2value ~s:String.atu
+    value it = IdIndex.s2value ~s:String.it
+    value result = IdIndex.s2dule ~s:String.it
+    value tt = IdIndex.s2case ~s:String.it
+    value ff = IdIndex.s2case ~s:String.it
+    value sp2dule = IdIndex . fun ~it -> 
+      assert is_sp ~it in 
+      s2dule ~s:(t2s ~it)
+    value dule2sp = IdIndex . fun ~it -> 
+      assert is_dule ~it in 
+      s2sp ~s:(t2s ~it)
+end
+spec Value = sig type t end
+spec IList =
+~Index ~Value ->
+  sig
+    type t
+    value t2ind : ~l:t ->
+      ind t: [`Nil|`Cons {i : Index.t; v : Value.t; l : t}]
+    value tde : ~l:t -> [`Nil|`Cons {i : Index.t; v : Value.t; l : t}]
+    value nil : t
+    value cons : ~i:Index.t ~v:Value.t ~l:t -> t
+  end
+library IList =
+  link
+    spec Elem = 
+    ~Index ~Value -> 
+      sig
+        type t
+        value i : ~e:t -> Index.t
+        value v : ~e:t -> Value.t
+        value assoc : ~i:Index.t ~v:Value.t -> t
+      end
+    Elem = 
+      struct
+        type t = {i : Index.t; v : Value.t}
+        value i = fun ~e -> e.i
+        value v = fun ~e -> e.v
+        value assoc = fun ~i ~v -> {i; v}
+      end
+    spec ElemList = List with {Elem}
+    ElemList = load List with {Elem}
+    List2IList = 
+      :: ~ElemList -> IList
+      struct
+        type t = ElemList.t
+        value t2ind = fun ~l -> 
+          match ElemList.t2ind ~it:l with
+          fold [`Nil -> `Nil . con
+               |`Cons {head; tail} -> 
+                   {i = Elem.i ~e:head;
+                    v = Elem.v ~e:head;
+                    l = tail} .`Cons . con]
+        value tde = fun ~l ->
+          match ElemList.tde ~it:l with
+          [`Nil -> `Nil
+          |`Cons {head; tail} ->
+              {i = Elem.i ~e:head;
+               v = Elem.v ~e:head;
+               l = tail} .`Cons]
+        value nil = ElemList.nil
+        value cons =
+          let not_in = fun ~i ~l ->
+            let tail_or_in_head = fun ~it:{head; tail} ->
+              match tail with
+              [`False -> tail
+              |`True -> Index.eq ~i ~it:(Elem.i ~e:head)]
+            in
+            match ElemList.t2ind ~it:l with
+            fold [`Nil -> `True
+                 |`Cons tail_or_in_head]
+          in
+          fun ~i ~v ~l -> 
+            assert not_in ~i ~l in
+            ElemList.cons ~tail:l ~head:(Elem.assoc ~i ~v)
+      end
+  end | List2IList
+spec IListOps =
+~IList ->
+  sig
+    value ind2t : 
+      ~l:ind t: [`Nil|`Cons {i : Index.t; v : Value.t; l : t}] -> IList.t
+    value is_nil : ~l:IList.t -> [`True|`False]
+    value is_in : ~i:Index.t ~l:IList.t -> [`True|`False]
+    value not_in : ~i:Index.t ~l:IList.t -> [`True|`False]
+    value bforall : 
+      ~p: ~i:Index.t ~v:Value.t -> [`True|`False] 
+      ~l:IList.t -> 
+        [`True|`False]
+    value vforall : 
+      ~p: ~it:Value.t -> [`True|`False] 
+      ~l:IList.t -> 
+        [`True|`False]
+    value iforall : 
+      ~p: ~it:Index.t -> [`True|`False] 
+      ~l:IList.t -> 
+        [`True|`False]
+    value vexists : 
+      ~p: ~it:Value.t -> [`True|`False] 
+      ~l:IList.t -> 
+        [`True|`False]
+    value eqset : 
+      ~eq: ~v:Value.t ~it:Value.t -> [`True|`False] 
+      ~l:IList.t ~it:IList.t -> 
+        [`True|`False]
+    value bmap : 
+      ~f: (~i:Index.t ~v:Value.t -> Value.t) ~l:IList.t -> IList.t
+    value vmap : ~f: ~v:Value.t -> Value.t ~l:IList.t -> IList.t
+    value imap : ~f: ~i:Index.t -> Value.t ~l:IList.t -> IList.t
+    value rmap : ~f: ~it:Index.t -> Index.t ~l:IList.t -> IList.t
+    value bfilter : 
+      ~p: ~i:Index.t ~v:Value.t -> [`True|`False] ~l:IList.t -> IList.t
+    value ifilter : 
+      ~p: ~it:Index.t -> [`True|`False] ~l:IList.t -> IList.t
+    value remove : ~i:Index.t ~l:IList.t -> IList.t
+    value subtract : ~l1:IList.t ~l2:IList.t -> IList.t
+    value append : ~l1:IList.t ~l2:IList.t -> IList.t
+    value find : ~i:Index.t ~l:IList.t -> Value.t
+    value find_ok : ~i:Index.t ~l:IList.t -> [`OK Value.t |`Error]
+    value bchoose : ~l:IList.t -> [`OK {i : Index.t; v : Value.t}|`Error]
+    value vchoose : ~l:IList.t -> [`OK Value.t|`Error]
+    value ichoose : ~l:IList.t -> [`OK Index.t|`Error]
+    value bfold1ok : 
+      ~init:IList.t 
+      ~f: ~i:Index.t ~v:Value.t ~l:IList.t -> [`OK IList.t|`Error]
+      ~l:IList.t ->
+        [`OK IList.t|`Error]         
+    value vfold1ok : 
+      ~init:IList.t 
+      ~f: ~v:Value.t ~l:IList.t -> [`OK IList.t|`Error]
+      ~l:IList.t ->
+        [`OK IList.t|`Error]         
+    value ifold1ok : 
+      ~init:IList.t 
+      ~f: ~i:Index.t ~l:IList.t -> [`OK IList.t|`Error]
+      ~l:IList.t ->
+        [`OK IList.t|`Error]         
+    value bmap1ok :
+      ~f: (~i:Index.t ~v:Value.t -> [`OK Value.t|`Error]) ~l:IList.t ->
+        [`OK IList.t|`Error]
+    value imap1ok :
+      ~f: (~i:Index.t -> [`OK Value.t|`Error]) ~l:IList.t ->
+        [`OK IList.t|`Error]
+    value vmap1ok :
+      ~f: (~v:Value.t -> [`OK Value.t|`Error]) ~l:IList.t ->
+        [`OK IList.t|`Error]
+  end
+library IListOps = 
+  link
+    spec IListOpsBasic = 
+    ~IList ->
+      sig
+        value ind2t : 
+          ~l:ind t: [`Nil|`Cons {i : Index.t; v : Value.t; l : t}] ->
+            IList.t
+        value is_nil : ~l:IList.t -> [`True|`False]
+        value not_in : ~i:Index.t ~l:IList.t -> [`True|`False]
+        value bforall : 
+          ~p: ~i:Index.t ~v:Value.t -> [`True|`False] 
+          ~l:IList.t -> 
+            [`True|`False]
+        value bmap : 
+          ~f: (~i:Index.t ~v:Value.t -> Value.t) ~l:IList.t -> IList.t
+        value bfilter :  ~p: ~i:Index.t ~v:Value.t -> [`True|`False] 
+                         ~l:IList.t -> IList.t
+        value append : ~l1:IList.t ~l2:IList.t -> IList.t
+        value find_ok : ~i:Index.t ~l:IList.t -> [`OK Value.t |`Error]
+        value bchoose : 
+          ~l:IList.t -> [`OK {i : Index.t; v : Value.t}|`Error]
+        value bfold1ok : 
+          ~init:IList.t 
+          ~f: ~i:Index.t ~v:Value.t ~l:IList.t -> [`OK IList.t|`Error]
+          ~l:IList.t ->
+            [`OK IList.t|`Error]         
+        value bmap1ok :
+          ~f: (~i:Index.t ~v:Value.t -> [`OK Value.t|`Error]) 
+          ~l:IList.t ->
+            [`OK IList.t|`Error]
+      end
+    IListOpsBasic =
+      struct
+        value ind2t = fun ~l -> 
+          match l with
+          fold [`Nil -> IList.nil
+               |`Cons {i; v; l} -> IList.cons ~i ~v ~l]
+        value is_nil = fun ~l -> 
+          match IList.tde ~l with
+          [`Nil -> `True
+          |`Cons -> `False]
+        value not_in = fun ~i ~l ->
+          let tail_or_in_head = fun ~it ->
+            match it.l with
+            [`False -> it.l
+            |`True -> Index.eq ~i ~it:it.i]
+          in
+          match IList.t2ind ~l with
+          fold [`Nil -> `True
+               |`Cons tail_or_in_head]
+        value bforall = fun ~p ~l ->
+          match IList.t2ind ~l with
+          fold [`Nil -> `True
+               |`Cons {i; v; l} -> if l then p ~i ~v else `False]
+        (* [vmap] and [rmap] could be defined using [map] *)
+        (* while [bmap] and [imap] both need [fold] *)
+        value bmap = IList . fun ~f ~l ->
+          match t2ind ~l with
+          fold [`Nil -> nil
+               |`Cons {i; v; l} ->
+                   let v = f ~i ~v in
+                   cons ~i ~v ~l]
+        value bfilter = IList . fun ~p ~l ->
+          match t2ind ~l with
+          fold [`Nil -> nil
+               |`Cons {i; v; l} ->
+                   match p ~i ~v with
+                   [`True -> cons ~i ~v ~l
+                   |`False -> l]]
+        value append = fun ~l1 ~l2 ->
+          match IList.t2ind ~l:l1 with
+          fold [`Nil -> l2
+               |`Cons {i; v; l} -> IList.cons ~i ~v ~l]
+        value find_ok = fun ~i ~l ->
+          let tail_or_in_head = fun ~it ->
+            match it.l with
+            [`OK -> it.l
+            |`Error ->
+                match Index.eq ~i ~it:it.i with
+                [`True -> it.v .`OK
+                |`False -> `Error]]
+          in
+          match IList.t2ind ~l with
+          fold [`Nil -> `Error
+               |`Cons tail_or_in_head]
+        value bchoose = fun ~l ->
+          match IList.tde ~l  with
+          [`Nil -> `Error
+          |`Cons it -> it . {i; v} .`OK]
+        value bfold1ok = fun ~init ~f ~l ->
+          match IList.t2ind ~l with
+          fold [`Nil -> init .`OK
+               |`Cons {i; v; l} ->
+                   match l with
+                   [`OK l ->
+                       f ~i ~v ~l
+                   |`Error -> `Error]]
+        value bmap1ok = IList . fun ~f ~l ->
+          match t2ind ~l with
+          fold [`Nil -> nil .`OK
+               |`Cons {i; v; l} ->
+                   match l with
+                   [`OK l ->
+                       match f ~i ~v with
+                       [`OK v ->
+                           cons ~i ~v ~l .`OK
+                       |`Error -> `Error]
+                   |`Error -> `Error]]
+      end
+    Basic2IList = 
+      :: ~Bool ~IListOpsBasic -> IListOps
+      struct
+        value ind2t = IListOpsBasic.ind2t
+        value is_nil = IListOpsBasic.is_nil
+        value not_in  = IListOpsBasic.not_in
+        value is_in  = fun ~i ~l -> 
+          Bool.neg ~it:(IListOpsBasic.not_in ~i ~l)
+        value bforall = IListOpsBasic.bforall
+        value vforall = fun ~p ~l -> 
+          IListOpsBasic.bforall ~p:(fun ~i ~v -> p ~it:v) ~l
+        value iforall = fun ~p ~l ->
+          IListOpsBasic.bforall ~p:(fun ~i ~v -> p ~it:i) ~l
+        value vexists = fun ~p ~l ->
+          Bool.neg ~it:
+            (IListOpsBasic.bforall ~p:(fun ~i ~v -> 
+              Bool.neg ~it:(p ~it:v)) ~l)
+        value eqset = fun ~eq ~l ~it ->
+          Bool.conj 
+            ~b: (IListOpsBasic.bforall ~l ~p:(fun ~i ~v ->
+              match IListOpsBasic.find_ok ~i ~l:it with
+              [`OK it -> eq ~v ~it
+              |`Error -> `False]))
+            ~it:(IListOpsBasic.bforall ~l:it ~p:(fun ~i ~v ->
+              match IListOpsBasic.find_ok ~i ~l with
+              [`OK it -> eq ~v ~it
+              |`Error -> `False]))
+        value bmap = IListOpsBasic.bmap
+        value vmap = fun ~f ~l ->
+          IListOpsBasic.bmap ~f:(fun ~i ~v -> f ~v) ~l
+        value imap = fun ~f ~l ->
+          IListOpsBasic.bmap ~f:(fun ~i ~v -> f ~i) ~l
+        value rmap = fun ~f ~l ->
+          IListOpsBasic.ind2t ~l:
+            match IList.t2ind ~l with
+            map f
+        value bfilter = IListOpsBasic.bfilter
+        value ifilter = fun ~p ~l ->
+          IListOpsBasic.bfilter ~p:(fun ~i ~v -> p ~it:i) ~l
+        value remove = fun ~i ~l ->
+          IListOpsBasic.bfilter ~p:(fun ~i:it ~v -> 
+            Bool.neg ~it:(Index.eq ~i ~it)) ~l
+        value subtract = fun ~l1 ~l2 ->
+          IListOpsBasic.bfilter ~p:(fun ~i ~v -> 
+            IListOpsBasic.not_in ~i ~l:l2) ~l:l1
+        value append = IListOpsBasic.append
+        value find = fun ~i ~l -> 
+          match IListOpsBasic.find_ok ~i ~l with
+          [`OK v -> v
+          |`Error fail]
+        value find_ok = IListOpsBasic.find_ok
+        value bchoose = IListOpsBasic.bchoose
+        value vchoose = fun ~l ->
+          match IListOpsBasic.bchoose ~l with
+          [`OK {i; v} -> v .`OK
+          |`Error er -> er .`Error]
+        value ichoose = fun ~l ->
+          match IListOpsBasic.bchoose ~l with
+          [`OK {i; v} -> i .`OK
+          |`Error er -> er .`Error]
+        value bfold1ok = IListOpsBasic.bfold1ok
+        value vfold1ok = fun ~init ~f ~l ->
+          IListOpsBasic.bfold1ok ~init ~f:(fun ~i ~v ~l -> f ~v ~l) ~l
+        value ifold1ok = fun ~init ~f ~l ->
+          IListOpsBasic.bfold1ok ~init ~f:(fun ~i ~v ~l -> f ~i ~l) ~l
+        value bmap1ok = IListOpsBasic.bmap1ok
+        value vmap1ok = fun ~f ~l ->
+          IListOpsBasic.bmap1ok ~f:(fun ~i ~v -> f ~v) ~l
+        value imap1ok = fun ~f ~l ->
+          IListOpsBasic.bmap1ok ~f:(fun ~i ~v -> f ~i) ~l
+      end
+end | Basic2IList :> IListOps
+
+Compiler = 
+link
+  (* the full core language f-Core: *)
+  spec IList = IList with {Value; Index = IdIndex}
+  library IList = load IList with {Value; Index = IdIndex}
+  spec IListOps = IListOps with {Value; IList; Index = IdIndex}
+  library IListOps = 
+    load IListOps with {Bool; Value; IList; Index = IdIndex} :> IListOps
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~IdIndex ->
+    sig
+      type t
+      value tde : ~c:t ->
+               [`C_PP CatIList.t
+               |`C_BB]
+      value c_PP : ~lc:CatIList.t -> t
+      value c_BB : t
+    end
+  module ind CatIList = load IList with {{Value = Cat}}
+  and Cat = (* only normal form terms, no rewriting here *)
+    struct
+      type t = 
+        ind t: [`C_PP CatIList.t
+               |`C_BB]
+      value tde = fun ~c -> c . de
+      value c_PP = fun ~lc -> lc .`C_PP . con
+      value c_BB = `C_BB . con
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+      value t2ind : ~f:t -> 
+        ind t: [`F_ID Cat.t
+               |`F_COMP {f1 : t; f2 : t}
+               |`F_PR {lc : CatIList.t; i : IdIndex.t}
+               |`F_RECORD {c : Cat.t; lf : FunctIList.t}
+               |`F_pp {c : Cat.t; lf : FunctIList.t}
+               |`F_ss {c : Cat.t; lf : FunctIList.t}
+               |`F_ii t
+               |`F_tt t
+               |`F_ee {lg : FunctIList.t; h : t}]
+      value tde : ~f:t -> 
+               [`F_ID Cat.t
+               |`F_COMP {f1 : t; f2 : t}
+               |`F_PR {lc : CatIList.t; i : IdIndex.t}
+               |`F_RECORD {c : Cat.t; lf : FunctIList.t}
+               |`F_pp {c : Cat.t; lf : FunctIList.t}
+               |`F_ss {c : Cat.t; lf : FunctIList.t}
+               |`F_ii t
+               |`F_tt t
+               |`F_ee {lg : FunctIList.t; h : t}]
+      value f_ID : ~c:Cat.t -> t
+      value f_COMP : ~f1:t ~f2:t -> t
+      value f_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value f_RECORD : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_pp : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_ss : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_ii : ~g:t -> t
+      value f_tt : ~g:t -> t
+      value f_ee : ~lg:FunctIList.t ~h:t -> t
+    end
+  module ind FunctIList = load IList with {{Value = Funct}}
+  and Funct =
+    struct
+      type t =
+        ind t: [`F_ID Cat.t
+               |`F_COMP {f1 : t; f2 : t}
+               |`F_PR {lc : CatIList.t; i : IdIndex.t}
+               |`F_RECORD {c : Cat.t; lf : FunctIList.t}
+               |`F_pp {c : Cat.t; lf : FunctIList.t}
+               |`F_ss {c : Cat.t; lf : FunctIList.t}
+               |`F_ii t
+               |`F_tt t
+               |`F_ee {lg : FunctIList.t; h : t}]
+      value t2ind = fun ~f -> f
+      value tde = fun ~f -> f . de
+      value f_ID = fun ~c -> c .`F_ID . con
+      value f_COMP = fun ~f1 ~f2 -> {f1; f2} .`F_COMP . con
+      value f_PR = fun ~lc ~i -> {lc; i} .`F_PR . con
+      value f_RECORD = fun ~c ~lf -> {c; lf} .`F_RECORD . con
+      value f_pp = fun ~c ~lf -> {c; lf} .`F_pp . con
+      value f_ss = fun ~c ~lf -> {c; lf} .`F_ss . con
+      value f_ii = fun ~g -> g .`F_ii . con
+      value f_tt = fun ~g -> g .`F_tt . con
+      value f_ee = fun ~lg ~h -> {lg; h} .`F_ee . con
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+      value t2ind : ~t:t -> 
+        ind t: [`T_ID Cat.t
+               |`T_COMP {t1 : t; t2 : t}
+               |`T_PR {lc : CatIList.t; i : IdIndex.t}
+               |`T_RECORD {c : Cat.t; lt : TransIList.t}
+               |`T_FT {f1 : Funct.t; t2 : t}
+               |`T_TF {t1 : t; f2 : Funct.t}
+               |`T_id Funct.t
+               |`T_comp {t1 : t; t2 : t} 
+               |`T_pp {c : Cat.t; lt : TransIList.t}
+               |`T_pr {lf : FunctIList.t; i : IdIndex.t}
+               |`T_record {f : Funct.t; lt : TransIList.t}
+               |`T_ss {c : Cat.t; lt : TransIList.t}
+               |`T_in {lf : FunctIList.t; i : IdIndex.t}
+               |`T_case {lt : TransIList.t; h : Funct.t}
+               |`TL_case {f : Funct.t; lt : TransIList.t; h : Funct.t}
+               |`T_map {g : Funct.t; t : t}
+               |`T_ii t
+               |`T_con Funct.t
+               |`T_fold {g : Funct.t; t : t}
+               |`TL_fold {g : Funct.t; t : t}
+               |`T_de Funct.t
+               |`T_tt t
+               |`T_uncon Funct.t
+               |`T_unfold {g : Funct.t; t :t}
+               |`TL_unfold {g : Funct.t; t :t}
+               |`T_unde Funct.t
+               |`T_ee {lt : TransIList.t; u : t}
+               |`T_appl {lg : FunctIList.t; h : Funct.t}
+               |`T_curry t
+               |`T_fix t
+               |`TL_fix t]
+      value tde : ~t:t -> 
+               [`T_ID Cat.t
+               |`T_COMP {t1 : t; t2 : t}
+               |`T_PR {lc : CatIList.t; i : IdIndex.t}
+               |`T_RECORD {c : Cat.t; lt : TransIList.t}
+               |`T_FT {f1 : Funct.t; t2 : t}
+               |`T_TF {t1 : t; f2 : Funct.t}
+               |`T_id Funct.t
+               |`T_comp {t1 : t; t2 : t} 
+               |`T_pp {c : Cat.t; lt : TransIList.t}
+               |`T_pr {lf : FunctIList.t; i : IdIndex.t}
+               |`T_record {f : Funct.t; lt : TransIList.t}
+               |`T_ss {c : Cat.t; lt : TransIList.t}
+               |`T_in {lf : FunctIList.t; i : IdIndex.t}
+               |`T_case {lt : TransIList.t; h : Funct.t}
+               |`TL_case {f : Funct.t; lt : TransIList.t; h : Funct.t}
+               |`T_map {g : Funct.t; t : t}
+               |`T_ii t
+               |`T_con Funct.t
+               |`T_fold {g : Funct.t; t : t}
+               |`TL_fold {g : Funct.t; t : t}
+               |`T_de Funct.t
+               |`T_tt t
+               |`T_uncon Funct.t
+               |`T_unfold {g : Funct.t; t :t}
+               |`TL_unfold {g : Funct.t; t :t}
+               |`T_unde Funct.t
+               |`T_ee {lt : TransIList.t; u : t}
+               |`T_appl {lg : FunctIList.t; h : Funct.t}
+               |`T_curry t
+               |`T_fix t
+               |`TL_fix t]
+      value t_ID : ~c:Cat.t -> t
+      value t_COMP : ~t1:t ~t2:t -> t
+      value t_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value t_RECORD : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_FT : ~f1:Funct.t ~t2:t -> t
+      value t_TF : ~t1:t ~f2:Funct.t -> t
+      value t_id : ~f:Funct.t -> t
+      value t_comp : ~t1:t ~t2:t -> t
+      value t_pp : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_pr : ~lf:FunctIList.t ~i:IdIndex.t -> t
+      value t_record : ~f:Funct.t ~lt:TransIList.t -> t
+      value t_ss : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_in : ~lf:FunctIList.t ~i:IdIndex.t -> t
+      value t_case : ~lt:TransIList.t ~h:Funct.t  -> t
+      value tl_case : ~f:Funct.t ~lt:TransIList.t ~h:Funct.t -> t
+      value t_map : ~g:Funct.t ~t:t -> t
+      value t_ii : ~t:t -> t
+      value t_con : ~g:Funct.t -> t
+      value t_fold : ~g:Funct.t ~t:t -> t
+      value tl_fold : ~g:Funct.t ~t:t -> t
+      value t_de : ~g:Funct.t -> t
+      value t_tt : ~t:t -> t
+      value t_uncon : ~g:Funct.t -> t
+      value t_unfold : ~g:Funct.t ~t:t -> t
+      value tl_unfold : ~g:Funct.t ~t:t -> t
+      value t_unde : ~g:Funct.t -> t
+      value t_ee : ~lt:TransIList.t ~u:t -> t
+      value t_appl : ~lg:FunctIList.t ~h:Funct.t -> t
+      value t_curry : ~t:t -> t
+      value t_fix : ~t:t -> t
+      value tl_fix : ~t:t -> t
+    end
+  module ind TransIList = load IList with {{Value = Trans}}
+  and Trans = 
+    struct
+      type t = 
+        ind t: [`T_ID Cat.t
+               |`T_COMP {t1 : t; t2 : t}
+               |`T_PR {lc : CatIList.t; i : IdIndex.t}
+               |`T_RECORD {c : Cat.t; lt : TransIList.t}
+               |`T_FT {f1 : Funct.t; t2 : t}
+               |`T_TF {t1 : t; f2 : Funct.t}
+               |`T_id Funct.t
+               |`T_comp {t1 : t; t2 : t} 
+               |`T_pp {c : Cat.t; lt : TransIList.t}
+               |`T_pr {lf : FunctIList.t; i : IdIndex.t}
+               |`T_record {f : Funct.t; lt : TransIList.t}
+               |`T_ss {c : Cat.t; lt : TransIList.t}
+               |`T_in {lf : FunctIList.t; i : IdIndex.t}
+               |`T_case {lt : TransIList.t; h : Funct.t}
+               |`TL_case {f : Funct.t; lt : TransIList.t; h : Funct.t}
+               |`T_map {g : Funct.t; t : t}
+               |`T_ii t
+               |`T_con Funct.t
+               |`T_fold {g : Funct.t; t : t}
+               |`TL_fold {g : Funct.t; t : t}
+               |`T_de Funct.t
+               |`T_tt t
+               |`T_uncon Funct.t
+               |`T_unfold {g : Funct.t; t :t}
+               |`TL_unfold {g : Funct.t; t :t}
+               |`T_unde Funct.t
+               |`T_ee {lt : TransIList.t; u : t}
+               |`T_appl {lg : FunctIList.t; h : Funct.t}
+               |`T_curry t
+               |`T_fix t
+               |`TL_fix t]
+      value t2ind = fun ~t -> t
+      value tde = fun ~t -> t . de
+      value t_ID = fun ~c -> c .`T_ID . con
+      value t_COMP = fun ~t1 ~t2 -> {t1; t2} .`T_COMP . con
+      value t_PR = fun ~lc ~i -> {lc; i} .`T_PR . con
+      value t_RECORD = fun ~c ~lt -> {c; lt} .`T_RECORD . con
+      value t_FT = fun ~f1 ~t2 -> {f1; t2} .`T_FT . con
+      value t_TF = fun ~t1 ~f2 -> {t1; f2} .`T_TF . con
+      value t_id = fun ~f -> f .`T_id . con
+      value t_comp = fun ~t1 ~t2 -> {t1; t2} .`T_comp . con
+      value t_pp = fun ~c ~lt -> {c; lt} .`T_pp . con
+      value t_pr = fun ~lf ~i -> {lf; i} .`T_pr . con
+      value t_record = fun ~f ~lt -> {f; lt} .`T_record . con
+      value t_ss = fun ~c ~lt -> {c; lt} .`T_ss . con
+      value t_in = fun ~lf ~i -> {lf; i} .`T_in . con
+      value t_case = fun ~lt ~h -> {lt; h} .`T_case . con
+      value tl_case = fun ~f ~lt ~h -> {f; lt; h} .`TL_case . con
+      value t_map = fun ~g ~t -> {g; t} .`T_map . con
+      value t_ii = fun ~t -> t .`T_ii . con
+      value t_con = fun ~g -> g .`T_con . con
+      value t_fold = fun ~g ~t -> {g; t} .`T_fold . con
+      value tl_fold = fun ~g ~t -> {g; t} .`TL_fold . con
+      value t_de = fun ~g -> g .`T_de . con
+      value t_tt = fun ~t -> t .`T_tt . con
+      value t_uncon = fun ~g -> g .`T_uncon . con
+      value t_unfold = fun ~g ~t -> {g; t} .`T_unfold . con
+      value tl_unfold = fun ~g ~t -> {g; t} .`TL_unfold . con
+      value t_unde = fun ~g -> g .`T_unde . con
+      value t_ee = fun ~lt ~u -> {lt; u} .`T_ee . con
+      value t_appl = fun ~lg ~h -> {lg; h} .`T_appl . con
+      value t_curry = fun ~t -> t .`T_curry . con
+      value t_fix = fun ~t -> t .`T_fix . con
+      value tl_fix = fun ~t -> t .`TL_fix . con
+    end
+  spec CatIListOps = IListOps with {{Value = Cat; IList = CatIList}}
+  CatIListOps = load IListOps with 
+    {{Bool; Value = Cat; IList = CatIList}} :> CatIListOps
+  spec FunctIListOps = IListOps with {{Value = Funct; IList = FunctIList}}
+  FunctIListOps = load IListOps with 
+    {{Bool; Value = Funct; IList = FunctIList}} :> FunctIListOps
+  spec TransIListOps = IListOps with {{Value = Trans; IList = TransIList}}
+  TransIListOps = load IListOps with 
+    {{Bool; Value = Trans; IList = TransIList}} :> TransIListOps
+  spec MapCF =
+  ~Funct ->
+    sig
+      value imap_cf : 
+        ~f: ~i:IdIndex.t -> Funct.t ~l:CatIList.t -> FunctIList.t
+      value bmap1ok_cf :
+        ~f: (~i:IdIndex.t ~v:Cat.t -> [`OK Funct.t|`Error]) 
+        ~l:CatIList.t ->
+          [`OK FunctIList.t|`Error]
+      value vmap_fc : 
+            ~f: ~v:Funct.t -> Cat.t ~l:FunctIList.t -> CatIList.t
+    end
+  MapCF =
+    :: ~CatIListOps ~FunctIListOps -> MapCF
+    struct
+      value imap_cf = fun ~f ~l ->
+        match CatIList.t2ind ~l with
+        fold [`Nil -> FunctIList.nil
+             |`Cons {i; v; l} ->
+                 let v = f ~i in
+                 FunctIList.cons ~i ~v ~l]
+      value bmap1ok_cf = fun ~f ~l ->
+        match CatIList.t2ind ~l with
+        fold [`Nil -> FunctIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match f ~i ~v with
+                     [`OK v ->
+                         FunctIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+      value vmap_fc = fun ~f ~l ->
+        CatIListOps.ind2t ~l:
+          match FunctIList.t2ind ~l with
+            map v -> f ~v
+    end
+  spec MapFT =
+  ~Trans ->
+    sig       
+      value bmap1ok_ft :
+        ~f: (~i:IdIndex.t ~v:Funct.t -> [`OK Trans.t|`Error]) 
+        ~l:FunctIList.t ->
+          [`OK TransIList.t|`Error]
+      value vmap_tf : 
+        ~f: ~v:Trans.t -> Funct.t ~l:TransIList.t -> FunctIList.t
+    end
+  MapFT = 
+    :: ~TransIListOps ~FunctIListOps -> MapFT
+    struct
+      value bmap1ok_ft = fun ~f ~l ->
+        match FunctIList.t2ind ~l with
+        fold [`Nil -> TransIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match f ~i ~v with
+                     [`OK v ->
+                         TransIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+       value vmap_tf = fun ~f ~l ->
+        FunctIListOps.ind2t ~l:
+          match TransIList.t2ind ~l with
+            map v -> f ~v
+    end
+  spec Eq =
+  ~Value ->
+    sig
+      value eq : ~v:Value.t ~it:Value.t -> [`True|`False]
+    end
+  spec EqCat = Eq with {Value = Cat}
+  EqCat =
+    :: ~CatIListOps -> EqCat
+    struct
+      value rec eq = fun ~v ~it ->
+        match Cat.tde ~c:it with
+        [`C_PP lc -> 
+            match Cat.tde ~c:v with
+            [`C_PP ld -> CatIListOps.eqset ~eq ~l:lc ~it:ld
+            |`C_BB -> `False]
+        |`C_BB -> 
+            match Cat.tde ~c:v with
+            [`C_PP ld -> `False
+            |`C_BB -> `True]]
+    end
+  spec EqFunct = Eq with {Value = Funct}
+  EqFunct =
+    :: ~FunctIListOps -> EqFunct
+    struct
+      value eq = fun ~v ~it -> `True
+    end
+  spec EqIList =
+  ~Eq ~IList ->
+    sig
+      value subset : ~l1:IList.t ~l2:IList.t -> [`True|`False]
+      value eqset : ~l1:IList.t ~l2:IList.t -> [`True|`False]
+      value diff : ~l1:IList.t ~l2:IList.t -> IList.t
+      value inter : ~l1:IList.t ~l2:IList.t -> IList.t
+      value append_ok : ~l1:IList.t ~l2:IList.t -> [`OK IList.t|`Error]
+    end
+  library EqIList =
+    :: ~IListOps -> EqIList
+    struct
+      value subset = fun ~l1 ~l2 ->
+        IListOps.bforall ~l:l1 ~p:(fun ~i ~v ->
+          match IListOps.find_ok ~i ~l:l2 with
+          [`OK it -> Eq.eq ~v ~it
+          |`Error -> `False])
+      value eqset = fun ~l1 ~l2 -> IListOps.eqset ~eq:Eq.eq ~l:l1 ~it:l2
+      value diff = fun ~l1 ~l2 ->
+        IListOps.bfilter ~p:(fun ~i ~v -> 
+          match IListOps.find_ok ~i ~l:l2 with
+          [`OK it -> assert Eq.eq ~v ~it in `False
+          |`Error -> `True]) ~l:l1
+      value inter = fun ~l1 ~l2 ->
+        IListOps.bfilter ~p:(fun ~i ~v -> 
+          match IListOps.find_ok ~i ~l:l2 with
+          [`OK it -> assert Eq.eq ~v ~it in `True
+          |`Error -> `False]) ~l:l1
+      value append_ok = fun ~l1 ~l2 ->
+        let add_i = fun ~i ~v ~l ->
+          match IListOps.find_ok ~i ~l:l2 with
+          [`OK it -> if Eq.eq ~v ~it then l .`OK else `Error
+          |`Error -> IList.cons ~i ~v ~l .`OK]
+        in
+        IListOps.bfold1ok ~init:l2 ~f:add_i ~l:l1
+    end
+  spec EqIListCat = EqIList 
+    with {{Eq = EqCat; IList = CatIList; Value = Cat}}
+  EqIListCat = load EqIList 
+    with {{IListOps = CatIListOps; 
+           Eq = EqCat; IList = CatIList; Value = Cat}} :> EqIListCat
+  spec EqIListFunct = EqIList 
+    with {{Eq = EqFunct; IList = FunctIList; Value = Funct}}
+  EqIListFunct = load EqIList 
+    with {{IListOps = FunctIListOps; 
+           Eq = EqFunct; 
+           IList = FunctIList; Value = Funct}} :> EqIListFunct
+  spec SemCat =
+  ~AtIndex ~Cat ->
+    sig
+      (* a list of type argument and context: *)  
+      value coi : ~atj:Cat.t ~atk:Cat.t -> CatIList.t 
+      value unPP : ~c:Cat.t -> CatIList.t
+      value unPPok : ~c:Cat.t -> [`OK CatIList.t|`Error]
+    end
+  module SemCat =
+    struct
+      value coi = fun ~atj ~atk ->
+        CatIList.cons ~i:AtIndex.atj ~v:atj 
+          ~l:(CatIList.cons ~i:AtIndex.atk ~v:atk
+                ~l:CatIList.nil)
+      value unPP = fun ~c ->
+        match Cat.tde ~c with
+        [`C_PP lc -> lc
+        |`C_BB fail]
+      value unPPok = fun ~c ->
+        match Cat.tde ~c with
+        [`C_PP lc -> lc .`OK
+        |`C_BB -> `Error ]
+    end
+  spec SrcCore =
+  ~Funct -> 
+    sig
+      value src : ~f:Funct.t -> Cat.t
+      value trg : ~f:Funct.t -> Cat.t
+      value trg_bad : ~f:Funct.t -> Cat.t
+    end
+  module SrcCore =
+    :: ~AtIndex ~CatIListOps ~MapCF ~EqIListCat ~SemCat -> SrcCore
+    struct
+      value src =
+        let fing = fun ~it ->
+          let l = SemCat.unPP ~c:it in
+          CatIListOps.find ~i:AtIndex.atk ~l
+        in
+        fun ~f ->
+          match Funct.t2ind ~f with
+          fold [`F_ID c -> c
+               |`F_COMP {f1; f2} -> f1
+               |`F_PR {lc; i} -> Cat.c_PP ~lc
+               |`F_RECORD {c; lf} -> c
+               |`F_pp {c; lf} -> c
+               |`F_ss {c; lf} -> c
+               |`F_ii fing
+               |`F_tt fing
+               |`F_ee {lg; h} -> h]
+      value rec trg = fun ~f ->
+        match Funct.tde ~f with
+        [`F_ID c -> c
+        |`F_COMP {f1; f2} -> trg ~f:f2
+        |`F_PR {lc; i} -> CatIListOps.find ~i ~l:lc
+        |`F_RECORD {c; lf} ->
+            Cat.c_PP ~lc:(MapCF.vmap_fc ~f:(fun ~v -> trg ~f:v) ~l:lf)
+        |`F_pp -> Cat.c_BB
+        |`F_ss -> Cat.c_BB
+        |`F_ii g -> trg ~f:g
+        |`F_tt g -> trg ~f:g
+        |`F_ee -> Cat.c_BB]
+      value trg_bad = fun ~f ->
+        match Funct.t2ind ~f with
+        fold [`F_ID c -> c
+             |`F_COMP {f1; f2} -> f2
+             |`F_PR {lc; i} -> CatIListOps.find ~i ~l:lc
+             |`F_RECORD {c; lf} -> c (* FIXME: Funct.t2ind weak *)
+             |`F_pp -> Cat.c_BB
+             |`F_ss -> Cat.c_BB
+             |`F_ii g -> g
+             |`F_tt g -> g
+             |`F_ee -> Cat.c_BB]
+    end
+  spec SemFunct =
+  ~AtIndex ~Funct ~SrcCore ->
+    sig
+      value paf : ~f:Funct.t ~g:Funct.t -> Funct.t
+      (* a list of type argument and context: *)  
+      value coi : ~atj:Funct.t ~atk:Funct.t -> FunctIList.t 
+      (* a list of value argument and context: *)      
+      value cof : ~ate:Funct.t ~atd:Funct.t -> FunctIList.t
+      value unpp : ~f:Funct.t -> FunctIList.t
+      value unpp_ok : ~f:Funct.t -> [`OK FunctIList.t|`Error]
+    end
+  SemFunct =
+    struct
+      value paf = fun ~f ~g ->
+        let coi = fun ~atj ~atk ->
+          FunctIList.cons ~i:AtIndex.atj ~v:atj 
+            ~l:(FunctIList.cons ~i:AtIndex.atk ~v:atk
+                  ~l:FunctIList.nil) in
+        let c = SrcCore.src ~f in
+        let lf = coi ~atj:f ~atk:(Funct.f_ID ~c) in
+        Funct.f_COMP ~f1:(Funct.f_RECORD ~c ~lf) ~f2:g  
+      value coi = fun ~atj ~atk ->
+        FunctIList.cons ~i:AtIndex.atj ~v:atj 
+          ~l:(FunctIList.cons ~i:AtIndex.atk ~v:atk
+                ~l:FunctIList.nil)
+      value cof = fun ~ate ~atd ->
+        FunctIList.cons ~i:AtIndex.ate ~v:ate 
+          ~l:(FunctIList.cons ~i:AtIndex.atd ~v:atd
+                ~l:FunctIList.nil)
+      value unpp = fun ~f ->
+        match Funct.tde ~f with
+        [`F_pp {c; lf} -> lf
+        |`F_ID fail
+        |`F_COMP fail
+        |`F_PR fail
+        |`F_RECORD fail
+        |`F_ss fail
+        |`F_ii fail
+        |`F_tt fail
+        |`F_ee fail]
+      value unpp_ok = fun ~f ->
+        match Funct.tde ~f with
+        [`F_pp {c; lf} -> lf .`OK
+        |`F_ID -> `Error
+        |`F_COMP -> `Error
+        |`F_PR -> `Error
+        |`F_RECORD -> `Error
+        |`F_ss -> `Error
+        |`F_ii -> `Error
+        |`F_tt -> `Error
+        |`F_ee -> `Error]
+    end
+  spec DomCore =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> Funct.t
+      value cod : ~t:Trans.t -> Funct.t
+    end
+  DomCore = 
+    link
+      spec Dom = 
+      ~Trans ->
+        sig
+          value dom : ~t:Trans.t -> Funct.t
+        end
+      spec Cod = 
+      ~Trans ->
+        sig
+          value cod : ~t:Trans.t -> Funct.t
+        end
+      module ind Dom =    
+        :: ~Dom ~Cod ~FunctIListOps ~MapFT ~SrcCore ~SemFunct -> Dom
+        struct
+          value dom = fun ~t ->
+            let dom = Dom.dom
+                cod = Cod.cod in
+            (* simplified by assuming no `F_ee in `T_TF: *)
+            match Trans.tde ~t with
+            [`T_ID c -> Funct.f_ID ~c
+            |`T_COMP {t1; t2} -> 
+                Funct.f_COMP ~f1:(dom ~t:t1) ~f2:(dom ~t:t2)
+                (* if `F_ee allowed in `T_TF, 
+                   equal to dom (T_TF (t1, f2)) *)
+            |`T_PR {lc; i} -> Funct.f_PR ~lc ~i
+            |`T_RECORD {c; lt} ->
+                Funct.f_RECORD ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> dom ~t:v) ~l:lt)
+            |`T_FT {f1; t2} -> Funct.f_COMP ~f1 ~f2:(dom ~t:t2) 
+                (* if `F_ee allowed in `T_TF, this remains OK *)
+            |`T_TF {t1; f2} -> Funct.f_COMP ~f1:(dom ~t:t1) ~f2
+                (* if `F_ee allowed, 
+                   should be done by cases on f2 (cod t1) *)
+            |`T_id g -> g
+            |`T_comp {t1; t2} -> dom ~t:t1
+            |`T_pp {c; lt} ->
+                Funct.f_pp ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> dom ~t:v) ~l:lt)
+            |`T_pr {lf; i} ->
+                Funct.f_pp ~lf
+                  ~c:(SrcCore.src ~f:(FunctIListOps.find ~i ~l:lf)) 
+            |`T_record {f; lt} -> f
+            |`T_ss {c; lt} ->
+                Funct.f_ss ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> dom ~t:v) ~l:lt)
+            |`T_in {lf; i} -> FunctIListOps.find ~i ~l:lf
+            |`T_case {lt; h} ->
+                Funct.f_ss 
+                  ~c:(SrcCore.src ~f:h)
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> dom ~t:v) ~l:lt)
+            |`TL_case {f; lt; h} ->
+                let c = SrcCore.src ~f
+                    lf = MapFT.vmap_tf ~f:(fun ~v:t -> 
+                      let lg = SemFunct.unpp ~f:(dom ~t) in
+                      FunctIListOps.find ~i:AtIndex.ate ~l:lg) ~l:lt 
+                in
+                Funct.f_pp ~c 
+                  ~lf:(SemFunct.cof ~ate:(Funct.f_ss ~c ~lf) ~atd:f)
+            |`T_map {g; t} ->
+                let lup = SemFunct.unpp ~f:(dom ~t) in
+                let ate = FunctIListOps.find ~i:AtIndex.ate ~l:lup 
+                    atd = FunctIListOps.find ~i:AtIndex.atd ~l:lup in
+                Funct.f_pp 
+                  ~c:(SrcCore.src ~f:atd) 
+                  ~lf:(SemFunct.cof ~ate:(SemFunct.paf ~f:ate ~g) ~atd)
+            |`T_ii t -> Funct.f_ii ~g:(dom ~t)
+            |`T_con g -> SemFunct.paf ~f:(Funct.f_ii ~g) ~g
+            |`T_fold {g; t} -> Funct.f_ii ~g
+            |`TL_fold {g; t} ->
+                let lup = SemFunct.unpp ~f:(dom ~t) in
+                let atd = FunctIListOps.find ~i:AtIndex.atd ~l:lup in
+                Funct.f_pp 
+                  ~c:(SrcCore.src ~f:atd) 
+                  ~lf:(SemFunct.cof ~ate:(Funct.f_ii ~g) ~atd)
+            |`T_de g -> Funct.f_ii ~g
+            |`T_tt t -> Funct.f_tt ~g:(dom ~t)
+            |`T_uncon g -> SemFunct.paf ~f:(Funct.f_tt ~g) ~g
+            |`T_unfold {g; t} -> dom ~t
+            |`TL_unfold {g; t} -> dom ~t
+            |`T_unde g -> Funct.f_tt ~g
+            |`T_ee {lt; u} ->
+                Funct.f_ee
+                  ~lg:(MapFT.vmap_tf ~f:(fun ~v -> cod ~t:v) ~l:lt)
+                  ~h:(dom ~t:u)
+            |`T_appl {lg; h} ->
+                let v = Funct.f_ee ~lg ~h in
+                Funct.f_pp 
+                  ~c:(SrcCore.src ~f:h) 
+                  ~lf:(FunctIList.cons ~i:AtIndex.atu ~v ~l:lg)
+            |`T_curry t ->
+                let lf = SemFunct.unpp ~f:(dom ~t) in
+                FunctIListOps.find ~i:AtIndex.atu ~l:lf
+            |`T_fix t -> 
+                Funct.f_pp 
+                  ~c:(SrcCore.src ~f:(dom ~t)) 
+                  ~lf:FunctIList.nil
+            |`TL_fix t ->
+                let lup = SemFunct.unpp ~f:(dom ~t) in
+                let atd = FunctIListOps.find ~i:AtIndex.atd ~l:lup in
+                atd]
+            end
+      and Cod =    
+        :: ~Dom ~Cod ~FunctIListOps ~MapFT ~SrcCore ~SemFunct -> Cod
+        struct
+          value cod = fun ~t ->
+            let dom = Dom.dom
+                cod = Cod.cod in
+            match Trans.tde ~t with
+            [`T_ID c -> Funct.f_ID ~c
+            |`T_COMP {t1; t2} -> 
+                Funct.f_COMP ~f1:(cod ~t:t1) ~f2:(cod ~t:t2)
+            |`T_PR {lc; i} -> Funct.f_PR ~lc ~i
+            |`T_RECORD {c; lt} ->
+                Funct.f_RECORD ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> cod ~t:v) ~l:lt)
+            |`T_FT {f1; t2} -> Funct.f_COMP ~f1 ~f2:(cod ~t:t2) 
+            |`T_TF {t1; f2} -> Funct.f_COMP ~f1:(cod ~t:t1) ~f2
+            |`T_id g -> g
+            |`T_comp {t1; t2} -> cod ~t:t2
+            |`T_pp {c; lt} ->
+                Funct.f_pp ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> cod ~t:v) ~l:lt)
+            |`T_pr {lf; i} -> FunctIListOps.find ~i ~l:lf 
+            |`T_record {f; lt} ->
+                Funct.f_pp ~c:(SrcCore.src ~f)
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> cod ~t:v) ~l:lt)
+            |`T_ss {c; lt} ->
+                Funct.f_ss ~c
+                  ~lf:(MapFT.vmap_tf ~f:(fun ~v -> cod ~t:v) ~l:lt)
+            |`T_in {lf; i} ->
+                Funct.f_ss ~lf
+                  ~c:(SrcCore.src ~f:(FunctIListOps.find ~i ~l:lf)) 
+            |`T_case {lt; h} -> h
+            |`TL_case {f; lt; h} -> h
+            |`T_map {g; t} -> SemFunct.paf ~f:(cod ~t) ~g
+            |`T_ii t -> Funct.f_ii ~g:(cod ~t)
+            |`T_con g -> Funct.f_ii ~g
+            |`T_fold {g; t} -> cod ~t
+            |`TL_fold {g; t} -> cod ~t
+            |`T_de g -> SemFunct.paf ~f:(Funct.f_ii ~g) ~g
+            |`T_tt t -> Funct.f_tt ~g:(cod ~t)
+            |`T_uncon g -> Funct.f_tt ~g
+            |`T_unfold {g; t} -> Funct.f_tt ~g
+            |`TL_unfold {g; t} -> Funct.f_tt ~g
+            |`T_unde g -> SemFunct.paf ~f:(Funct.f_tt ~g) ~g
+            |`T_ee {lt; u} ->
+                Funct.f_ee
+                  ~lg:(MapFT.vmap_tf ~f:(fun ~v -> dom ~t:v) ~l:lt)
+                  ~h:(cod ~t:u)
+            |`T_appl {lg; h} -> h
+            |`T_curry t ->
+                let lf = SemFunct.unpp ~f:(dom ~t) in
+                let lg = FunctIListOps.remove ~i:AtIndex.atu ~l:lf in
+                Funct.f_ee ~lg ~h:(cod ~t)
+            |`T_fix t -> cod ~t
+            |`TL_fix t -> cod ~t]
+        end
+      module Both =
+        :: ~Dom ~Cod -> DomCore
+        struct
+          value dom = Dom.dom
+          value cod = Cod.cod
+        end
+    end | Both :> DomCore
+  spec Sign =
+  ~Funct ->
+    sig
+      type t
+      value f2s : ~f:Funct.t -> t
+(*
+   the result of [f2s f] is a signature 
+   iff [f] is of the form [f_pp (c_PP lc) lf]
+*)
+      value s2f : ~s:t -> Funct.t
+    end
+  Sign =
+    :: ~SemCat ~SrcCore ~SemFunct -> Sign
+    struct
+      type t = Funct.t
+      value f2s = fun ~f ->
+        assert
+          match SemFunct.unpp_ok ~f with
+          [`OK _ ->
+            match SemCat.unPPok ~c:(SrcCore.src ~f) with
+            [`OK _ -> `True
+            |`Error -> `False]
+          |`Error -> `False]
+        in f
+      value s2f = fun ~s -> s
+    end
+  spec Dule = 
+  ~Trans ~Sign ->
+    sig
+      type t
+      value pack : ~f:Funct.t ~t:Trans.t ~s:Sign.t -> t
+(*
+   the result of [pack (f, t, s)] is a module 
+   iff there is a signature [r] such that
+   1. f : src r -> src s
+   2. t : r -> f_COMP f s
+*)
+      value domain : ~m:t -> Sign.t
+      value codomain : ~m:t -> Sign.t
+      value type_part : ~m:t -> Funct.t
+      value value_part : ~m:t -> Trans.t
+    end
+  Dule = 
+    :: ~Bool ~SrcCore ~DomCore ~EqCat ~EqFunct -> Dule
+    struct
+      type t = {f : Funct.t; t : Trans.t; s : Sign.t}
+      value pack = fun ~f ~t ~s ->
+        assert 
+          let g = DomCore.dom ~t in
+          let r = Sign.f2s ~f:g in
+          let h = Sign.s2f ~s in
+          Bool.conj 
+            ~b:(Bool.conj
+                  ~b:(EqCat.eq 
+                        ~it:(SrcCore.src ~f) 
+                        ~v:(SrcCore.src ~f:g))
+                  ~it:(EqCat.eq 
+                         ~it:(SrcCore.trg ~f) 
+                         ~v:(SrcCore.src ~f:h)))
+            ~it:(EqFunct.eq 
+                   ~it:(DomCore.cod ~t) 
+                   ~v:(Funct.f_COMP ~f1:f ~f2:h))
+        in
+        {f; t; s}
+      value domain = fun ~m ->
+        Sign.f2s ~f:(DomCore.dom ~t:m.t)
+      value codomain = fun ~m -> m.s
+      value type_part = fun ~m -> m.f
+      value value_part = fun ~m -> m.t
+    end
+  spec SignIList = IList with {{Value = Sign}}
+  SignIList = load IList with {{Value = Sign}}
+  spec SignIListOps = IListOps with {{Value = Sign; IList = SignIList}}
+  SignIListOps = load IListOps with 
+    {{Bool; Value = Sign; IList = SignIList}} :> SignIListOps
+  spec DuleIList = IList with {{Value = Dule}}
+  DuleIList = load IList with {{Value = Dule}}
+  spec DuleIListOps = IListOps with {{Value = Dule; IList = DuleIList}}
+  DuleIListOps = load IListOps with 
+    {{Bool; Value = Dule; IList = DuleIList}} :> DuleIListOps
+  spec MapSM =
+  ~SignIList ~DuleIList ->
+    sig       
+      value imap1ok_sm :
+        ~f: (~i:IdIndex.t -> [`OK Dule.t|`Error]) 
+        ~l:SignIList.t ->
+          [`OK DuleIList.t|`Error]
+      value imap_fm : 
+        ~f: ~i:IdIndex.t -> Dule.t ~l:FunctIList.t -> DuleIList.t
+      value imap1ok_fm :
+        ~f: (~i:IdIndex.t -> [`OK Dule.t|`Error]) 
+        ~l:FunctIList.t ->
+          [`OK DuleIList.t|`Error]
+    end
+  MapSM =
+    struct
+      value imap1ok_sm = fun ~f ~l ->
+        match SignIList.t2ind ~l with
+        fold [`Nil -> DuleIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match f ~i with
+                     [`OK v ->
+                         DuleIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+      value imap_fm = fun ~f ~l ->
+        match FunctIList.t2ind ~l with
+        fold [`Nil -> DuleIList.nil
+             |`Cons {i; v; l} ->
+                 let v = f ~i in
+                 DuleIList.cons ~i ~v ~l]
+      value imap1ok_fm = fun ~f ~l ->
+        match FunctIList.t2ind ~l with
+        fold [`Nil -> DuleIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match f ~i with
+                     [`OK v ->
+                         DuleIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+    end
+
+(* IDule is a module system with inductive modules, *)
+(* first we deal with simple operations and linking operations: *)
+  library LinkIDule =
+link
+  (* some of the arguments: *)
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~IdIndex ->
+    sig
+      type t
+      value c_PP : ~lc:CatIList.t -> t
+      value c_BB : t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+      value f_ID : ~c:Cat.t -> t
+      value f_COMP : ~f1:t ~f2:t -> t
+      value f_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value f_RECORD : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_pp : ~c:Cat.t ~lf:FunctIList.t -> t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+      value t_ID : ~c:Cat.t -> t
+      value t_COMP : ~t1:t ~t2:t -> t
+      value t_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value t_RECORD : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_FT : ~f1:Funct.t ~t2:t -> t
+      value t_TF : ~t1:t ~f2:Funct.t -> t
+      value t_id : ~f:Funct.t -> t
+      value t_comp : ~t1:t ~t2:t -> t
+      value t_pp : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_pr : ~lf:FunctIList.t ~i:IdIndex.t -> t
+      value t_record : ~f:Funct.t ~lt:TransIList.t -> t
+    end
+  spec CatIListOps = IListOps with {{Value = Cat; IList = CatIList}}
+  spec FunctIListOps = IListOps with {{Value = Funct; IList = FunctIList}}
+  spec TransIListOps = IListOps with {{Value = Trans; IList = TransIList}}
+  spec MapCF =
+  ~Funct ->
+    sig              
+      value imap_cf : 
+        ~f: ~i:IdIndex.t -> Funct.t ~l:CatIList.t -> FunctIList.t
+      value bmap1ok_cf :
+        ~f: (~i:IdIndex.t ~v:Cat.t -> [`OK Funct.t|`Error]) 
+        ~l:CatIList.t ->
+          [`OK FunctIList.t|`Error]
+      value vmap_fc : 
+        ~f: ~v:Funct.t -> Cat.t ~l:FunctIList.t -> CatIList.t
+    end
+  spec MapFT =
+  ~Trans ->
+    sig                 
+      value bmap1ok_ft :
+        ~f: (~i:IdIndex.t ~v:Funct.t -> [`OK Trans.t|`Error]) 
+        ~l:FunctIList.t ->
+          [`OK TransIList.t|`Error]
+      value vmap_tf : 
+        ~f: ~v:Trans.t -> Funct.t ~l:TransIList.t -> FunctIList.t
+    end
+  spec EqCat = Eq with {Value = Cat}
+  spec EqFunct = Eq with {Value = Funct}
+  spec EqIListCat = 
+    EqIList with {{Eq = EqCat; IList = CatIList; Value = Cat}}
+  spec EqIListFunct = EqIList 
+    with {{Eq = EqFunct; IList = FunctIList; Value = Funct}}
+  spec SemCat =
+  ~Cat ->
+    sig
+      value unPP : ~c:Cat.t -> CatIList.t
+      value unPPok : ~c:Cat.t -> [`OK CatIList.t|`Error]
+    end
+  spec SrcCore =
+  ~Funct -> 
+    sig
+      value src : ~f:Funct.t -> Cat.t
+      value trg : ~f:Funct.t -> Cat.t
+    end
+  spec SemFunct =
+  ~AtIndex ~Funct ->
+    sig
+      value unpp : ~f:Funct.t -> FunctIList.t
+      value unpp_ok : ~f:Funct.t -> [`OK FunctIList.t|`Error]
+    end
+  spec DomCore =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> Funct.t
+      value cod : ~t:Trans.t -> Funct.t
+    end
+  spec Sign =
+  ~Funct ->
+    sig
+      type t
+      value f2s : ~f:Funct.t -> t
+      value s2f : ~s:t -> Funct.t
+    end
+  spec Dule = 
+  ~Trans ~Sign ->
+    sig
+      type t
+      value pack : ~f:Funct.t ~t:Trans.t ~s:Sign.t -> t
+      value domain : ~m:t -> Sign.t
+      value codomain : ~m:t -> Sign.t
+      value type_part : ~m:t -> Funct.t
+      value value_part : ~m:t -> Trans.t
+    end
+  spec SignIList = IList with {{Value = Sign}}
+  spec SignIListOps = IListOps with {{Value = Sign; IList = SignIList}}
+  spec DuleIList = IList with {{Value = Dule}}
+  spec DuleIListOps = IListOps with {{Value = Dule; IList = DuleIList}}
+  spec MapSM =
+  ~SignIList ~DuleIList ->
+    sig       
+      value imap1ok_sm :
+        ~f: (~i:IdIndex.t -> [`OK Dule.t|`Error]) 
+        ~l:SignIList.t ->
+          [`OK DuleIList.t|`Error]
+      value imap_fm : 
+        ~f: ~i:IdIndex.t -> Dule.t ~l:FunctIList.t -> DuleIList.t
+      value imap1ok_fm :
+        ~f: (~i:IdIndex.t -> [`OK Dule.t|`Error]) 
+        ~l:FunctIList.t ->
+          [`OK DuleIList.t|`Error]
+    end
+  (* results: *)
+  spec ToolWSign = 
+  ~Trans ->
+    sig
+      value partitionPp : ~h:Funct.t ->
+        {lb : CatIList.t; 
+         ld : CatIList.t}
+      value footPp : ~lc:CatIList.t ~i:IdIndex.t ~h:Funct.t -> Funct.t
+    end
+  ToolWSign = (* W-Dule --- module system with specialization *)
+    :: ~CatIListOps ~FunctIListOps ~MapCF ~EqIListCat ~SemCat ~SrcCore 
+       ~SemFunct -> ToolWSign
+    struct
+      value partitionPp = fun ~h -> 
+        let lc = SemCat.unPP ~c:(SrcCore.src ~f:h) in
+        let lcdu = CatIListOps.ifilter ~p:IdIndex.is_dule ~l:lc in
+        let lty = EqIListCat.diff ~l1:lc ~l2:lcdu 
+            lf = SemFunct.unpp ~f:h in
+        (* these are shared with the other signatures: *)
+        let ld = CatIListOps.ifilter ~p:(fun ~it -> 
+          FunctIListOps.not_in ~i:it ~l:lf) ~l:lcdu in
+        (* if [s] was [S_Pp] (maybe in [S_Ww]) *)
+        (* then [lcom] (its [cat] components) *)
+        (* are as numerous as [lf] else they are [nil]: *)
+        let lcom = EqIListCat.diff ~l1:lcdu ~l2:ld in
+        let lb = CatIListOps.append ~l1:lcom ~l2:lty in
+        {lb; ld}
+      value footPp = fun ~lc ~i ~h ->
+        let lb = SemCat.unPP ~c:(CatIListOps.find ~i ~l:lc)
+            f_PR_lc_i = Funct.f_PR ~lc ~i in
+        let pib = MapCF.imap_cf ~f:(fun ~i -> 
+          Funct.f_COMP ~f1:f_PR_lc_i ~f2:(Funct.f_PR ~lc:lb ~i)) ~l:lb
+            le = SemCat.unPP ~c:(SrcCore.src ~f:h) in
+        let ld = EqIListCat.diff ~l1:le ~l2:lb in
+        let pid = MapCF.imap_cf ~f:Funct.f_PR(~lc) ~l:ld in
+        let c = Cat.c_PP ~lc in
+        Funct.f_RECORD ~c ~lf:(FunctIListOps.append ~l1:pib ~l2:pid)
+    end
+  spec AnalyzeWSign = 
+  ~Funct ~SignIList ->
+    sig
+      value legsPp : ~lc:CatIList.t ~ls:SignIList.t -> FunctIList.t
+      value lsrcPp : ~ls:SignIList.t -> [`OK CatIList.t|`Error]
+      value lsrcWw : ~f1:Funct.t ~s2:Sign.t ->
+        [`OK {lc1 : CatIList.t; 
+              le1 : CatIList.t; 
+              le12 : CatIList.t; 
+              ld : CatIList.t; 
+              la : CatIList.t}
+        |`Error]
+    end
+  AnalyzeWSign = 
+    :: ~CatIListOps ~EqIListCat ~SemCat ~SrcCore ~ToolWSign -> AnalyzeWSign
+    struct
+      value legsPp = fun ~lc ~ls ->
+        let legPp = fun ~i ~v ->
+	  let h = Sign.s2f ~s:v in
+	  let foot = ToolWSign.footPp ~lc ~i ~h in
+          Funct.f_COMP ~f1:foot ~f2:h
+            bmap_sf = fun ~f ~l ->
+          match SignIList.t2ind ~l with
+          fold [`Nil -> FunctIList.nil
+               |`Cons {i; v; l} ->
+                   let v = f ~i ~v in
+                   FunctIList.cons ~i ~v ~l]
+        in
+        bmap_sf ~f:legPp ~l:ls
+
+      value lsrcPp = fun ~ls ->
+        let single_src = fun ~it ->
+          match it with
+          [`Nil -> CatIList.nil .`OK 
+          |`Cons {i; v; l} ->
+              match l with
+              [`OK r -> 
+  		  let h = Sign.s2f ~s:v in
+                  let {lb; ld} = ToolWSign.partitionPp ~h in
+                  let l1 = CatIList.cons ~i ~v:(Cat.c_PP ~lc:lb) 
+                    ~l:CatIList.nil in
+                  match EqIListCat.append_ok ~l1 ~l2:ld with
+                  [`OK la ->
+                      EqIListCat.append_ok ~l1:la ~l2:r
+                  |`Error er -> er .`Error]
+              |`Error er -> er .`Error]]
+        in
+        match SignIList.t2ind ~l:ls with
+        fold single_src
+      (* f1 = type_part m1, m1 : r1 -> s1=r2: *)
+      value lsrcWw = fun ~f1 ~s2 ->
+        let lc1 = SemCat.unPP ~c:(SrcCore.src ~f:f1) (* src r1 *)
+            le1 = SemCat.unPP ~c:(SrcCore.trg ~f:f1) (* src s1=r2 *)
+            le2 = SemCat.unPP ~c:(SrcCore.src ~f:(Sign.s2f ~s:s2)) in
+        let ld = EqIListCat.diff ~l1:le2 ~l2:le1 in
+        let le12 = EqIListCat.diff ~l1:le2 ~l2:ld in
+        match EqIListCat.append_ok ~l1:ld ~l2:lc1 with
+        [`OK la ->
+           {lc1; le1; le12; ld; la} .`OK
+        |`Error er -> er .`Error]
+    end
+  spec SemWSign =
+  ~Trans ~SignIList ~Dule ->
+    sig
+      value s_Pp : ~ls:SignIList.t -> [`OK Sign.t|`Error] 
+      value s_Bb : ~r:Sign.t ~lc:CatIList.t ~lf:FunctIList.t -> 
+        [`OK Sign.t|`Error]
+      value s_Ww : ~m1:Dule.t ~s2:Sign.t -> [`OK Sign.t|`Error]
+    end
+  SemWSign = 
+    :: ~CatIListOps ~FunctIListOps ~EqCat ~MapCF ~SemCat ~SrcCore
+       ~AnalyzeWSign -> SemWSign
+    struct
+      value s_Pp = fun ~ls ->
+        match AnalyzeWSign.lsrcPp ~ls with
+        [`OK lc -> 
+           let legs = AnalyzeWSign.legsPp ~lc ~ls in
+           let c = Cat.c_PP ~lc in
+           let body = Funct.f_pp ~c ~lf:legs in
+           (Sign.f2s ~f:body) .`OK
+        |`Error er -> er .`Error]
+      value s_Bb = fun ~r ~lc ~lf ->
+        let lb = SemCat.unPP ~c:(SrcCore.src ~f:(Sign.s2f ~s:r)) in
+        (* we merge local and context parameters: *)
+        let c = Cat.c_PP 
+            ~lc:(CatIListOps.append 
+                   ~l1:lc 
+                   ~l2:(CatIListOps.subtract ~l1:lb ~l2:lc))
+        in 
+          let la = MapCF.vmap_fc ~f:(fun ~v -> 
+            SrcCore.src ~f:v) ~l:lf in
+          match CatIListOps.vforall ~p:EqCat.eq(~v:c) ~l:la with
+          [`True ->
+              let le = MapCF.vmap_fc ~f:(fun ~v -> 
+                SrcCore.trg ~f:v) ~l:lf in
+              match CatIListOps.vforall 
+                      ~p:EqCat.eq(~v:Cat.c_BB) ~l:le with
+              [`True ->
+                  (Sign.f2s ~f:(Funct.f_pp ~c ~lf)) .`OK
+              |`False -> `Error]
+          |`False -> `Error]
+      value s_Ww = fun ~m1 ~s2 ->
+        let f1 = Dule.type_part ~m:m1 in
+        match AnalyzeWSign.lsrcWw ~f1 ~s2 with
+        [`OK {lc1; le1; le12; ld; la} ->
+           let a = Cat.c_PP ~lc:la
+               pic1 = MapCF.imap_cf ~f:Funct.f_PR(~lc:la) ~l:lc1 in 
+           let re1 = Funct.f_RECORD ~c:a ~lf:pic1 in
+           let f = Funct.f_COMP ~f1:re1 ~f2:f1 in
+           let f_COMP_f = fun ~i -> 
+             Funct.f_COMP ~f1:f ~f2:(Funct.f_PR ~lc:le1 ~i) in
+           let pife1 = MapCF.imap_cf ~f:f_COMP_f ~l:le12
+               pid = MapCF.imap_cf ~f:Funct.f_PR(~lc:la) ~l:ld in 
+           let pipi = FunctIListOps.append ~l1:pife1 ~l2:pid in
+           let re = Funct.f_RECORD ~c:a ~lf:pipi in
+           let h = Funct.f_COMP ~f1:re ~f2:(Sign.s2f ~s:s2) in
+           (Sign.f2s ~f:h) .`OK
+        |`Error er -> er .`Error]
+    end
+  spec OkWDule = 
+  ~Trans ->
+    sig
+      value mayRecord : ~lf:FunctIList.t ~lh:FunctIList.t -> 
+        [`OK FunctIList.t|`Error]
+      value mayBase : ~c:Cat.t ~e:Cat.t ~lg:FunctIList.t -> 
+        [`OK Funct.t|`Error]
+      value mayInst : ~f1:Funct.t ~f2:Funct.t -> [`OK Funct.t|`Error]
+      value mayTrim_f : ~e:Cat.t ~c:Cat.t -> [`OK Funct.t|`Error]
+      value mayTrim_t : ~h:Funct.t ~f:Funct.t -> [`OK Trans.t|`Error]
+    end
+  OkWDule =
+    :: ~CatIListOps ~FunctIListOps ~MapCF ~MapFT ~EqIListCat ~EqIListFunct 
+       ~SemCat ~SrcCore ~SemFunct ~ToolWSign -> OkWDule
+    struct
+      value mayRecord = fun ~lf ~lh -> 
+        let cut_at_i = fun ~i ~v ~l ->
+          let h = FunctIListOps.find ~i ~l:lh in
+          let {lb; ld} = ToolWSign.partitionPp ~h in
+          let lc = CatIListOps.append ~l1:lb ~l2:ld in
+          let c = Cat.c_PP ~lc in
+          let lfid = MapCF.imap_cf ~f:(fun ~i -> 
+            Funct.f_COMP ~f1:v ~f2:(Funct.f_PR ~lc ~i)) ~l:ld in
+          let pib = MapCF.imap_cf ~f:Funct.f_PR(~lc) ~l:lb in
+          let fib = 
+            Funct.f_COMP ~f1:v ~f2:(Funct.f_RECORD ~c ~lf:pib) in
+          let l1 = FunctIList.cons ~i ~v:fib ~l:FunctIList.nil in
+          match EqIListFunct.append_ok ~l1 ~l2:lfid with
+          [`OK lg ->
+              EqIListFunct.append_ok ~l1:lg ~l2:l
+          |`Error er -> er .`Error]
+        in
+        FunctIListOps.bfold1ok ~init:FunctIList.nil ~f:cut_at_i ~l:lf
+      value mayBase = fun ~c ~e ~lg -> 
+        let la = MapCF.vmap_fc ~f:(fun ~v -> 
+          SrcCore.src ~f:v) ~l:lg in
+        match CatIListOps.vforall ~p:EqCat.eq(~v:c) ~l:la with
+        [`True ->
+          let lc = SemCat.unPP ~c
+              le = SemCat.unPP ~c:e in
+          let ld = EqIListCat.inter ~l1:lc ~l2:le in (* context params *)
+          let pild = MapCF.imap_cf ~f:Funct.f_PR(~lc) ~l:ld in
+          let lf = 
+            FunctIListOps.append 
+              ~l1:lg 
+              ~l2:(FunctIListOps.subtract 
+                     ~l1:pild 
+                     ~l2:lg) (* some hidden *)
+          in
+          let f = Funct.f_RECORD ~c ~lf in
+          let d = SrcCore.trg ~f in
+          match EqCat.eq ~it:d ~v:e with
+          [`True -> f .`OK
+          |`False -> `Error]
+        |`False -> `Error]
+      value mayInst = fun ~f1 ~f2 ->
+        let c1 = SrcCore.src ~f:f1 in
+        let lc1 = SemCat.unPP ~c:c1 (* src r1 *)
+            le1 = SemCat.unPP ~c:(SrcCore.trg ~f:f1) (* src s1=r2 *)
+            le2 = SemCat.unPP ~c:(SrcCore.trg ~f:f2) in (* src s2 *)
+        let ld = EqIListCat.diff ~l1:le2 ~l2:le1
+            f12 = Funct.f_COMP ~f1 ~f2 in
+        let pid = MapCF.imap_cf ~f:(fun ~i -> 
+          Funct.f_COMP ~f1:f12 ~f2:(Funct.f_PR ~lc:le2 ~i)) ~l:ld 
+            pic1 = MapCF.imap_cf ~f:Funct.f_PR(~lc:lc1) ~l:lc1 in 
+        match EqIListFunct.append_ok ~l1:pid ~l2:pic1 with
+        [`OK lf ->
+           (Funct.f_RECORD ~c:c1 ~lf) .`OK
+        |`Error er -> er .`Error]
+      value rec mayTrim_f = fun ~e ~c ->
+        match EqCat.eq ~it:e ~v:c with
+        [`True ->
+            Funct.f_ID ~c .`OK
+        |`False ->
+            match SemCat.unPPok ~c with
+            [`OK lc ->
+               match SemCat.unPPok ~c:e with
+               [`OK le ->
+                   let fsu = fun ~i ~v ->
+                     match CatIListOps.find_ok ~i ~l:le with
+                     [`OK e ->
+                         match mayTrim_f ~e ~c:v with
+                         [`OK sf ->
+                             (Funct.f_COMP 
+                                ~f1:(Funct.f_PR ~lc:le ~i) 
+                                ~f2:sf) .`OK
+                         |`Error er -> er .`Error]
+                     |`Error er -> er .`Error]
+                   in
+                   match MapCF.bmap1ok_cf ~f:fsu ~l:lc with
+                   [`OK lf ->
+                       (Funct.f_RECORD ~c:e ~lf) .`OK
+                   |`Error er -> er .`Error]
+               |`Error er -> er .`Error]
+            |`Error er -> er .`Error]]
+      value rec mayTrim_t = fun ~h ~f ->
+        match EqFunct.eq ~it:h ~v:f with
+          [`True ->
+              Trans.t_id ~f .`OK
+          |`False ->
+              match SemFunct.unpp_ok ~f with
+              [`OK lf ->
+                  match SemFunct.unpp_ok ~f:h with
+                  [`OK lh ->
+                      let fsu = fun ~i ~v ->
+                        match FunctIListOps.find_ok ~i ~l:lh with
+                        [`OK h ->
+                            match mayTrim_t ~h ~f:v with
+                            [`OK sf ->
+                                (Trans.t_comp 
+                                   ~t1:(Trans.t_pr ~lf:lh ~i) 
+                                   ~t2:sf) .`OK
+                            |`Error er -> er .`Error]
+                        |`Error er -> er .`Error]
+                      in
+                      match MapFT.bmap1ok_ft ~f:fsu ~l:lf with
+                      [`OK lt ->
+                          (Trans.t_record ~f:h ~lt) .`OK
+                      |`Error er -> er .`Error]
+                  |`Error er -> er .`Error]
+              |`Error er -> er .`Error]]
+    end
+  spec SemWDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Id : ~s:Sign.t -> Dule.t
+      value m_Comp : ~m1:Dule.t ~m2:Dule.t -> Dule.t
+      value m_Pr : ~lr:SignIList.t ~i:IdIndex.t -> 
+        [`OK Dule.t|`Error]
+      value m_Record : ~r:Sign.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Base : ~r:Sign.t ~s:Sign.t 
+                     ~lg:FunctIList.t ~lt:TransIList.t ->
+                       [`OK Dule.t|`Error]
+      value m_Inst : ~m1:Dule.t ~m2:Dule.t -> [`OK Dule.t|`Error]
+      value m_Trim : ~m1:Dule.t ~r2:Sign.t -> [`OK Dule.t|`Error]
+    end
+  SemWDule =
+    :: ~FunctIListOps ~TransIListOps ~MapFT ~EqFunct ~SrcCore ~DomCore 
+       ~ToolWSign ~AnalyzeWSign ~SemWSign ~OkWDule ~SignIListOps -> SemWDule
+    struct
+(*
+   Invariant: 
+     If m : r -> s type-correct then [m] is a module with [r], [s].
+*)
+      value m_Id = fun ~s -> (* : s -> s *)
+        let h = Sign.s2f ~s in
+        let c = SrcCore.src ~f:h in
+        Dule.pack ~f:(Funct.f_ID ~c) ~t:(Trans.t_id ~f:h) ~s
+      value m_Comp = fun ~m1 ~m2 -> (* : r1 -> s2 *)
+        let f1 = Dule.type_part ~m:m1 (* : r1 -> s1 *)
+            t1 = Dule.value_part ~m:m1 
+            f2 = Dule.type_part ~m:m2 (* : r2 -> s2 *)
+            t2 = Dule.value_part ~m:m2 in
+        let f = Funct.f_COMP ~f1 ~f2 (* s1 = r2 *)
+            it2 = Trans.t_FT ~f1 ~t2 in
+        let t = Trans.t_comp ~t1 ~t2:it2
+            s2 = Dule.codomain ~m:m2 in
+        Dule.pack ~f ~t ~s:s2
+(*
+The following drawing shows the domains and codomains
+of the transformations appearing in the definition of [m_Comp].
+
+       t1    s1         t2    s2         t    s2
+  r1 ------> --    r2 ------> --    r1 -----> -- 
+             f1               f2              f2
+                                              --
+                                              f1
+
+The drawing below illustrates the value part, 
+called [t], of the result of module composition.
+Horizontal composition of transformations is here represented
+by placing the first transformation below the second.
+Vertical composition is represented by sharing a common domain/codomain.
+
+                  t2    s2
+             s1 ------> --       s1 = r2
+       t1               f2
+  r1 ------> --         --
+             f1 ------> f1
+                 t_id
+*)
+      value m_Pr = fun ~lr ~i -> (* : S_Pp lr -> s *)
+        match SignIListOps.find_ok ~i ~l:lr with
+        [`OK s ->       
+            match AnalyzeWSign.lsrcPp ~ls:lr with
+            [`OK lc -> 
+	        let h = Sign.s2f ~s in
+                let foot_i = ToolWSign.footPp ~lc ~i ~h
+                    legs = AnalyzeWSign.legsPp ~lc ~ls:lr in
+                let t = Trans.t_pr ~lf:legs ~i in
+                Dule.pack ~f:foot_i ~t ~s .`OK
+            |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      value m_Record = fun ~r ~lm -> (* : r -> S_Pp ls *)
+        let lm_ind = DuleIList.t2ind ~l:lm in
+        let lf = FunctIListOps.ind2t ~l:
+                   match lm_ind with
+                   map m -> Dule.type_part ~m (* : r -> s_i *)
+            lt = TransIListOps.ind2t ~l:
+                   match lm_ind with
+                   map m -> Dule.value_part ~m
+            ls = SignIListOps.ind2t ~l:
+                   match lm_ind with
+                   map m -> Dule.codomain ~m
+            lh = FunctIListOps.ind2t ~l:
+                   match lm_ind with
+                   map m -> Sign.s2f ~s:(Dule.codomain ~m)
+        in
+        match OkWDule.mayRecord ~lf ~lh with
+        [`OK lf -> 
+           let g = Sign.s2f ~s:r in
+           let c = SrcCore.src ~f:g in
+           let f = Funct.f_RECORD ~c ~lf
+               t = Trans.t_record ~f:g ~lt in
+           match SemWSign.s_Pp ~ls with
+           [`OK s ->
+               Dule.pack ~f ~t ~s .`OK
+           |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      value m_Base = fun ~r ~s ~lg ~lt -> (* : r -> s *)
+        let g = Sign.s2f ~s:r
+            h = Sign.s2f ~s in
+        let c = SrcCore.src ~f:g
+            e = SrcCore.src ~f:h in
+        match OkWDule.mayBase ~c ~e ~lg with
+        [`OK f ->
+            let lgt = MapFT.vmap_tf ~f:(fun ~v -> 
+              DomCore.dom ~t:v) ~l:lt in
+            match FunctIListOps.vforall ~p:EqFunct.eq(~v:g) ~l:lgt with
+            [`True ->
+                let t = Trans.t_record ~f:g ~lt in
+                let ts = DomCore.cod ~t
+                    fs = Funct.f_COMP ~f1:f ~f2:h in
+                match EqFunct.eq ~it:ts ~v:fs with
+                [`True ->
+                    Dule.pack ~f ~t ~s. `OK
+                |`False -> `Error]
+            |`False -> `Error]
+        |`Error er -> er .`Error]
+      value m_Inst = fun ~m1 ~m2 -> (* : r1 -> S_Ww (m1, s2) *)
+        let f1 = Dule.type_part ~m:m1 (* : r1 -> s1=r2 *)
+            t1 = Dule.value_part ~m:m1 
+            f2 = Dule.type_part ~m:m2 (* : s1=r2 -> s2 *)
+            t2 = Dule.value_part ~m:m2 in
+        match OkWDule.mayInst ~f1 ~f2 with
+        [`OK f -> 
+           let it2 = Trans.t_FT ~f1 ~t2 in
+           let t = Trans.t_comp ~t1 ~t2:it2
+               s2 = Dule.codomain ~m:m2 in
+           match SemWSign.s_Ww ~m1 ~s2 with
+           [`OK s ->
+               Dule.pack ~f ~t ~s .`OK
+           |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      value m_Trim = fun ~m1 ~r2 -> (* : r1 -> r2 *)
+        let f1 = Dule.type_part ~m:m1 in (* : r1 -> s1 *)
+        let t1 = Dule.value_part ~m:m1 in
+        let g2 = Sign.s2f ~s:r2 in
+        let e1 = SrcCore.trg ~f:f1 (* [src s1] *)
+            c2 = SrcCore.src ~f:g2 in
+        match OkWDule.mayTrim_f ~e:e1 ~c:c2 with
+        [`OK scf -> 
+           let f = Funct.f_COMP ~f1 ~f2:scf in
+           let fcr2 = Funct.f_COMP ~f1:f ~f2:g2
+               f1s1 = DomCore.cod ~t:t1 in (* [f_COMP f1 s1] *)
+           match OkWDule.mayTrim_t ~h:f1s1 ~f:fcr2 with
+           [`OK sct -> 
+              let t = Trans.t_comp ~t1 ~t2:sct in
+              (Dule.pack ~f ~t ~s:r2) .`OK
+           |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+    end
+  spec SemLDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Accord : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Concord : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Link : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Link_ordered : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+    end
+  SemLDule =
+    :: ~SemFunct ~SemWSign ~SemWDule ~DuleIListOps ~MapSM -> SemLDule
+    struct
+      value m_Accord = fun ~lr ~lm -> (* : S_Pp lr -> S_Pp ls *)
+        match SemWSign.s_Pp ~ls:lr with
+        [`OK r ->
+            match MapSM.imap1ok_sm ~f:SemWDule.m_Pr(~lr) ~l:lr with
+            [`OK lpr ->
+                let prm = fun ~v:m ->
+                  let lf = 
+                    SemFunct.unpp ~f:(Sign.s2f ~s:(Dule.domain ~m)) in
+                  let lmf = MapSM.imap_fm
+                        ~f:DuleIListOps.find(~l:lpr) ~l:lf in
+                  match SemWDule.m_Record ~r ~lm:lmf with
+                  [`OK re ->
+                      (SemWDule.m_Comp ~m1:re ~m2:m) .`OK
+                  |`Error er -> er .`Error]
+                in
+                match DuleIListOps.vmap1ok ~f:prm ~l:lm with
+                [`OK lm ->
+                    SemWDule.m_Record ~r ~lm
+                |`Error er -> er .`Error]
+             |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      value m_Concord = fun ~lr ~lm -> 
+              (*: S_Pp lr -> S_Pp (ls @@ diff lr ls)*)
+        match SemWSign.s_Pp ~ls:lr with
+        [`OK r ->
+            match MapSM.imap1ok_sm ~f:SemWDule.m_Pr(~lr) ~l:lr with
+            [`OK lpr ->
+                let prm = fun ~v:m ->
+                  let lf = 
+                    SemFunct.unpp ~f:(Sign.s2f ~s:(Dule.domain ~m)) in
+                  let lmf = MapSM.imap_fm
+                        ~f:DuleIListOps.find(~l:lpr) ~l:lf in
+                  match SemWDule.m_Record ~r ~lm:lmf with
+                  [`OK re ->
+                      (SemWDule.m_Comp ~m1:re ~m2:m) .`OK
+                  |`Error er -> er .`Error]
+                in
+                match DuleIListOps.vmap1ok ~f:prm ~l:lm with
+                [`OK lm ->
+                    let lm = DuleIListOps.append 
+                      ~l1:lm ~l2:(DuleIListOps.subtract ~l1:lpr ~l2:lm) in
+                    SemWDule.m_Record ~r ~lm
+                |`Error er -> er .`Error]
+             |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      (* here order of lm doesn't matter, 
+         but no circularity allowed: *)
+      value m_Link = fun ~lr ~lm -> (* : S_Pp lr -> S_Pp ls *)
+        match SemWSign.s_Pp ~ls:lr with
+        [`OK r ->
+            match MapSM.imap1ok_sm ~f:SemWDule.m_Pr(~lr) ~l:lr with
+            [`OK lpr ->
+                let rec rlink = fun ~i ->
+                  match DuleIListOps.find_ok ~i ~l:lpr with
+                  [`OK pr -> pr .`OK
+                  |`Error er ->
+                      let m = DuleIListOps.find ~i ~l:lm in
+                      let lf = 
+                        SemFunct.unpp ~f:(Sign.s2f ~s:(Dule.domain ~m)) in
+                      match MapSM.imap1ok_fm ~f:rlink ~l:lf with
+                      [`OK lmf ->
+                          match SemWDule.m_Record ~r ~lm:lmf with
+                          [`OK re ->
+                              (SemWDule.m_Comp ~m1:re ~m2:m) .`OK
+                          |`Error er -> er .`Error]
+                      |`Error er -> er .`Error]]
+                in
+                match DuleIListOps.imap1ok ~f:rlink ~l:lm with
+                [`OK lm ->
+                    SemWDule.m_Record ~r ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+      (* here we assume a module depends 
+         only on the previous ones in lm: *)
+      value m_Link_ordered = fun ~lr ~lm -> (* : S_Pp lr -> S_Pp ls *)
+        match SemWSign.s_Pp ~ls:lr with
+        [`OK r ->
+            match MapSM.imap1ok_sm ~f:SemWDule.m_Pr(~lr) ~l:lr with
+            [`OK lpr ->
+                let pro = fun ~i ~v:m ~l ->
+                  let lf = 
+                    SemFunct.unpp ~f:(Sign.s2f ~s:(Dule.domain ~m)) in
+                  match MapSM.imap1ok_fm
+                    ~f:DuleIListOps.find_ok(~l) ~l:lf 
+                  with
+                  [`OK lmf ->
+                      match SemWDule.m_Record ~r ~lm:lmf with
+                      [`OK re ->
+                          let m = SemWDule.m_Comp ~m1:re ~m2:m in
+                          (DuleIList.cons ~i ~v:m ~l) .`OK
+                      |`Error er -> er .`Error]
+                  |`Error er -> er .`Error]
+                in
+                match DuleIListOps.bfold1ok ~init:lpr ~f:pro ~l:lm  with
+                [`OK lprlm ->
+                    let lm = DuleIListOps.subtract ~l1:lprlm ~l2:lpr in
+                    SemWDule.m_Record ~r ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`Error er -> er .`Error]
+    end
+end
+  LinkIDule_on_fCore = load LinkIDule with
+    {{Bool;
+      CatIListOps;
+      FunctIListOps;
+      TransIListOps;
+      MapCF;
+      MapFT;
+      EqIListCat;
+      EqIListFunct;
+      SemCat;
+      SrcCore; 
+      SemFunct;
+      DomCore;
+      SignIListOps;
+      DuleIListOps;
+      MapSM}}
+
+(* here we deal with inductive modules: *)
+  library IndIDule =
+link
+  (* some of the arguments: *)
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~IdIndex ->
+    sig
+      type t
+      value c_PP : ~lc:CatIList.t -> t
+      value c_BB : t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+      value f_ID : ~c:Cat.t -> t
+      value f_COMP : ~f1:t ~f2:t -> t
+      value f_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value f_RECORD : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_pp : ~c:Cat.t ~lf:FunctIList.t -> t
+      value f_ii : ~g:t -> t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+      value t_ID : ~c:Cat.t -> t
+      value t_COMP : ~t1:t ~t2:t -> t
+      value t_PR : ~lc:CatIList.t ~i:IdIndex.t -> t
+      value t_RECORD : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_FT : ~f1:Funct.t ~t2:t -> t
+      value t_TF : ~t1:t ~f2:Funct.t -> t
+      value t_id : ~f:Funct.t -> t
+      value t_comp : ~t1:t ~t2:t -> t
+      value t_pp : ~c:Cat.t ~lt:TransIList.t -> t
+      value t_pr : ~lf:FunctIList.t ~i:IdIndex.t -> t
+      value t_record : ~f:Funct.t ~lt:TransIList.t -> t
+      value t_ii : ~t:t -> t
+      value t_con : ~g:Funct.t -> t
+      value t_de : ~g:Funct.t -> t
+    end
+  spec CatIListOps = IListOps with {{Value = Cat; IList = CatIList}}
+  spec FunctIListOps = IListOps with {{Value = Funct; IList = FunctIList}}
+  spec TransIListOps = IListOps with {{Value = Trans; IList = TransIList}}
+  spec MapCF =
+  ~Funct ->
+    sig
+      value imap_cf : 
+        ~f: ~i:IdIndex.t -> Funct.t ~l:CatIList.t -> FunctIList.t
+      value bmap1ok_cf :
+        ~f: (~i:IdIndex.t ~v:Cat.t -> [`OK Funct.t|`Error]) 
+        ~l:CatIList.t ->
+          [`OK FunctIList.t|`Error]
+    end
+  spec MapFT =
+  ~Trans ->
+    sig
+      value bmap1ok_ft :
+        ~f: (~i:IdIndex.t ~v:Funct.t -> [`OK Trans.t|`Error]) 
+        ~l:FunctIList.t ->
+          [`OK TransIList.t|`Error]
+      value vmap_tf : 
+        ~f: ~v:Trans.t -> Funct.t ~l:TransIList.t -> FunctIList.t
+    end
+  spec EqCat = Eq with {Value = Cat}
+  spec EqFunct = Eq with {Value = Funct}
+  spec EqIListCat = 
+    EqIList with {{Eq = EqCat; IList = CatIList; Value = Cat}}
+  spec EqIListFunct = EqIList 
+    with {{Eq = EqFunct; IList = FunctIList; Value = Funct}}
+  spec SemCat =
+  ~Cat ->
+    sig
+      value coi : ~atj:Cat.t ~atk:Cat.t -> CatIList.t 
+      value unPP : ~c:Cat.t -> CatIList.t
+      value unPPok : ~c:Cat.t -> [`OK CatIList.t|`Error]
+    end
+  spec SrcCore =
+  ~Funct -> 
+    sig
+      value src : ~f:Funct.t -> Cat.t
+      value trg : ~f:Funct.t -> Cat.t
+    end
+  spec SemFunct =
+  ~AtIndex ~Funct ->
+    sig
+      (* a list of type argument and context: *)  
+      value coi : ~atj:Funct.t ~atk:Funct.t -> FunctIList.t 
+      (* a list of value argument and context: *)      
+      value cof : ~ate:Funct.t ~atd:Funct.t -> FunctIList.t
+      value unpp : ~f:Funct.t -> FunctIList.t
+      value unpp_ok : ~f:Funct.t -> [`OK FunctIList.t|`Error]
+    end
+  spec DomCore =
+  ~Trans -> 
+    sig
+      value dom : ~t:Trans.t -> Funct.t
+      value cod : ~t:Trans.t -> Funct.t
+    end
+  spec Sign =
+  ~Funct ->
+    sig
+      type t
+      value f2s : ~f:Funct.t -> t
+      value s2f : ~s:t -> Funct.t
+    end
+  spec Dule = 
+  ~Trans ~Sign ->
+    sig
+      type t
+      value pack : ~f:Funct.t ~t:Trans.t ~s:Sign.t -> t
+      value domain : ~m:t -> Sign.t
+      value codomain : ~m:t -> Sign.t
+      value type_part : ~m:t -> Funct.t
+      value value_part : ~m:t -> Trans.t
+    end
+  spec SignIList = IList with {{Value = Sign}}
+  spec SignIListOps = IListOps with {{Value = Sign; IList = SignIList}}
+  spec DuleIList = IList with {{Value = Dule}}
+  spec DuleIListOps = IListOps with {{Value = Dule; IList = DuleIList}}
+  spec SemWSign =
+  ~Trans ~SignIList ->
+    sig
+      value s_Pp : ~ls:SignIList.t -> [`OK Sign.t|`Error] 
+    end
+  spec SemLDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Accord : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+    end
+  (* results: *)
+  spec ToolIndIDule = 
+  ~Trans ->
+    sig
+      value addcon : ~f:Funct.t ~g:Funct.t -> Trans.t
+      value adduncon : ~f:Funct.t ~g:Funct.t -> Trans.t
+    end
+  ToolIndIDule =
+    :: ~SrcCore ~DomCore -> ToolIndIDule
+    struct
+      value addcon = fun ~f ~g -> Trans.t_ID ~c:Cat.c_BB 
+      value adduncon = fun ~f ~g -> Trans.t_ID ~c:Cat.c_BB 
+    end 
+  spec SemIDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Ind : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_CoInd : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+    end
+  SemIDule =
+    :: ~SrcCore ~DomCore ~SemWSign ~SemLDule 
+       ~ToolIndIDule -> SemIDule
+    struct
+      value m_Ind = fun ~lr ~lm -> (* : S_Pp lr -> S_Pp ls *)
+        `Error
+      value m_CoInd = fun ~lr ~lm -> (* : S_Pp lr -> S_Pp ls *)
+        `Error
+    end
+end
+  SemWSign = LinkIDule_on_fCore | SemWSign
+  SemLDule = LinkIDule_on_fCore | SemLDule
+  IndIDule_on_fCore = load IndIDule with 
+    {{MapCF; MapFT; SemCat; SrcCore; SemFunct; DomCore;
+      SignIListOps; DuleIListOps; SemWSign; SemLDule}}
+
+(* type-checking of modules: *)
+  library ElabIDule =
+link
+  (* some of the arguments: *)
+  spec rec CatIList = IList with {{Value = Cat}}
+  and Cat =
+  ~IdIndex ->
+    sig
+      type t
+    end
+  spec rec FunctIList = IList with {{Value = Funct}}
+  and Funct =
+  ~Cat ->
+    sig
+      type t
+    end
+  spec rec TransIList = IList with {{Value = Trans}}
+  and Trans =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec Sign =
+  ~Funct ->
+    sig
+      type t
+    end
+  spec Dule = 
+  ~Trans ~Sign ->
+    sig
+      type t
+      value value_part : ~m:t -> Trans.t
+    end
+  spec SignIList = IList with {{Value = Sign}}
+  spec DuleIList = IList with {{Value = Dule}}
+  spec SemWSign =
+  ~Trans ~SignIList ~Dule ->
+    sig
+      value s_Pp : ~ls:SignIList.t -> [`OK Sign.t|`Error] 
+      value s_Bb : ~r:Sign.t ~lc:CatIList.t ~lf:FunctIList.t -> 
+        [`OK Sign.t|`Error]
+      value s_Ww : ~m1:Dule.t ~s2:Sign.t -> [`OK Sign.t|`Error]
+    end
+  spec SemWDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Id : ~s:Sign.t -> Dule.t
+      value m_Comp : ~m1:Dule.t ~m2:Dule.t -> Dule.t
+      value m_Pr : ~lr:SignIList.t ~i:IdIndex.t -> 
+        [`OK Dule.t|`Error]
+      value m_Record : ~r:Sign.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Base : ~r:Sign.t ~s:Sign.t 
+                     ~lg:FunctIList.t ~lt:TransIList.t ->
+                       [`OK Dule.t|`Error]
+      value m_Inst : ~m1:Dule.t ~m2:Dule.t -> [`OK Dule.t|`Error]
+      value m_Trim : ~m1:Dule.t ~r2:Sign.t -> [`OK Dule.t|`Error]
+    end
+  spec SemLDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Accord : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Concord : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Link : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_Link_ordered : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+    end
+  spec SemIDule =
+  ~Trans ~SignIList ~DuleIList ->
+    sig
+      value m_Ind : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+      value m_CoInd : ~lr:SignIList.t ~lm:DuleIList.t ->
+        [`OK Dule.t|`Error]
+    end
+  (* results: *)
+  spec rec ISignIList = IList with {{Value = ISign}}
+  and ISign =
+  ~FunctIList ->
+    sig
+      type t
+      value tde : ~s:t -> 
+               [`S_Pp ISignIList.t
+               |`S_Bb {r : ISign.t; lc : CatIList.t; lf : FunctIList.t}
+               |`S_Ww {m1 : IDule.t; s2 : t}]
+      value s_Pp : ~ls:ISignIList.t -> t
+      value s_Bb : ~r:ISign.t ~lc:CatIList.t ~lf:FunctIList.t -> t
+      value s_Ww : ~m1:IDule.t ~s2:t -> t
+    end
+  (* ISign mutually recursive with IDule (see S_Ww) *)
+  and IDuleIList = IList with {{Value = IDule}}
+  and IDule =
+  ~TransIList ->
+    sig
+      type t
+      value tde : ~m:t -> 
+               [`M_Id ISign.t
+               |`M_Comp {m1 : t; m2 : t}
+               |`M_Pr {lr : ISignIList.t; i : IdIndex.t}
+               |`M_Record {r : ISign.t; lm : IDuleIList.t}
+               |`M_Base {r : ISign.t; s : ISign.t; 
+                         lg : FunctIList.t; lt : TransIList.t}
+               |`M_Inst {m1 : t; m2 : t}
+               |`M_Trim {m1 : t; r2 : ISign.t}
+               |`M_Accord {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Concord {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Link {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Ind {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_CoInd {lr : ISignIList.t; lm : IDuleIList.t}]
+      value m_Id : ~s:ISign.t -> t
+      value m_Comp : ~m1:t ~m2:t -> t
+      value m_Pr : ~lr:ISignIList.t ~i:IdIndex.t -> t
+      value m_Record : ~r:ISign.t ~lm:IDuleIList.t -> t
+      value m_Base : ~r:ISign.t ~s:ISign.t 
+                     ~lg:FunctIList.t ~lt:TransIList.t -> t
+      value m_Inst : ~m1:t ~m2:t -> t
+      value m_Trim : ~m1:t ~r2:ISign.t -> t
+      value m_Accord : ~lr:ISignIList.t ~lm:IDuleIList.t -> t
+      value m_Concord : ~lr:ISignIList.t ~lm:IDuleIList.t -> t
+      value m_Link : ~lr:ISignIList.t ~lm:IDuleIList.t -> t
+      value m_Ind : ~lr:ISignIList.t ~lm:IDuleIList.t -> t
+      value m_CoInd : ~lr:ISignIList.t ~lm:IDuleIList.t -> t
+    end
+  module ind ISignIList = load IList with {{Value = ISign}}
+  and ISign = 
+    struct
+      type t = 
+        ind t: [`S_Pp ISignIList.t
+               |`S_Bb {r : ISign.t; lc : CatIList.t; lf : FunctIList.t}
+               |`S_Ww {m1 : IDule.t; s2 : t}]
+      value tde = fun ~s -> s . de
+      value s_Pp = fun ~ls -> ls .`S_Pp . con
+      value s_Bb = fun ~r ~lc ~lf -> {r; lc; lf} .`S_Bb . con
+      value s_Ww = fun ~m1 ~s2 -> {m1; s2} .`S_Ww . con
+    end
+  and IDuleIList = load IList with {{Value = IDule}}
+  and IDule = 
+    struct
+      type t = 
+        ind t: [`M_Id ISign.t
+               |`M_Comp {m1 : t; m2 : t}
+               |`M_Pr {lr : ISignIList.t; i : IdIndex.t}
+               |`M_Record {r : ISign.t; lm : IDuleIList.t}
+               |`M_Base {r : ISign.t; s : ISign.t; 
+                         lg : FunctIList.t; lt : TransIList.t}
+               |`M_Inst {m1 : t; m2 : t}
+               |`M_Trim {m1 : t; r2 : ISign.t}
+               |`M_Accord {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Concord {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Link {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_Ind {lr : ISignIList.t; lm : IDuleIList.t}
+               |`M_CoInd {lr : ISignIList.t; lm : IDuleIList.t}]
+      value tde = fun ~m -> m . de
+      value m_Id = fun ~s -> s .`M_Id . con
+      value m_Comp = fun ~m1 ~m2 -> {m1; m2} .`M_Comp . con
+      value m_Pr = fun ~lr ~i -> {lr; i} .`M_Pr . con
+      value m_Record = fun ~r ~lm -> {r; lm} .`M_Record . con
+      value m_Base = fun ~r ~s ~lg ~lt -> {r; s; lg; lt} .`M_Base . con
+      value m_Inst = fun ~m1 ~m2 -> {m1; m2} .`M_Inst . con
+      value m_Trim = fun ~m1 ~r2 -> {m1; r2} .`M_Trim . con
+      value m_Accord = fun ~lr ~lm -> {lr; lm} .`M_Accord . con
+      value m_Concord = fun ~lr ~lm -> {lr; lm} .`M_Concord . con
+      value m_Link = fun ~lr ~lm -> {lr; lm} .`M_Link . con
+      value m_Ind = fun ~lr ~lm -> {lr; lm} .`M_Ind . con
+      value m_CoInd = fun ~lr ~lm -> {lr; lm} .`M_CoInd . con
+    end
+  spec rec ElabISign =
+  ~ISign ~SignIList ->
+    sig
+      value el_s : ~s:ISign.t -> [`OK Sign.t|`Error]
+      value el_ls : ~ls:ISignIList.t -> [`OK SignIList.t|`Error]
+    end
+  and ElabIDule =
+  ~IDule ~DuleIList ->
+    sig
+      value el_m : ~m:IDule.t -> [`OK Dule.t|`Error]
+      value el_lm : ~lm:IDuleIList.t -> [`OK DuleIList.t|`Error]
+    end
+  module ind ElabISign = 
+    :: ~SemWSign -> ElabISign
+    struct
+      value el_s = fun ~s ->
+        match ISign.tde ~s with
+        [`S_Pp ls ->
+            match ElabISign.el_ls ~ls with
+            [`OK ls -> 
+                SemWSign.s_Pp ~ls
+            |`Error er -> er .`Error]
+        |`S_Bb {r; lc; lf} -> 
+            match ElabISign.el_s ~s:r with
+            [`OK r -> 
+                SemWSign.s_Bb ~r ~lc ~lf
+            |`Error er -> er .`Error]
+        |`S_Ww {m1; s2} ->
+            match ElabIDule.el_m ~m:m1 with
+            [`OK m1 ->
+                match ElabISign.el_s ~s:s2 with
+                [`OK s2 ->
+                    SemWSign.s_Ww ~m1 ~s2
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]]
+      value el_ls = fun ~ls ->
+        match ISignIList.t2ind ~l:ls with
+        fold [`Nil -> SignIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match ElabISign.el_s ~s:v with
+                     [`OK v ->
+                         SignIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+    end
+  and ElabIDule = 
+    :: ~SemWDule ~SemLDule ~SemIDule -> ElabIDule
+    struct
+      value el_m = fun ~m ->
+        match IDule.tde ~m with
+        [`M_Id s ->
+            match ElabISign.el_s ~s with
+            [`OK s -> 
+                SemWDule.m_Id ~s .`OK
+            |`Error er -> er .`Error]
+        |`M_Comp {m1; m2} ->
+            match ElabIDule.el_m ~m:m1 with
+            [`OK m1 ->
+                match ElabIDule.el_m ~m:m2 with
+                [`OK m2 ->
+                    SemWDule.m_Comp ~m1 ~m2 .`OK
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Pr {lr; i} ->
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                SemWDule.m_Pr ~lr ~i
+            |`Error er -> er .`Error]
+        |`M_Record {r; lm} ->
+            match ElabISign.el_s ~s:r with
+            [`OK r ->
+                match ElabIDule.el_lm ~lm with
+                [`OK lm -> 
+                    SemWDule.m_Record ~r ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Base {r; s; lg; lt} ->
+            match ElabISign.el_s ~s:r with
+            [`OK r ->
+                match ElabISign.el_s ~s with
+                [`OK s ->
+                    SemWDule.m_Base ~r ~s ~lg ~lt
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Inst {m1; m2} ->
+            match ElabIDule.el_m ~m:m1 with
+            [`OK m1 ->
+                match ElabIDule.el_m ~m:m2 with
+                [`OK m2 ->
+                    SemWDule.m_Inst ~m1 ~m2
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Trim {m1; r2} ->
+            match ElabIDule.el_m ~m:m1 with
+            [`OK m1 ->
+                match ElabISign.el_s ~s:r2 with
+                [`OK r2 ->
+                    SemWDule.m_Trim ~m1 ~r2
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Accord {lr; lm} ->
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                match ElabIDule.el_lm ~lm with
+                [`OK lm ->                      
+                    SemLDule.m_Accord ~lr ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Concord {lr; lm} ->
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                match ElabIDule.el_lm ~lm with
+                [`OK lm ->                      
+                    SemLDule.m_Concord ~lr ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Link {lr; lm} -> 
+        (* assumption : there is no cyclic dependency 
+           in lm (with m_Link) or every module depends 
+           only on previous ones (with m_Link_ordered) *)
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                match ElabIDule.el_lm ~lm with
+                [`OK lm ->                      
+                    (* reversing of lm may be needed here *)
+                    SemLDule.m_Link_ordered ~lr ~lm (* or m_Link *)
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_Ind {lr; lm} -> 
+        (* here circularity in lm permitted! *)
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                match ElabIDule.el_lm ~lm with
+                [`OK lm ->                      
+                    SemIDule.m_Ind ~lr ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]
+        |`M_CoInd {lr; lm} -> 
+        (* here circularity in lm permitted! *)
+            match ElabISign.el_ls ~ls:lr with
+            [`OK lr -> 
+                match ElabIDule.el_lm ~lm with
+                [`OK lm ->                      
+                    SemIDule.m_CoInd ~lr ~lm
+                |`Error er -> er .`Error]
+            |`Error er -> er .`Error]]
+      value el_lm = fun ~lm ->
+        match IDuleIList.t2ind ~l:lm with
+        fold [`Nil -> DuleIList.nil .`OK
+             |`Cons {i; v; l} ->
+                 match l with
+                 [`OK l ->
+                     match ElabIDule.el_m ~m:v with
+                     [`OK v ->
+                         DuleIList.cons ~i ~v ~l .`OK
+                     |`Error -> `Error]
+                 |`Error -> `Error]]
+    end
+  Test =
+    :: ~ElabIDule -> sig value test : [`OK Trans.t|`Error] end
+    struct
+      value test =
+        let m = IDule.m_Id 
+          ~s:(ISign.s_Pp 
+                ~ls:ISignIList.nil) 
+        in
+        match ElabIDule.el_m ~m with
+        [`OK m -> Dule.value_part ~m .`OK
+        |`Error er -> er .`Error]
+    end
+end
+  SemWDule = LinkIDule_on_fCore | SemWDule 
+  SemIDule = IndIDule_on_fCore | SemIDule  
+  ElabIDule_on_fCore = load ElabIDule with 
+    {{Trans; SignIList; DuleIList;
+      SemWSign; SemWDule; SemLDule; SemIDule}}
+  spec OuterTest = ~Trans -> sig value test : [`OK Trans.t|`Error] end
+  OuterTest = (ElabIDule_on_fCore | Test) :> OuterTest
+  Result =
+    :: ~SrcCore ~DomCore ~OuterTest -> sig value ok : [`True|`False] end
+    struct
+      value ok =
+        match OuterTest.test with
+        [`OK t -> 
+          match Cat.tde ~c:(SrcCore.src ~f:(DomCore.dom ~t)) with
+          [`C_PP lc -> `True
+          |`C_BB -> `False]
+        |`Error er -> `False]
+    end
+end
+ Result = Compiler | Result
+end

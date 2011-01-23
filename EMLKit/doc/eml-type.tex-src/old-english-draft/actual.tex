@@ -1,0 +1,129 @@
+\section{\secactual}
+\label{sec:actual}
+
+In this section I'll try to describe how I actually implemented the algorithm
+sketched in the Theorem, on the basis of the ML Kit algorithm for
+the SML signature elaboration.
+
+\subsection{\secconventions}
+\label{sec:conventions}
+
+\subsection{\secimplaxioms}
+\label{sec:impl_axioms}
+
+First I would like to obtain $(\N')\S'$ and the realisation. 
+My implementation elaborates the original $\sigexp$ 
+instead of its stripped version taking advantage of the fact, 
+that errors found while elaborating axioms are recorded in the
+abstract syntax tree and in other ways ignored.
+The result of this elaboration is some strange trace $\trace''$, 
+the principal signature $(\N'')\S''$ for $\sigexp'$,
+and the corresponding realisation. Now I make the signature equality-principal,
+and accordingly extend the realisation, getting at last $(\N')\S'$. This is the end of the first pass.
+The code follows:
+{\small
+\begin{verbatim}
+fun elab_psigexp (B: Env.Basis, psigexp: IG.psigexp)
+    : (Stat.Sig * OG.psigexp) =
+  let
+    val IG.PRINCIPpsigexp(i, sigexp) = psigexp
+    val A = Env.mkAssembly B
+(* mikon#1.45 *)
+    val NofB = Env.N_of_B B
+    val (rea, _, S_first, _) = 
+        (StrId.backup_state();
+        elab_sigexp'(B, sigexp, A, FIRST_PASS))
+    val (_, rea1) = Stat.equality_principal(NofB, S_first)
+    val (_, _, S, out_sigexp) = 
+        (StrId.restore_state();
+        elab_sigexp'(B, sigexp, A, SECOND_PASS(rea1 oo rea)))
+(* end mikon#1.45 *)
+  in ... S ... out_sigexp ... end
+\end{verbatim}
+}
+
+Now the only things that I need are to check that axioms are valid, 
+get their traces, and repair $\trace''$ to get the required trace.
+The easiest way achieve these goals is to elaborate the $\sigexp$ for the second
+time, with an additional parameter being the realisation.
+When axioms are found they are elaborated in the bases
+modified by the realisation:
+{\small
+\begin{verbatim}
+fun elab_spec (B: Env.Basis, spec: IG.spec, A: Env.Assembly, p : pass): 
+   (Stat.Realisation * Env.Assembly * Env.Env * OG.spec) =
+  case spec of
+  ...
+(* mikon#1.4 and #1.43 *)
+   (* Axiom specification *)
+  | IG.AXIOMspec(i, axdesc) =>
+      let
+        val (out_axdesc) = 
+          case p
+            of FIRST_PASS => elab_axdesc(B, axdesc)
+             | (SECOND_PASS(rea1)) => elab_axdesc(rea1 onB B, axdesc)
+      in
+        (Stat.Id, Env.emptyA, Env.emptyE, OG.AXIOMspec(okConv i, out_axdesc))
+      end
+(* end mikon#1.4 and #1.43 *)
+\end{verbatim}
+}
+
+\subsection{\secimpltraces}
+\label{sec:impl_traces}
+ 
+%Another possibility is to refrain from correcting the trace during the elaboration,
+%but instead apply the final substitution to the trace obtained at the end of the process.
+%To prove that it works a lemma is needed, similar to the one proved in Section~\ref{sec:comforting}.
+%The proof of the lemma proceeds by induction over all the rules of the Static Semantics of EML.
+
+\section{\secanegdote}
+\label{sec:anegdote}
+
+When I had finished coding this algorithm, for a few days I was sure, I could prove,
+that the algorithm was correct, but the algorithm kept producing strange
+and inexplicable results. I was a bit annoyed. Then what made me really angry
+was the discovering that the culprits were side-effects used in some places
+in the ML Kit for example to get fresh type names.
+
+I solved the problem in a rather brutal way, as can be seen
+in the code for the function \|elab_psigexp| above
+and in the offending module below:
+{\small
+\begin{verbatim}
+functor Timestamp(): TIMESTAMP =
+struct
+  type stamp = int
+  val r = ref 0
+  fun new() = (r := !r + 1; !r)
+  fun print i = "$" ^ Int.string i
+(* mikon#1.44 *)
+  val backup = ref 0
+  fun backup_state() = backup := !r
+  fun restore_state() = r := !backup
+(* end mikon#1.44 *)
+end; 
+\end{verbatim} 
+} %$
+
+
+
+
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 
+
+
+
+
+
+
+
+
+
+

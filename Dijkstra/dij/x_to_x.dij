@@ -1,0 +1,22 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    pricon x : int ;
+    privar y : int ;
+    privar z : int
+
+if input >= 0 ->
+
+    x :vir= input ;
+    y :vir= input ;
+    z :vir= 1 ;
+    do y <> 0 -> z := z * x ; 
+		 y := y - 1
+    od ;	
+
+    output :vir= z
+
+fi
+
+end

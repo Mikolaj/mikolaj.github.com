@@ -1,0 +1,12 @@
+spec T = sig end  
+
+spec ErrWw =
+(~Arg : sig type t end
+~Specialized : sig end ->
+sig 
+  value m : Arg.t 
+end)
+  with
+    {Specialized = 
+       :: ~Arg : sig (*type t*) end -> T
+       struct end}

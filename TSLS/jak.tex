@@ -1,0 +1,40 @@
+\chapter{
+Jak pracowa"c z kompilatorem SML-a}
+
+\begin{itemize}
+
+\item Interaktywnie:
+\begin{enumerate}
+\item uruchomi"c SML (\|mosml|, \|new-sml|, \|sml-0.93|, \|sml|)
+\item po zach"ecie, kt"or"a na og"o"l jest my"slnik, napisa"c program
+\item zako"nczy"c pisanie "srednikiem i nacisn"a"c \|RET|
+\end{enumerate}
+
+\item Wsadowo: 
+
+\begin{enumerate}
+\item napisa"c program jakim"s edytorem
+\item zapisa"c go w pliku \|smth.sml|
+\item uruchomi"c SML i napisac \|use "smth.sml";|
+\end{enumerate}
+
+\item Przy pomocy EMACS-a i \|sml-mode|:
+
+\begin{enumerate}
+\item uruchomi"c EMACS-a
+\item \|C-x C-f smth.sml RET| (wa"rne, "reby ko"nc"owk"a nazwy by"lo \|.sml|)
+\item napisa"c b"l"edny program (\|Tab| automagicznie formatuje)
+\item \|C-c C-l| i b"edzie wiadomo co dalej
+\item Zrobi"c \|C-c `| (ten ostatni znaczek to back-quote, 
+      wyst"epuje na klawiaturze na og"o"l pod tyld"a), 
+      wtedy on ustawi kursor tam gdzie w pliku jest b"l"ad 
+\item Korzysta"c z~innych dobrodziejstw \|sml-mode|,
+      np.\ \|sml-mode-info|, czyli podr"ecznika do \|sml-mode|
+\end{enumerate}
+
+\end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 

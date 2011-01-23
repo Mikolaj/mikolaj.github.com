@@ -1,0 +1,21 @@
+begin
+
+    glocon input : int ;
+    vircon output : int ;
+    privar acc : int ;
+    privar k : int 
+
+if input > 0 ->
+ 
+    acc :vir= 1 ;
+    k :vir= input ;
+    do k <> 0 -> acc := acc * k ; 
+		 k := k - 1
+    od ;	
+
+    output :vir= acc
+
+fi
+
+end
+

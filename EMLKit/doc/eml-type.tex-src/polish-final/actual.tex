@@ -1,0 +1,415 @@
+
+W tej cz"e"sci wielokrotnie odwo"luj"e si"e do kodu "zr"od"lowego
+systemu EML~Kit. Staram si"e pokazywa"c przyk"ladowy kod w postaci 
+jak najmniej zmienionej i poci"etej.
+Jednocze"snie zdaj"e sobie spraw"e, "re nie jestem w stanie zast"api"c narracj"a przeplatan"a przyk"ladami,
+lektury pe"lnych "zr"ode"l i eksperyment"ow przy u"ryciu pracuj"acego systemu.
+Dlatego te"r w dodatku~\ref{sec:system} podaj"e informacje na temat 
+dost"epno"sci najnowszego wydania systemu EML Kit,
+zawieraj"acego w szczeg"olno"sci ponad p"o"ltora megabajta kodu "zr"od"lowego.
+
+\section{\secimplaxioms}
+\label{sec:impl_axioms}
+
+Elaboracja sygnatur zawieraj"acych aksjomaty zbudowana zosta"la
+na podstawie algorytmu naszkicowanego w rozdziale~\ref{sec:mature},
+korzystaj"ac z wniosk"ow sformu"lowanych w rozdziale~\ref{sec:validating} i~\ref{sec:observation}
+oraz bazuj"ac na elaboracji sygnatur SML zaimplementowanej w systemie ML Kit.
+
+Przypomn"e szkic algorytmu z rozdzia"lu~\ref{sec:mature}:
+\begin{enumerate}
+\item obedrzyj $\sigexp$ z aksjomat"ow dostaj"ac $\sigexp'$,
+\label{2step:strip}
+\item dokonaj elaboracji $\sigexp'$ dostaj"ac sygnatur"e g"l"own"a~$(\N')\S'$ i~"slad~$\trace'$,
+\label{2step:elab_sig'}
+\item sprawd"z, "re aksjomaty nie wymuszaj"a zr"ownania typ"ow, 
+      ani uznania typu za r"owno"sciowy w $\sigexp$,
+\label{2step:check}
+\item dokonaj elaboracji aksjomat"ow zgodnie z regu"l"a 74.1, uzyskuj"ac "slady $\trace_1,\dots,\trace_n$,
+\label{2step:elab_axiom}
+\item je"sli wszystko przebieg"lo poprawnie, wynikiem jest $(\N')\S'$ i dodatkowo $\trace'$ 
+      ze "sladami $\trace_1,\dots,\trace_n$ wstawionymi w odpowiednich miejscach.
+\label{2step:insert}
+\end{enumerate}
+
+Wida"c, "re rezultatem krok"ow~\ref{2step:strip} i~\ref{2step:elab_sig'}
+ma by"c semantyczna sygnatura $(\N')\S'$, g"l"owna dla $\sigexp'$ oraz "slad $\trace'$.
+Ze Spostrze"renia~\ref{thm:make_be} wiadomo, "re przydatna by"laby r"ownie"r
+realizacja $\rea$, b"ed"aca wynikiem elaboracji wykonanej w kroku~\ref{2step:elab_sig'}.
+
+Algorytm elaboracji sygnatur w systemie EML Kit
+musi by"c przygotowany na mo"rliwo"s"c znalezienia 
+w analizowanej przez siebie sygnaturze aksjomat"ow.
+Je"sli nie za"r"ada si"e inaczej, 
+to napotykane aksjomaty s"a elaborowane w bie"r"acej bazie,
+a ewentualne b"l"edy ich elaboracji s"a zapisywane
+w drzewie sk"ladni abstrakcyjnej i pod innymi wzgl"edami ignorowane.
+Dzi"eki temu mog"e uzyska"c $(\N')\S'$ oraz realizacj"e $\rea$
+elaboruj"ac oryginalne $\sigexp$ zamiast jej obdartej wersji.
+Poniewa"r "slad takiej elaboracji jest tworem sztucznym i nieprzydatnym,
+nie zachowam go, a zbieranie $\trace'$ od"lo"r"e na p"o"zniej.
+
+Dokonuje si"e to w pierwszym przebiegu algorytmu,
+kt"orego wywo"lanie mo"rna wyr"o"rni"c w kodzie
+po tym, "re dodatkowy parametr elaboracji ma warto"s"c \|FIRST_PASS|:
+{\small
+\begin{verbatim}
+fun elab_psigexp (B: Env.Basis, psigexp: IG.psigexp)
+    : (Stat.Sig * OG.psigexp) =
+  let
+    val IG.PRINCIPpsigexp(i, sigexp) = psigexp
+    val A = Env.mkAssembly B
+    val NofB = Env.N_of_B B
+    val (rea, _, S_first, _) = 
+        (StrId.backup_state();
+        elab_sigexp'(B, sigexp, A, FIRST_PASS))
+    val (_, rea1) = Stat.equality_principal(NofB, S_first)
+    val (_, _, S, out_sigexp) = 
+        (StrId.restore_state();
+        elab_sigexp'(B, sigexp, A, SECOND_PASS(rea1 oo rea)))
+  in 
+    ... Stat.closeStr(NofB, S) ... 
+  end
+\end{verbatim}
+} 
+Historia i znaczenie \|StrId.backup_state| oraz \|StrId.restore_state|
+pojawiaj"acych si"e powy"rej, opisana jest w rozdziale~\ref{sec:anegdote}.
+Znaczenie \|mkAssembly| i wielu rozbudowanych polece"n znajduj"acych
+si"e w wykropkowanej cz"e"sci kodu, jest takie samo jak w przypadku
+elaboracji sygnatur SML, opisanej w dokumentacji systemu ML~Kit~\cite{BRTT93}.
+
+Po pierwszym przebiegu tworzona jest realizacja, kt"orej aplikacja do
+sygnatury uczyni j"a r"owno"sciowo g"l"own"a \ang{equality principal}.
+R"ow\-no\-"scio\-wa g"l"owno"s"c jest poj"eciem, 
+kt"ore dla uproszczenia pomin"eli"smy w roz\-wa\-"ra\-niach teoretycznych 
+i do kt"orego r"ownie"r tutaj nie b"edziemy ju"r wi"ecej wracali,
+gdy"r nie przeszkadza ono w poprawnej elaboracji aksjomat"ow,
+a jego implementacja przebiega identycznie jak w przypadku SML.
+
+Teraz nale"ry wykona"c krok~\ref{2step:check}, 
+czyli sprawdzi"c czy aksjomaty czego"s nie wymuszaj"a.
+Na mocy Twierdzenia~\ref{thm:validating} wystarczy w tym celu
+dokona"c elaboracji aksjomat"ow w odpowiadaj"acych im bazach $B_e$.
+Naj"latwiejszym sposobem, aby to osi"agn"a"c jest elaboracja
+$\sigexp$ po raz drugi, z dodatkowym parametrem, kt"orym jest 
+otrzymana w pierwszym przebiegu realizacja $\rea$. 
+Kiedy podczas tej elaboracji napotykany jest
+aksjomat, jest on elaborowany w bie"r"acej bazie
+zmodyfikowanej realizacj"a $\rea$.
+Ta baza jest, na mocy Spostrze"renia~\ref{thm:make_be},
+r"owna bazie $B_e$ aksjomatu:
+{\small
+\begin{verbatim}
+fun elab_spec (B: Env.Basis, spec: IG.spec, A: Env.Assembly, p : pass): 
+   (Stat.Realisation * Env.Assembly * Env.Env * OG.spec) =
+  case spec of
+  ...
+   (* Axiom specification *)
+  | IG.AXIOMspec(i, axdesc) =>
+      let
+        val (out_axdesc) = 
+          case p
+            of FIRST_PASS => elab_axdesc(B, axdesc)
+             | (SECOND_PASS(rea)) => elab_axdesc(rea onB B, axdesc)
+      in
+        (Stat.Id, Env.emptyA, Env.emptyE, OG.AXIOMspec(okConv i, out_axdesc))
+      end
+\end{verbatim}
+}
+
+Podczas drugiego przebiegu elboracji $\sigexp$ nast"epuje zbieranie "sladu,
+nazwijmy go~$\trace$, a w nim zbierane s"a r"ownie"r "slady
+$\trace_1,\dots,\trace_n$ zgodnie z krokiem~\ref{2step:elab_axiom}.
+Co wi"ecej, jak "latwo zobaczy"c, $\trace$ r"owny jest "sladowi $\trace'$, 
+z $\trace_1,\dots,\trace_n$ wstawionymi w odpowiednich miejscach, 
+co oznacza, "re elaboracja zosta"la zako"nczona.
+
+\section{\secimpltracesmod}
+\label{sec:impl_traces_mod}
+
+W systemie EML Kit "slady s"a gromadzone w drzewie sk"ladni abstrakcyjnej programu.
+Ka"rdy w"eze"l takiego drzewa zawiera pole, w kt"orym przechowywane s"a dodatkowe informacje.
+W wypadku program"ow, kt"ore przesz"ly ju"r proces elaboracji,
+typ tego pola ma nast"epuj"ac"a definicj"e:
+{\small
+\begin{verbatim}
+datatype PostElabGrammarInfo =
+  POST_ELAB_GRAMMAR_INFO of {preElabGrammarInfo: PreElabGrammarInfo,
+                             errorInfo: ErrorInfo Option,
+                             typeInfo: TypeInfo Option,
+                             overloadingInfo: OverloadingInfo Option,
+                             trace : Trace Option}
+\end{verbatim}
+}
+Przy czym pojawiaj"acy si"e tu i w innych miejscach typ \|Option|,
+jest zdefiniowany nast"epuj"aco:
+{\small
+\begin{verbatim}
+datatype 'a Option = None | Some of 'a 
+\end{verbatim}
+}
+
+"Sci"sle m"owi"ac, w w"ez"lach nie ma prawdziwych "slad"ow,
+czyli obiekt"ow budowanych przy pomocy operacji w"la"sciwych dziedzinom postaci 
+$\Tree{A}$ (patrz rozdzia"l~\ref{sec:tracedef}).
+Zamiast tego i w pewnym sensie r"ownowa"rnie,
+w w"ez"lach znajduj"a si"e komponenty "slad"ow.
+W ten spos"ob "slad podprogramu, maj"acego sw"oj korze"n w danym w"e"zle,
+reprezentowany jest przez ca"le poddrzewo sk"ladni abstrakcyjnej, 
+zaczynaj"ace si"e w tym w"e"zle i zawieraj"ace sk"ladniki tego "sladu.
+
+"Slady j"ezyka Modu"l"ow EML sk"ladaj"a si"e ze "slad"ow j"ezyka J"adra EML
+(tu oznaczonych \|TraceCOR| --- ich zbieraniu po"swi"econy jest rozdzia"l~\ref{sec:impl_traces})
+oraz "slad"ow prostych (\|SimTrace|). 
+Poniewa"r nigdy nie zdarza si"e jednoczesne dodanie komponentu do "sladu i zwi"azanie w nim nazw,
+zjawisko zwi"azywania nazw w "sladach mo"re by"c reprezentowane 
+jako trzeci rodzaj sk"ladnika "sladu (\|BoundTrace|):
+{\small
+\begin{verbatim}
+datatype Trace = 
+    TRACE_COR of TraceCOR
+  | SIM_TRACE of SimTrace
+  | BOUND_TRACE of BoundTrace 
+and BoundTrace = 
+    BOUND of NameSet
+and SimTrace = 
+    STRNAME of StrName
+  | REA of Rea
+  | VARENV of VarEnv
+  | TYENV of TyEnv
+  | ENV of Env
+\end{verbatim}
+}
+Dodawania "slad"ow mo"rna teraz dokonywa"c przy pomocy prostych funkcji pomocniczych:
+{\small
+\begin{verbatim}
+(* Auxiliary functions for trace collection *)               
+fun addTrace (tr : Trace.Trace) (i : PostElabGrammarInfo) =
+    GrammarInfo.addPostElabTrace(i, tr)
+fun addCoreTrace (tr : Trace.TraceCOR) (i : PostElabGrammarInfo) =
+    addTrace (Trace.TRACE_COR(tr)) i
+fun addSimTrace (sim : Trace.SimTrace) (i : PostElabGrammarInfo) =
+    addTrace (Trace.SIM_TRACE(sim)) i
+fun addBoundTrace (bound : Trace.BoundTrace) (i : PostElabGrammarInfo) =
+    addTrace (Trace.BOUND_TRACE(bound)) i
+\end{verbatim}
+}
+
+Elaboracja sygnatur odbywa si"e w dw"och przebiegach,
+po to by poprawnie traktowa"c aksjomaty (patrz rozdzia"l~\ref{sec:impl_axioms}). 
+Mechanizmy, skonstruowane na potrzeby tej elaboracji,
+pozwalaj"a r"ownie"r bez dodatkowych wysi"lk"ow opanowa"c niedeterminizm, 
+przeszkadzaj"acy w zbieraniu "slad"ow j"ezyka Modu"l"ow.
+
+Poprawne musi by"c jedynie zbieranie "slad"ow podczas drugiego przebiegu elaboracji.
+Ale wtedy w"la"snie dost"epna jest ju"r wynikowa realizacja ca"lego programu,
+dzi"eki kt"orej mo"rna "`zgadywa"c'' ostateczn"a konkretyzacj"e pojawiaj"acych si"e obiekt"ow semantycznych.
+Dzi"eki temu nie ma potrzeby u\-"sci\-"sla\-nia zebranych uprzednio "slad"ow,
+a do ka"rdego komponentu aplikowana jest tylko jedna realizacja i tylko jeden raz.
+
+Ilustruj"a to dwie regu"ly Semantyki Statycznej Modu"l"ow EML,
+kt"ore s"a "zr"od"lami niedetermizmu w wyborze w"lasno"sci podstruktur pojawiaj"acyh si"e w sygnaturach:
+$$
+\frac{\B\ts\spec\ra\E,\trace }
+     {\B\ts\encsigexp\ra (\m,\E),\append{\m}{\trace}}
+\eqno(63)
+$$
+$$
+\frac{ \sigord{\B(\sigid)}{\rea}{\S} }
+     { \B\ts\sigid\ra\S,\rea }
+\eqno(64)
+$$
+oraz implementacja kroku elaboracji odpowiadaj"acego tym regu"lom:
+{\small
+\begin{verbatim}
+fun elab_sigexp' (B: Env.Basis, sigexp: IG.sigexp, A: Env.Assembly, p : pass):
+  (Stat.Realisation * Env.Assembly * Stat.Str * OG.sigexp) =
+   case sigexp of
+     (* Generative *)
+     IG.SIGsigexp(i, spec) =>
+       let
+         val (rea, A1, E, out_spec) = elab_spec(B, spec, A, p)
+         val m = Stat.freshStrName()
+         val S  = Stat.mkStr(m, E)
+         val A2 = A1 union Env.singleA_Str(S)
+       in
+         (rea, A2, S, OG.SIGsigexp(addSimTrace 
+          (Trace.STRNAME(case p
+                           of FIRST_PASS => m
+                            | (SECOND_PASS(rea1)) => M.onStrName rea1 m))
+          (okConv i), out_spec))
+       end
+     (* Signature identifier *)
+   | IG.SIGIDsigexp(i, sigid) =>
+       case Env.lookup_sigid(B, sigid)
+         of Some sigma =>
+              let
+                val (S, A', rea) = Env.Sig_instance_for_traces sigma
+              in
+                (Stat.Id, A', S, OG.SIGIDsigexp(addSimTrace
+                 (Trace.REA(case p
+                              of FIRST_PASS => rea
+                               | (SECOND_PASS(rea1)) => rea1 oo rea))
+                 (okConv i), sigid))
+              end
+          | None => ... ErrorInfo.LOOKUP_SIGID sigid ...
+\end{verbatim}
+}
+
+\section{\secimpltraces}
+\label{sec:impl_traces}
+
+Z Wniosku~\ref{single_pass} wynika, "re zbierania "slad"ow j"ezyka J"adra EML 
+mo"rna dokonywa"c, dodaj"ac do bie"r"acych "slad"ow nowe komponenty 
+i ci"agle konkretyzuj"ac stare, poprzez aplikowanie podstawie"n.
+
+Inn"a mo"rliwo"sci"a jest wstrzymanie si"e od poprawiania "slad"ow podczas elaboracji,
+a zamiast tego zaaplikowanie ko"ncowego podstawienia do "sladu otrzymanego na ko"ncu procesu.
+Aby dowie"s"c, "re jest to poprawne, potrzebne jest twierdzenie podobne do 
+Lematu~\ref{thm:comforting} z rozdzia"lu~\ref{sec:comforting}.
+Dow"od lematu nast"epuje poprzez indukcj"e po wszystkich regu"lach Semantyki Statycznej J"adra EML.
+
+Rzecz"a, kt"ora wymaga ostro"rno"sci jest to,
+i"r skoro wstrzymujemy si"e od konkretyzacji "slad"ow,
+nie powinni"smy ich r"ownie"r za wcze"snie domyka"c.
+W zwi"azku z tym implementacja "slad"ow elaboracji J"adra EML
+zawiera dwie formy $\TraceScheme$. Jedna z nich to lista zmiennych, 
+reprezentuj"aca zmienne znajduj"ace si"e pod kwantyfikatorem.
+Druga to kontekst, jaki wy\-st"e\-po\-wa"l podczas elaboracji,
+gdy pojawi"la si"e potrzeba domkni"ecia "sladu, 
+ale domkni"ecie zosta"lo od"lo"rone na p"o"zniej:
+{\small
+\begin{verbatim}
+datatype Trace = 
+    TRACE of SchemeTrace Option * SimTrace Option
+and SimTrace = 
+    TYPE of Type
+  | ENV of Env
+  | CONTEXTxTYPE of Context * Type
+  | CONTEXTxENV of Context * Env
+  | TYENV of TyEnv
+  | VARENVxTYREA of VarEnv * TyRea
+  | CONTEXTxTYNAME of Context * TyName
+and SchemeTrace =
+    SCHEME_C of Context
+  | TYVARS of TyVar list
+\end{verbatim}
+}
+Zauwa"rmy, "re poniewa"r czasami jednocze"snie
+dodaje si"e komponent do "sladu i domyka ca"ly "slad,
+typ \|Trace| nie mo"re by"c sum"a roz"l"aczn"a mo"rliwych postaci komponent"ow "sladu, 
+jak by"lo to w rozdziale~\ref{sec:impl_traces_mod}.
+
+Podczas zbierania "slad"ow, ka"rda napotkana sytuacja, 
+w kt"orej potrzebne by by"lo domkni"ecie "sladu,
+powoduje umieszczenie bie"r"acego kontekstu w komponencie \|SchemeTrace|.
+Natomiast po zebraniu ca"lego "sladu elaboracji, wykonywana jest
+operacja \|process_core_trace_and_tvs|, kt"ora aplikuje wynikowe podstawienie elaboracji
+do ka"rdego atomowego "sladu, dokonuj"ac jednocze"snie w"la"sciwego domykania
+na podstawie zgromadzonych kontekst"ow:
+\pagebreak
+\enlargethispage*{0.5cm}
+{\small
+\begin{verbatim}
+fun onScheme (S, SCHEME_C(C)) = SCHEME_C(Environments.onC (S, C))
+  | onScheme (S, TYVARS(_))   = Crash.impossible "CoreTrace.onScheme"
+fun onScheme_opt (S, Some(scheme)) = Some(onScheme (S, scheme))
+  | onScheme_opt (S, None)          = None
+fun onSim (S, TYPE(tau)) = TYPE(Environments.on (S, tau))
+  | onSim (S, ENV(E)) = ENV(Environments.onE (S, E))
+  | onSim (S, CONTEXTxTYPE(C, tau)) = CONTEXTxTYPE(Environments.onC (S, C), 
+                                                   Environments.on (S, tau))
+  | onSim (S, CONTEXTxENV(C, E)) = CONTEXTxENV(Environments.onC (S, C), 
+                                                   Environments.onE (S, E))
+  | onSim (S, TYENV(TE)) = TYENV(TE)
+  | onSim (S, VARENVxTYREA(VE, phi_Ty)) = VARENVxTYREA(VE, phi_Ty)
+  | onSim (S, CONTEXTxTYNAME(C, t)) = CONTEXTxTYNAME(Environments.onC (S, C), t)
+fun onSim_opt (S, Some(sim)) = Some(onSim (S, sim))
+  | onSim_opt (S, None)      = None
+fun onCoreTrace (S, TRACE(scheme_opt, sim_opt)) = 
+    TRACE(onScheme_opt (S, scheme_opt), onSim_opt (S, sim_opt))   
+fun tyvars_sim (TYPE(tau)) = Environments.tyvarsTy tau
+  | tyvars_sim (ENV(E)) = Environments.tyvarsE E
+  | tyvars_sim (CONTEXTxTYPE(C, tau)) = (Environments.tyvarsC C) 
+                                        @ (Environments.tyvarsTy tau)
+  | tyvars_sim (CONTEXTxENV(C, E)) = (Environments.tyvarsC C) 
+                                     @ (Environments.tyvarsE E)
+  | tyvars_sim (TYENV(TE)) = []
+  | tyvars_sim (VARENVxTYREA(VE, phi_Ty)) = []
+  | tyvars_sim (CONTEXTxTYNAME(C, t)) = Environments.tyvarsC C
+fun tyvars_sim_opt (Some(sim)) = tyvars_sim sim
+  | tyvars_sim_opt None = []
+fun process_core_trace_and_tvs (core_trace, tvs) S = 
+  let  
+    val core_trace' as (TRACE(scheme_opt, sim_opt)) = onCoreTrace (S, core_trace)
+    val sim_opt_tvs = tyvars_sim_opt sim_opt
+    val free_tvs = sim_opt_tvs @ tvs
+  in
+    case scheme_opt 
+      of None => (core_trace', free_tvs)
+       | Some(SCHEME_C(C)) => 
+          let val tvs_to_bind = minus (free_tvs, Environments.tyvarsC C)
+          in (TRACE(Some(TYVARS(tvs_to_bind)), sim_opt),
+              minus (free_tvs, tvs_to_bind))
+          end
+       | Some(TYVARS(_)) => 
+          Crash.impossible "CoreTrace.process_core_trace_and_tvs" 
+  end
+\end{verbatim}
+}
+\addtolength{\hoffset}{-1cm}
+\pagebreak
+\addtolength{\hoffset}{1cm}
+       
+\section{\secanegdote}
+\label{sec:anegdote}
+
+Kiedy sko"nczy"lem kodowanie algorytmu elaboracji aksjomat"ow w sygnaturach, 
+przez kilka dni by"lem pewien, mog"lem dowie"s"c, "re jest on poprawny 
+--- ale algorytm uparcie produkowa"l dziwne i niewyja"snialne rezultaty. 
+By"lem nieco zirytowany.
+Jednak to, co uczyni"lo mnie naprawd"e z"lym, 
+by"lo odkrycie, "re winowajc"a s"a efekty uboczne.
+Jestem ich fanatycznym przeciwnikiem i nie przyjmowa"lem do wiadomo"sci,
+"re autorzy tak eleganckiego systemu, jak ML~Kit, mogli zni"ry"c si"e do ich stosowania.
+Tymczasem okaza"lo si"e, "re w systemie ML~Kit, 
+a co za tym idzie r"ownie"r w systemie EML~Kit,
+efekty uboczne s"a u"rywane. Mi"edzy innymi po to, 
+aby uzyskiwa"c "swie"re nazwy typ"ow i struktur podczas elaboracji sygnatur.
+
+Rozwi"aza"lem problem w raczej brutalny spos"ob, nie przebieraj"ac w "srod\-kach,
+jak mo"rna zobaczy"c w kodzie funkcji \|elab_psigexp| powy"rej
+oraz w odpowiedzialnym za szkody module poni"rej: 
+{\small
+\begin{verbatim}
+functor Timestamp(): TIMESTAMP =
+struct
+  type stamp = int
+  val r = ref 0
+  fun new() = (r := !r + 1; !r)
+  fun print i = "$" ^ Int.string i
+(* mikon#1.44 *)
+  val backup = ref 0
+  fun backup_state() = backup := !r
+  fun restore_state() = r := !backup
+(* end mikon#1.44 *)
+end; 
+\end{verbatim} 
+} %$
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 
+
+
+
+
+
+
+
+
+
+

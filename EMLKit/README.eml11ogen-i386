@@ -1,0 +1,44 @@
+The README for 
+The EML Kit 1.1 Proof Obligations Generator i386 Binaries Release
+
+(this is for i386 (Linux) only, if you run another platform
+please, take a look at the Sources Release)
+
+Contents:
+1. Installation
+2. Copying
+3. No Warranty
+
+1. The EML Kit 1.1 Proof Obligations Generator i386 Binaries Release is 
+available through anonymous ftp from zls.mimuw.edu.pl. 
+The archive containing the release is called 
+eml11ogen-i386.tar.gz and resides in the /People/mikon/EMLKit directory.
+There is also a link to this file from our home-page:
+http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html
+The documentation is available separately from
+the /People/mikon/EMLKit/doc ftp directory or by WWW.
+
+To install the EML Kit Proof Obligations Generator first ungzip and untar 
+the archive. It should contain:
+README.eml11ogen-i386 - this file
+README - some info about the EML Kit 1.1 Proof Obligations Generator
+EML11.README - original README from EML Kit 1.1
+CHANGES - a list of changes to the EML Kit from version 1.0 to this 
+          extension
+emlkit - the i386 executable
+COPYING - text of the GNU General Public License
+
+Place emlkit in a proper directory.
+Installation complete.
+
+2. The EML Kit is distributed under the terms of 
+the GNU General Public License as published by the Free Software Foundation; 
+either version 2 of the License, or (at your option) any later version.
+This means that you can give out copies of the eml11ogen-i386.tar.gz archive.
+This also means that you have the right to get the source code.
+The source code is available as eml11ogen-src.tar.gz, through ftp or WWW.
+
+3. This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.

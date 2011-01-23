@@ -1,0 +1,472 @@
+\section{\secaxiom}
+\label{sec:axiom}
+
+W Extended ML aksjomaty mog"a wyst"epowa"c zar"owno w strukturach, jak~i w~sygnaturach.
+Poprawno"s"c statyczn"a aksjomat"ow w strukturach mo"rna do"s"c prosto sprowadzi"c
+do poprawno"sci wyra"renia logicznego, 
+stanowi"acego naj\-wa"r\-niej\-sz"a cz"e"s"c cia"la tych aksjomat"ow.
+Z kolei poprawno"s"c tego wy\-ra\-"re\-nia, cho"c zawiera"c ono mo"re konstrukcje
+j"ezykowe specyficzne dla EML, "latwo sprawdzi"c metodami analogicznymi co w SML.
+
+Dla odmiany poprawno"sci statycznej aksjomat"ow w sygnaturach
+nie mo\-"rna sprawdzi"c metodami analizy statycznej SML.
+Podstawow"a cech"a tych metod jest liniowa widoczno"s"c,
+to znaczy ocenianie poprawno"sci frazy tylko na podstawie informacji, 
+uzyskanych z badania programu do tej frazy w"l"acznie,
+bez "`wybiegania naprz"od''.
+Natomiast, jak b"edzie wida"c z dalszych rozwa"ra"n, 
+poprawno"s"c aksjomatu mo"re zale"re"c
+nie tylko od pocz"atkowego fragmentu sygnatury,
+ale od dowolnie du"rej porcji sygnatury za aksjomatem.
+
+\subsection{\secsketch}
+\label{sec:sketch}
+
+W tym rozdziale podejm"e pr"ob"e naszkicowania algorytmu
+elaboracji sygnatur Extended ML, potencjalnie zawieraj"acych aksjomaty.
+
+\subsubsection{\secinsig}
+\label{sec:in_sig}
+
+Regu"la 65 Semantyki Statycznej EML (rozpatruj"e tu nieco uproszczon"a wer\-sj"e)
+opisuje znaczenie syntaktycznej sygnatury,
+jako element dziedziny semantycznej $\Sig$.
+Ta regu"la jest troch"e bardziej z"lo"rona ni"r jej odpowiednik w Sematyce Statycznej SML.
+Jak mo"rna "latwo pokaza"c, dodatkowa druga i trzecia przes"lanka zapewnia, 
+"re aksjomaty nie wymuszaj"a zr"ownania typ"ow, ani uznania ty\-pu za r"owno"sciowy w sygnaturze.
+To ograniczenie jest narzucone przy u"ryciu operacji $\strip$,
+"`obdzieraj"acej'' sygnatur"e z aksjomat"ow:
+$$
+\frac{\begin{array}{c}
+\mbox{$(\N)\S$ with $\trace$ principal for $\sigexp$ in $\B$}\\
+\strip(\sigexp,\trace)=(\sigexp',\trace')\\
+\mbox{$(\N)\S$ with $\trace'$ principal for $\sigexp'$ in $\B$}
+      \end{array}}
+     {\B\ts\sigexp\ra (\N)\S,(\N)\trace}
+\eqno(65)
+$$
+
+Te specyficzne dla EML, dodatkowe warunki na poprawn"a posta"c sygnatur 
+wprowadzone s"a g"l"ownie po to, by programy Extended ML
+po za\-ko"n\-cze\-niu procesu ich konstruowania,
+automatycznie stawa"ly si"e poprawnymi programami j"ezyka Standard ML.
+Inymi s"lowy, gdy nie ma konstrukcji specyfikacjnych zamiast wykonywalnego kodu,
+i gdy tylko wszystkie aksjomaty, pe"lni"ace ju"r jedynie rol"e komentarzy, zostaj"a usuni"ete,
+program EML powinien by"c jedncze"snie programem SML.
+Rozpatrzmy przyk"lad:
+\begin{verbatim}
+functor F (Arg : sig
+                     type t
+                     val f : t -> int
+                     type u
+                     val a : u                                         
+                     axiom f a = 0
+                 end) : 
+sig 
+    val b : int 
+end =
+struct
+    val b = Arg.f Arg.a
+end
+\end{verbatim}
+Ten program nie jest poprawny, poniewa"r aksjomat w sygnaturze wymusza zr"ownanie typ"ow \|t| i \|u|.
+Gdyby nie ograniczenia w regule 65, powy"rszy program by"lby poprawny.
+Jednak jego wersja "`obdarta'' z aksjomat"ow jest niepoprawnym programem j"ezyka SML,
+z powodu aplikacji funkcji \|Arg.f|, kt"ora ma typ \|t -> int|, do argumentu \|Arg.a| o typie \|u|.
+
+\subsubsection{\secquasi}
+\label{sec:quasi}
+
+Niech QUASI-EML b"edzie dialektem EML, w kt"orym druga i trzecia przes\-"lan\-ka s"a nieobecne w regule~65.
+W QUASI-EML regu"la~65 wygl"ada wobec tego nast"epuj"aco:
+$$
+\frac{\begin{array}{c}
+\mbox{$(\N)\S$ with $\trace$ principal for $\sigexp$ in $\B$}\\
+     \end{array}}
+     {\B\ts\sigexp\ra (\N)\S,(\N)\trace}
+$$
+
+\begin{lem}
+W QUASI-EML skr"oty typowe \ang{type abbreviations}
+mog"a zosta"c zdefiniowane jako formy pochodne \ang{derived forms}.
+\end{lem}
+
+Zamiast formalnego dowodu rozpatrzmy przyk"ladowy program:
+\begin{verbatim}
+sig
+    type 'a t
+    type u = int t (* a type abbreviation *)
+    sharing type u = int
+end
+\end{verbatim}
+Pochodzi on z ksi"a"rki~\cite{MT91}, strona 66, 
+i zawiera skr"ot typowy w miejscu oznaczonym komentarzem.
+W j"ezyku QUASI-EML mo"rna napisa"c program r"ownowa"rny 
+temu programowi, ale z form"a pochodn"a w miejscu skr"otu typowego:
+\begin{verbatim}
+sig
+    type 'a t
+    type u
+    axiom true orelse (forall (c : u, d : int t) => c == d)
+    sharing type u = int
+end
+\end{verbatim}
+
+\begin{cor}
+W QUASI-EML rekonstrukcja sygnatur g"l"ownych jest nierozstrzygalna.
+\end{cor}
+
+Powodem jest to, "re skr"oty typowe w po"l"aczeniu z postulatami r"owno"sci typ"ow \ang{sharing equations}
+czyni"a rekonstrukcj"e sygnatur g"l"ownych tak tru\-dn"a jak unifikacja drugiego rz"edu.
+(W powy"rszym przyk"ladzie unifikacja drugiego rz"edu by"laby potrzebna
+by zdecydowa"c czy $\Lambda$\|'a.|$\INT$, czy te"r $\Lambda$\|'a.'a| jest najog"olniejsz"a
+funkcj"a typow"a, jaka mo"re by"c przypisana \|t|.) Jako "re unifkacja drugiego rz"edu
+jest nierozstrzygalna~\cite{MT91}, dostajemy nierozstrzygalno"s"c 
+rekonstrukcji sygnatur g"l"ownych w QUASI-EML.
+
+\subsubsection{\secnaive}
+\label{sec:naive}
+
+Teraz powr"o"cmy do problemu elaboracji sygnatur j"ezyka EML.
+Patrz"ac na regu"l"e 65 Semantyki Statycznej EML:
+$$
+\frac{\begin{array}{c}
+\mbox{$(\N)\S$ with $\trace$ principal for $\sigexp$ in $\B$}\\
+\strip(\sigexp,\trace)=(\sigexp',\trace')\\
+\mbox{$(\N)\S$ with $\trace'$ principal for $\sigexp'$ in $\B$}
+      \end{array}}
+     {\B\ts\sigexp\ra (\N)\S,(\N)\trace}
+\eqno(65)
+$$
+mo"rna doj"s"c do wniosku, 
+"re poprawny jest najprostszy spos"ob jej algorytmizacji 
+(dla uproszczenia nie uwzgl"edniam tutaj "slad"ow):
+\begin{enumerate}
+\item dokonaj elaboracji oryginalnej $\sigexp$ dostaj"ac sygnatur"e g"l"own"a~$(\N)\S$,
+\item obedrzyj $\sigexp$ z aksjomat"ow dostaj"ac $\sigexp'$,
+\item dokonaj elaboracji $\sigexp'$ uzyskuj"ac jej sygnatur"e g"l"own"a~$(\N')\S'$,
+\item je"sli $(\N)\S$ i $(\N')\S'$ s"a identyczne
+      wtedy $(\N)\S$ jest rezultatem, w przeciwnym przypadku sygnatura by"la niepoprawna.
+\end{enumerate}
+Niestety implementacja pierwszego kroku jest niemo"rliwa,
+gdy"r by"laby r"ow\-nie"r rozwi"azaniem (nierozstrzygalnego) problemu
+rekonstrukcji g"l"ow\-nych sygnatur w QUASI-EML.
+
+\subsubsection{\seccomforting}
+\label{sec:comforting}
+
+Na szcz"e"scie zachodzi nast"epuj"acy lemat.
+\begin{lem}[\thmcomforting]
+\label{thm:comforting}
+Aksjomaty nie maj"a wk"ladu w za\-war\-to"s"c "srodowiska powsta"lego w wyniku elaboracji sygnatury.
+Co wi"ecej, o\-bec\-no"s"c i to"rsamo"s"c "slad"ow powsta"lych jako rezultat elaboracji aksjomat"ow
+nie wp"lywa na elaboracj"e pozosta"lych komponent"ow sygnatury.
+\end{lem}
+
+\begin{proof}
+Prawdziwo"s"c pierwszej cz"e"sci lematu wynika z regu"ly 74.1 
+Semantyki Statycznej EML:
+$$
+\frac{\B\ts\axiomdesc\ra\trace}
+     {\B\ts\axiomspec\ra\emptymap\ \In\ \Env,\ \trace}
+$$
+Dow"od drugiej cz"e"sci to "rmudna indukcja po regu"lach 63--90.
+\end{proof}
+
+\begin{cor}
+\label{thm:nontrivial}
+Aksjomaty mog"a wp"lywa"c na elaboracj"e sygnatury 
+tylko przez wymuszanie zr"ownania typ"ow, albo uznania typu za r"owno"sciowy,
+a nie przez nietrywialny wk"lad, to znaczy wk"lad do wynikowego "srodowiska,
+lub zmian"e "sladu inn"a ni"r proste wstawienie komponentu.
+\end{cor}
+
+\subsubsection{\secmature}
+\label{sec:mature}
+
+Bazuj"ac na Lemacie~\ref{thm:comforting} i Wniosku~\ref{thm:nontrivial} 
+mo"rna teraz sformu"lowa"c szkic algorytmu implementuj"acego regu"l"e 65:
+\begin{enumerate}
+\item obedrzyj $\sigexp$ z aksjomat"ow dostaj"ac $\sigexp'$,
+\label{step:strip}
+\item dokonaj elaboracji $\sigexp'$ dostaj"ac sygnatur"e g"l"own"a~$(\N')\S'$ i~"slad~$\trace'$,
+\label{step:elab_sig'}
+\item sprawd"z, "re aksjomaty nie wymuszaj"a zr"ownania typ"ow, 
+      ani uznania typu za r"owno"sciowy w $\sigexp$,
+\label{step:check}
+\item dokonaj elaboracji aksjomat"ow zgodnie z regu"l"a 74.1, uzyskuj"ac "slady $\trace_1,\dots,\trace_n$,
+\label{step:elab_axiom}
+\item je"sli wszystko przebieg"lo poprawnie, wynikiem jest $(\N')\S'$ i dodatkowo $\trace'$ 
+      ze "sladami $\trace_1,\dots,\trace_n$ wstawionymi w odpowiednich miejscach.
+\label{step:insert}
+\end{enumerate}
+(Intuicje prowadz"ace do podobnego rozwi"azania zosta"ly sformu"lowane przez Stefana Kahrsa w~\cite{Kah94}.)
+
+\begin{thm}
+Powy"rsza procedura jest poprawna.
+%"a implementacj"a regu"ly~65.
+\end{thm}
+
+\begin{proof}
+"Slady elaboracji komponent"ow sygnatury s"a sk"ladane w "`wolny'' spos"ob 
+(patrz np.\ regu"la 81 cytowana w rozdziale~\ref{sec:elaborating} poni"rej).
+Dzi"eki temu proste wstawienie $\trace_1,\dots,\trace_n$ 
+do $\trace'$ w kroku~\ref{step:insert} jest wystarczaj"ace,
+by poprawnie zrekonstruowa"c $\trace$, czyli "slad, jaki powsta"lby w czasie elaboracji $\sigexp$.
+W takim razie, gdy kontrola przeprowadzona w kroku~\ref{step:check} upewnia nas, 
+"re aksjomaty nie wymuszaj"a zr"ownania typ"ow, ani uznania typu za r"owno"sciowy,
+wiemy z Wniosku~\ref{thm:nontrivial}, i"r sygnatura semantyczna $(\N')\S'$, 
+wynikaj"aca z elaboracji $\sigexp'$, wraz ze "sladem $\trace$ jest g"l"owna dla $\sigexp$.
+\end{proof}
+
+Zanalizujmy kroki naszkicowane powy"rej.
+Krok~\ref{step:strip} jest prost"a syntaktyczn"a operacj"a.
+Poniewa"r $\sigexp'$ jest pozbawione aksjomat"ow, krok~\ref{step:elab_sig'} jest tak "latwy
+jak elaboracja sygnatur SML (pomijaj"ac zbieranie "slad"ow opisane w rozdziale~\ref{sec:trace}). 
+Wstawianie "slad"ow $\trace_1,\dots,\trace_n$ do $\trace'$ w kroku~\ref{step:insert}
+jest jedynie prostym problemem natury technicznej.
+Pozostaje implementacja krok"ow~\ref{step:check}~i~\ref{step:elab_axiom}.
+
+\subsubsection{\secvalidating}
+\label{sec:validating}
+
+Za"l"o"rmy, "re mamy sygnatur"e $\sigexp$ ze znajduj"acym si"e wewn"atrz niej aks\-jo\-ma\-tem.
+Niech $\sigexp'$ b"edzie sygnatur"a podobn"a do $\sigexp$, 
+ale z pust"a specyfikacj"a w miejscu, gdzie w $\sigexp$ znajdowa"l si"e aksjomat.
+Za"l"o"rmy, "re istnieje wyw"od $Der'$ g"l"ownej sygnatury dla $\sigexp'$ i
+niech $Der_e$ b"edzie jego podwywodem, odpowiadaj"acym pustej specyfikacji.
+Niech $\B_e$ b"edzie baz"a, jaka znajduje si"e w korzeniu $Der_e$.
+
+\begin{thm}
+\label{thm:validating}
+Aksjomat nie wymusza zr"ownania typ"ow ani uznania ty\-pu za r"owno"sciowy w $\sigexp$ 
+wtedy i tylko wtedy, gdy istnieje derywacja $Der_{ax}$ g"l"ownego "sladu 
+dla aksjomatu w bazie $\B_e$. 
+\end{thm}
+
+\begin{proof}[\proofname\ ($\Leftarrow$)]
+Przypu"s"cmy, "re istnieje $Der_{ax}$. Wtedy $Der'$ z $Der_{ax}$ w miejscu $Der_e$
+jest szkieletem g"l"ownego wywodu $Der$ dla $\sigexp$.
+Aby ten szkielet przekszta"lci"c w formalnie poprawne drzewo wywodu, 
+wystarczy na mocy Lematu~\ref{thm:comforting}
+wykona"c dodatkowo dwie operacje na ka"rdym przodku w"ez"la $Der_e$.
+Pierwsza operacja to poprawne wstawienie "sladu wynikaj"acego z $Der_{ax}$ 
+do "sladu w"ez"la. Druga to zast"apienie pustej specyfikacji, wyst"epuj"acej
+w w"e"zle, przez aksjomat.
+
+Po tych operacjach $Der$ jest poprawnym wywodem dla $\sigexp$ i, co wi"ecej, 
+g"l"ownym wywodem, gdy"r $Der'$ i $Der_{ax}$ s"a g"l"owne. Teraz nale"ry zauwa"ry"c, 
+"re $Der$ ma t"e sam"a wynikow"a sygnatur"e co $Der'$, a jego "slad
+jest prostym rozszerzeniem "sladu $Der'$. W takim razie z definicji wymuszania
+wynika, "re aksjomat nie wymusza zr"ownania typ"ow, 
+ani uznania typu za r"owno"sciowy w $\sigexp$.
+%\end{proof}
+
+%\begin{proof}[\proofname\ ($\Rightarrow$)]
+($\Rightarrow$).
+Skoro $\sigexp'$ ma g"l"owny wyw"od i aksjomat niczego nie wymusza,
+to z Wniosku~\ref{thm:nontrivial} istnieje g"l"owny wyw"od dla $\sigexp$. Oczywi"scie jego
+podwyw"od odpowiadaj"acy aksjomatowi jest r"ownie"r g"l"owny.
+Pozostaje udowodni"c, "re ten wyw"od dla aksjomatu zaczyna si"e w bazie $\B_e$.
+
+Z Lematu~\ref{thm:comforting}, aksjomat (kt"ory jak wiemy niczego nie wymusza)
+nie mo"re wp"lywa"c na bazy, wyst"epuj"ace w g"l"ownym wywodzie dla $\sigexp$.
+A~wi"ec wyw"od g"l"owny dla aksjomatu jest wykonywany w tej samej bazie, 
+co wyw"od dla $Der_e$, czyli w~bazie~$\B_e$.
+\end{proof}
+
+Sprawdzenie, "re istnieje wyw"od g"l"owny dla aksjomatu w danej bazie,
+nie jest bardziej skomplikowane, ni"r elaboracja aksjomatu wyst"epuj"acego w strukturze.
+W dodatku, jak mo"rna by"lo zobaczy"c z dowodu, "slady wyprodukowane jako rezultat
+tej elaboracji s"a w"la"snie tymi 
+wymaganymi w kroku~\ref{step:elab_axiom} z rozdzia"lu~\ref{sec:mature}.
+
+Teraz jedyn"a pozostaj"ac"a trudno"sci"a 
+w zaimplemetowaniu kroku~\ref{step:check} z rozdzia"lu~\ref{sec:mature},
+a w ten spos"ob ca"lego ju"r algorytmu, jest obliczanie baz $\B_e$ dla danych aksjomat"ow.
+
+\subsection{\secinter}
+\label{sec:inter}
+
+Tak naprawd"e, wiemy ju"r sk"ad dosta"c baz"e $\B_e$.
+Jest ona jednym z komponent"ow "sladu $\trace'$ wynikaj"acego z elaboracji $\sigexp'$
+(w kroku~\ref{step:elab_sig'}, rozdzia"l~\ref{sec:mature}).
+Istniej"a jednak dwa problemy. 
+
+Po pierwsze, dla prostoty za"lo"ryli"smy w rozdziale~\ref{sec:judgments},
+"re "slady s"a pe"l\-ny\-mi drzewami wywodu. W rzeczywisto"sci,
+chocia"r mo"rna zrekonstruowa"c drzewo wywodu dla frazy ze "sladu elaboracji tej frazy, 
+to jednak zadanie to jest niewiele "latwiejsze, ni"r zbudowanie drzewa wywodu dla frazy bez opierania si"e na "sladzie.
+
+Po drugie "slady s"a niezb"edne jedynie Semantyce Weryfikacyjnej EML.
+Je"sli uda"lo by si"e znale"z"c wygodny spos"ob obliczania $\B_e$ bez "slad"ow,
+nie by"lo by potrzeby wprowadzania "slad"ow do implementacji Sematyki Statycznej.
+Mo"re to by"c o tyle po"ryteczne, "re implementacja "slad"ow jest cokolwiek skomplikowana i k"lopotliwa
+(patrz rozdzia"l~\ref{sec:trace}).
+
+Aby zobaczy"c, jak nale"ry oblicza"c bazy $\B_e$ bez u"rycia "slad"ow,
+powinni"smy najpierw zag"l"ebi"c si"e w szczeg"o"ly elaboracji sygnatur w SML 
+(albo r"o\-wno\-wa"r\-nie, elaboracji sygnatur bez aksjomat"ow w EML).
+
+\subsubsection{\secstatic}
+\label{sec:static}
+
+Zar"owno Semantyka Statyczna Modu"l"ow Extended ML jak i Standard ML silnie polega
+na niedeterminizmie. W ramach budowania wywodu, to"rsamo"s"c wyst"epuj"acych
+w nim typ"ow i struktur jest "`niedeterministycznie zgadywana''.
+Na przyk"lad w regule~83 (nieco uproszczonej):
+$$
+\frac{ \tyvarseq = \alphak \qquad\arity\theta=k }
+     { \C\ts{\mbox{\tyvarseq\ \tycon}}\ra\{\tycon\mapsto(\theta,\emptymap)\}}
+\eqno(83)
+$$
+$\theta$ mo"re by"c dobrana tak, by spe"lnione by"ly warunki na r"owno"s"c typ"ow.
+Albo w regule 63:
+$$
+\frac{\B\ts\spec\ra\E,\trace }
+     {\B\ts\encsigexp\ra (\m,\E),\append{\m}{\trace}}
+\eqno(63)
+$$
+$m$ mo"re zosta"c tak dobrane, by spe"lniona by"la r"owno"s"c odpowiednich struktur.
+
+\subsubsection{\secelaborating}
+\label{sec:elaborating}
+
+Aby pozby"c si"e niedeterminizmu tkwi"acego w Semantyce Statycznej Mo\-du\-"l"ow,
+nale"ry u"ry"c algorytmu do obliczania sygnatury g"l"ownej,
+przypominaj"acego algorytm do rekonstrukcji typ"ow g"l"ownych
+opisany przez Damasa i Milnera w pracy~\cite{DM82}.
+
+Zamiast by"c poprawnie ustalane od razu, nazwy typ"ow i struktur 
+na\-le\-"r"a\-cych do sygnatury s"a uznawane za "swie"re, 
+czyli r"o"rne od wszystkich dotychczas spotkanych.
+Potem, w procesie elaboracji sygnatury, systematycznie gromadzona jest realizacja, 
+czyli (w uproszczeniu) sko"nczony automorfizm nazw typ"ow i struktur.
+
+Za ka"rdym razem, gdy okazuje si"e, "re pewne nazwy powinny by"c r"owne,
+na przyk"lad dlatego, "re tak stanowi"a postulaty r"owno"sci \ang{sharing equations},
+wzbogaca si"e realizacj"e.
+Jednocze"snie ca"ly czas aplikuje si"e bie"r"ac"a realizacj"e do obiekt"ow semantycznych,
+co ulepsza pierwsze ostro"rne przybli"renia poprzez zr"ownywanie odpowiednich nazw.
+Etap "`zgadywania'' zostaje w ten spos"ob od"lo"rony do momentu, 
+gdy wiadomo ju"r dok"ladnie co powinno by"c odgadni"ete.
+
+Proces gromadzenia i aplikowania realizacji szczeg"olnie dobrze widoczny jest
+w kroku algorytmu dotycz"acym regu"ly 81, opisuj"acej elaboracj"e specyfikacji z"lo"ronej:
+$$
+\frac{ \B\ts\spec_1\ra\E_1,\trace_1 \qquad
+\plusmap{\B}{\E_1}\ts\spec_2\ra\E_2,\trace_2 }
+     { \B\ts\seqspec\ra\plusmap{\E_1}{\E_2},\append{\trace_1}{\trace_2} }
+\eqno(81)
+$$
+Ogl"adaj"ac kod "zr"od"lowy implementacji tego kroku w systemie EML Kit,
+szczeg"oln"a uwag"e zwr"o"cmy na realizacje (\|rea1|, \|rea2|), 
+ich z"lo"renie (\|oo|) oraz ich aplikacj"e do obiekt"ow semantycznych (\|onB|, \|onE|):
+{\small
+\begin{verbatim}
+fun elab_spec (B: Env.Basis, spec: IG.spec) : 
+    (Stat.Realisation * Env.Env * OG.spec) =
+    case spec of
+    ...
+    (* Sequential specification *)
+    | IG.SEQspec(i, spec1, spec2) =>
+        let
+            val (rea1, E1, out_spec1) = elab_spec(B, spec1)
+            val B' = (rea1 onB B) B_plus_E E1
+            val (rea2, E2, out_spec2) = elab_spec(B', spec2)
+        in
+            (rea2 oo rea1, 
+             (rea2 onE E1) E_plus_E E2, 
+             OG.SEQspec(okConv i, out_spec1, out_spec2))
+        end
+    ...
+\end{verbatim}
+}
+
+\subsection{\secsearch}
+\label{sec:search}
+
+Znaj"ac podstawy algorytmu elaboracji sygnatur pozbawionych aksjomat"ow,
+spr"obujmy zgadn"ac, jak dosta"c baz"e $\B_e$ dla danej sygnatury $\sigexp$ zawieraj"acej aksjomat.
+
+\subsubsection{\secmodest}
+\label{sec:modest}
+
+Czy powinna to by"c baza u"rywana przez algorytm,
+gdy zaczyna on elaboracj"e ca"lego $\sigexp$?
+Nie, i nast"epuj"acy przyk"lad pokazuje, jakie mog"a by"c tego niedobre skutki:
+\begin{verbatim}
+signature S1 =
+sig
+    type t
+    axiom forall (a : t) => true
+end
+\end{verbatim}
+W tej bazie nie ma typu \|t|, a wi"ec aksjomat zosta"lby niepoprawnie uznany za "zle skonstruowany.
+
+\subsubsection{\secignorant}
+\label{sec:ignorant}
+
+Mo"re w takim razie u"ry"c bazy, kt"ora pojawia si"e w miejscu tu"r przed aksjomatem?
+Popatrzmy na przyk"lad:
+\begin{verbatim}
+signature S2 =
+sig
+    type t
+    type u 
+    axiom forall ( a : t, f : u -> bool) => f a
+    sharing type t = u
+end
+\end{verbatim}
+Aksjomat wyst"epuj"acy tutaj nie wymusza zr"ownania typ"ow,
+poniewa"r w sygnaturze z aksjomatem usuni"etym, typy \|t| i \|u| by"lyby zr"ownane.
+Niemniej elaboracja aksjomatu w bazie otrzymanej, kiedy algorytm
+sko"nczy elaborowa"c pierwsze dwie specyfikacje, nie powiedzie si"e,
+gdy"r "swie"re semantyczne typy zostan"a przypisane \|t| i \|u|,
+bez uwzgl"ednienia pojawiaj"acego si"e dalej postulatu r"owno"sci typ"ow.
+
+\subsubsection{\secomniscient}
+\label{sec:omniscient}
+
+Wydaje si"e wi"ec, "re baza zebrana na ko"ncu elaboracji b"edzie dobrym kandydatem na $\B_e$.
+Rzeczywi"scie elaboracja aksjomatu z poprzedniego przyk"ladu przebiegnie
+tu pomy"slnie, gdy"r typy przypisane \|t| i \|u| s"a w niej zr"ownane.
+Niestety, w nast"epuj"acym przyk"ladzie aksjomat, kt"ory jest wyra"znie
+"zle skonstruowany, daje si"e elaborowa"c w takiej bazie:
+\begin{verbatim}
+signature S3 =
+sig
+    axiom forall (a : t) => true
+    type t
+end
+\end{verbatim}
+
+\subsubsection{\secobservation}
+\label{sec:observation}
+
+Jak widzimy, w bazie $\B_e$ powinny by"c dok"ladnie te komponenty, 
+co w bazie tu"r sprzed aksjomatu, ale ich to"rsamo"s"c powinna
+odzwierciedla"c informacj"e zebran"a podczas elaboracji ca"lej sygnatury.
+
+\begin{obs}
+\label{thm:make_be}
+Okazuje si"e, "re aby dosta"c baz"e $\B_e$ wystarczy zboby"c ko"ncow"a realizacj"e $\|rea|$,
+wykonuj"ac standardowy algorytm elaboracji dla sygnatury $\sigexp'$,
+a nast"epnie zaaplikowa"c $\|rea|$ do bazy, pobranej gdy algorytm
+zako"nczy"l analizowanie specyfikacji tu"r przed aksjomatem.
+\end{obs}
+
+\begin{cor}
+Mo"rliwe jest otrzymywanie bazy $\B_e$ --- 
+a co za tym idzie realizowanie kroku~\ref{step:check} z rozdzia"lu~\ref{sec:mature}
+i dzi"eki temu przeprowadzanie poprawnej elaboracji sygnatur zawieraj"acych aksjomaty
+--- bez u"rycia "slad"ow.
+\end{cor}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "eml-type"
+%%% End: 
+
+

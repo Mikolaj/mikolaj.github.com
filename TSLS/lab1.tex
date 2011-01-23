@@ -1,0 +1,87 @@
+\chapter{
+Wyra"renia
+}
+
+Program w j"ezyku funkcyjnym to wyra"renie, 
+a wykonanie programu to obliczenie warto"sci wyra"renia. Przyk"lady wyra"re"n:
+\begin{verbatim}
+    3;   (* Comment: semicolon ";" tells the interpreter *)
+    (1 + 2) * 1;   (* to evaluate expressions. *)
+    ("Hi! I'm the first element of this tuple", 3, false);
+    if ((2.3 > 5.4) orelse true) then "yes" else "no";
+    (fn n => 2 * n) 3;
+    fn x => x;
+\end{verbatim}
+ 
+Wielkie i skomplikowane wyra"renia zapisuje si"e wygodniej 
+u"rywaj"ac konstrukcji \|let...in...end| oraz deklaracji:
+\begin{verbatim}
+    let 
+       val text = "I'm a string"
+    in
+       text^". Yes, "^text^". Sure, "^text^"!"
+    end;
+    val twice = (fn n => 2 * n);
+    twice;
+    twice (twice 3);
+    fun twice' n = 2 * n;
+    twice 3 = twice' 3 andalso twice' 4 = twice 4;
+\end{verbatim}
+
+Przyk"lad z \|pi| pokazuje pewn"a istotn"a ceche deklaracji.
+Jaka jest warto"s"c wyra"renia \|area 5.0|
+z ostatniej linii tego przyk"ladu?
+\begin{verbatim}
+    val pi = 3.14;
+    fun area r = pi * r * r;
+    area 5.0;
+    val pi = 1.0;
+    area 5.0;
+\end{verbatim}
+
+% W programach funkcyjnych pojawiaj"a si"e r"ownie"r deklaracje rekurencyjne:
+Pot"e"rnym narz"edziem programowania funkcjnego jest rekurencja:
+\begin{verbatim}
+    fun fact n = if n <= 1 then 1 else n * (fact (n - 1)); 
+    fun fib n = if n <= 1 then 1 else (fib (n - 1)) + (fib (n - 2));
+    fact (fib 4);
+    fib;
+\end{verbatim}
+% \ldots\ i wielkie mn"ostwo innych cudowno"sci, a wszystko po to, 
+% by uda"lo si"e zapisa"c to wyra"renie, na kt"orego warto"s"c 
+% od pocz"atku pisania programu dybiemy.
+
+\section*{Zadanie}
+\begin{exercises}
+
+\item
+Oto definicja funkcji \|fib'|:
+\begin{verbatim}
+fun fib' n = 
+    let
+        fun fib_pair n = 
+            if n <= 1 then (1, 1) 
+                      else let
+                               val (j, k) = fib_pair (n - 1)
+                           in
+                               (j + k, j)
+                           end
+    in
+        #1 (fib_pair n)
+    end
+\end{verbatim}
+(\|#1| oznacza wzi"ecie pierwszego elementu tupla).
+ 
+Udowodnij przy pomocy indukcji, "re dla ka"rdego n
+$$\f{fib} n = \f{fib'} n.$$
+
+Koszt czasowy $\f{fib} n$ jest wyk"ladniczy wzgl"edem $n$. 
+Jaki jest koszt $\f{fib'} n$?
+
+\end{exercises}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "TajnySkryptSML"
+%%% End: 
