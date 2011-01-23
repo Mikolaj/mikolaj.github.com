@@ -11,14 +11,14 @@ Prentice-Hall, 1976.<br>
 
 The (dis)similarity of the implemented language
 to the one described in the book, can be estimated
-on the basis of examples contained in 
-<a href="dij/">
+on the basis of examples contained in
+<a href="http://www.mimuw.edu.pl/~mikon/dij/">
 dij/</a> directory,
-the syntax described in 
+the syntax described in
 <a href="Abstractor/ABSTRACT_GRAMMAR.sml">
 Abstractor/ABSTRACT_GRAMMAR.sml</a> file,
-and the denotational semantics residing in 
-<a href="Elaborator/">
+and the denotational semantics residing in
+<a href="http://www.mimuw.edu.pl/~mikon/Elaborator/">
 Elaborator/</a> directory.
 
 <p>
@@ -29,33 +29,33 @@ in the design of the semantics, was heavily thought of:
 <li> the concurrent assignment is not implemented,
   because I have the feeling, that it's
   just a special case of pattern matching with product types,
-  and so should be implemented in full generality 
+  and so should be implemented in full generality
   (in the future versions, of course :) ,
 <li> the decision to move declaration of variable's type
   from virgin assignment to variable declaration itself,
-  is due to the belief, that nothing gets lost, 
+  is due to the belief, that nothing gets lost,
   but the typing gets "stronger" and easier to read,
 <li> the if...fi and do...od constructs are made deterministic,
   to avoid artificial complexity. Still they do
   fulfill the requirements described in non-deterministic
   fashion in the book. But in fact, the non-deterministic
   notation seems to be very nice. It helps in manifesting,
-  the independence from the guard evaluation order, 
+  the independence from the guard evaluation order,
   which is quite common.
   This could also give optimizing compilers more freedom,
   although at the cost of the need for making separate binaries
   for testing, with run-time-random choosing of evaluation order.
-<li> the arrays are not implemented, although they can be 
-  simulated to some extent. Arrays have so imperative 
-  and simple nature, but on the other hand their proposed 
-  semantics was quite complicated and possessed 
-  no (apparent) imperative, efficient implementation. 
+<li> the arrays are not implemented, although they can be
+  simulated to some extent. Arrays have so imperative
+  and simple nature, but on the other hand their proposed
+  semantics was quite complicated and possessed
+  no (apparent) imperative, efficient implementation.
   So, if not for the efficiency, what for?
 </ul>
-  
+
 The only ad hoc change to the original language was
-adding denotations of blocks to storable values, 
-with block application, higher-order blocks, and 
+adding denotations of blocks to storable values,
+with block application, higher-order blocks, and
 <a href="Elaborator/ElabRightBl.sml">
 such-like</a>.
 This was needed for ad hoc input-output of programs,
@@ -71,70 +71,70 @@ which is left as an exercise for the reader to find.
 
 <p><hr><p>
 
-This project started in early 1994, 
-after lectures about denotational semantics by 
+This project started in early 1994,
+after lectures about denotational semantics by
 <a href="http://www.mimuw.edu.pl/faculty/M.Grabowski.e.html">
 Michal Grabowski</a>
-and labs about implementing denotational semantics 
-in Standard ML with 
-<a href="http://zls.mimuw.edu.pl/~gsg/home.html">
+and labs about implementing denotational semantics
+in Standard ML with
+<a href="http://www.mimuw.edu.pl/~gsg/home.html">
 Grzegorz Grudzinski</a> (hi Grzes!).
 In these times, the author of the interpreter
 still had hopes, that imperative languages can be beautiful,
 and imperative programming - not error-provoking.
 To instantiate the hopes, or drop them once and for all,
 he decided to try to make a clean, mathematically beautiful,
-executable denotational definition of the most beautiful 
-imperative language, possessing the most natural and the safest,  
+executable denotational definition of the most beautiful
+imperative language, possessing the most natural and the safest,
 bug-eliminating variable scoping mechanisms - the Dijkstra's language.
 
 <p>
 
-Any conclusions of this project are left, 
+Any conclusions of this project are left,
 for an intrepid reader of SML sources, to draw :).
 Nevertheless, the fact is, that I'm quite satisfied
-with this work, done with the use of functional 
-and specification languages. Also, this was quite thrilling 
-to write, or even only rewrite, some sample programs 
-in imperative language, after so many years ...  
+with this work, done with the use of functional
+and specification languages. Also, this was quite thrilling
+to write, or even only rewrite, some sample programs
+in imperative language, after so many years ...
 
 <p><hr><p>
 
 The interpreter was written in a functional programming language
-<a href="http://foxnet.cs.cmu.edu/sml.html"> 
+<a href="http://foxnet.cs.cmu.edu/sml.html">
 Standard ML</a>
-to run on 
+to run on
 <a href="http://cm.bell-labs.com/cm/cs/what/smlnj/index.html">
 SML/NJ</a> 109+. Versions 0.93-108 all crash in three places :-P.
 
 <p>
 
-The 
-<a href="ver.EML/Lexer">
+The
+<a href="http://www.mimuw.edu.pl/~mikon/ver.EML/Lexer">
 Lexer</a> was written as a case study of developing software in
 <a href="http://www.dcs.ed.ac.uk/%7Edts/eml/">Extended ML</a>
-to run on 
-<a href="http://zls.mimuw.edu.pl/~mikon/ftp/EMLKit/README.html"> 
-EML Kit</a>. 
+to run on
+<a href="http://www.mimuw.edu.pl/~mikon/EMLKit/README.html">
+EML Kit</a>.
 File <CODE>ver.EML.build.sml</CODE> builds the EML version of the interpreter.
 
 <p>
 
-Here is the 
+Here is the
 <a href=".">
 root</a> of the source tree.
 The <CODE>.tar.gz</CODE> archive of the tree is available by WWW from<br>
-<CODE><a href="http://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
-http://zls.mimuw.edu.pl/~mikon/ftp/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a><br>
+<CODE><a href="http://www.mimuw.edu.pl/~mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
+http://www.mimuw.edu.pl/~mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a><br>
 or by ftp from<br>
-<CODE><a href="ftp://zls.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
-ftp://zls.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a>.<br>
+<CODE><a href="ftp://www.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz">
+ftp://www.mimuw.edu.pl/pub/mikon/Dijkstra/dij-sml-eml_1.1-2.tar.gz</CODE></a>.<br>
 
 <p><hr><p>
 
     Copyright (C) 1994-1997 Mikolaj Konarski<br>
-    <a href="http://zls.mimuw.edu.pl/~mikon/home.english.html">
-    <CODE>http://zls.mimuw.edu.pl/~mikon/home.english.html</CODE></a><br>
+    <a href="http://www.mimuw.edu.pl/~mikon/home.english.html">
+    <CODE>http://www.mimuw.edu.pl/~mikon/home.english.html</CODE></a><br>
     <a href="mailto:mikon@mimuw.edu.pl">
     <EM>mikon@mimuw.edu.pl</EM></a>
 
